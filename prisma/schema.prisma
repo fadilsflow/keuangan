@@ -8,17 +8,16 @@ datasource db {
 }
 
 model Transaction {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
   date         DateTime
   description  String
-  category     String // Bahan Baku, Tenaga Kerja, Overhead, dll.
-  relatedParty String // Nama supplier atau pihak terkait
-  amountTotal  Float // Dihitung dari total harga item
-  paymentImg   String // Gambar bukti pembayaran
-  type         String   @default("income")
+  category     String
+  relatedParty String
+  amountTotal  Float
+  paymentImg   String   @default("")
+  type         String   @default("pengeluaran")
 
   items          Item[]
   monthHistory   MonthHistory? @relation(fields: [monthHistoryId], references: [id])
@@ -39,20 +38,22 @@ model Item {
 model MonthHistory {
   id           String @id @default(cuid())
   year         Int
-  month        Int // 1 = Januari, 2 = Februari, dst.
-  totalIncome  Float  @default(0) // Total pemasukan bulan ini
-  totalExpense Float  @default(0) // Total pengeluaran bulan ini
+  month        Int
+  totalIncome  Float  @default(0)
+  totalExpense Float  @default(0)
 
   transactions  Transaction[]
-  yearHistory   YearHistory?  @relation(fields: [yearHistoryId], references: [id])
-  yearHistoryId String?
+  yearHistory   YearHistory   @relation(fields: [yearHistoryId], references: [id])
+  yearHistoryId String
+
+  @@unique([year, month])
 }
 
 model YearHistory {
   id           String @id @default(cuid())
-  year         Int // Tahun transaksi
-  totalIncome  Float  @default(0) // Total pemasukan tahun ini
-  totalExpense Float  @default(0) // Total pengeluaran tahun ini
+  year         Int    @unique
+  totalIncome  Float  @default(0)
+  totalExpense Float  @default(0)
 
   months MonthHistory[]
 }

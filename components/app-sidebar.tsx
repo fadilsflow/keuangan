@@ -16,6 +16,8 @@ import {
   // IconReport,
   IconSearch,
   IconSettings,
+  IconHome,
+  IconReceipt2,
 } from "@tabler/icons-react";
 
 // import { NavDocuments } from "@/components/nav-documents";
@@ -41,8 +43,13 @@ const data = {
   navMain: [
     {
       title: "Dashboard",
-      url: "#",
-      icon: IconDashboard,
+      url: "/dashboard",
+      icon: IconHome,
+    },
+    {
+      title: "Transactions",
+      url: "/transactions",
+      icon: IconReceipt2,
     },
     {
       title: "Manajemen Transaksi",
@@ -144,9 +151,13 @@ const data = {
   // ],
 };
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+interface AppSidebarProps {
+  variant?: "default" | "inset";
+}
+
+export function AppSidebar({ variant = "default" }: AppSidebarProps) {
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar variant={variant}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
