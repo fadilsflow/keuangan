@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/prisma";
+import { TransactionSchema } from "@/lib/types";
+
 import { Hono } from "hono";
 import { handle } from "hono/vercel";
+
 export const runtime = "nodejs";
 
 const app = new Hono().basePath("/api");
@@ -22,6 +25,16 @@ app.get("/transactions", async (c) => {
 app.post("/transactions", async (c) => {
   try {
     const body = await c.req.json();
+
+    const validatedData = TransactionSchema.safeParse(body);
+    if (!validatedData.success) {
+      return c.json(
+        { error: "Data tidak valid", details: validatedData.error },
+        400
+      );
+    }
+    const data = validatedData.data;
+
     console.log("Request Body:", body); // Debugging
 
     // Validasi data
