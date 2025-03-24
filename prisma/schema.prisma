@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Transaction {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  date         DateTime
+  description  String
+  category     String // Bahan Baku, Tenaga Kerja, Overhead, dll.
+  relatedParty String // Nama supplier atau pihak terkait
+  amountTotal  Float // Dihitung dari total harga item
+  paymentImg   String // Gambar bukti pembayaran
+  type         String   @default("income")
+
+  items          Item[]
+  monthHistory   MonthHistory? @relation(fields: [monthHistoryId], references: [id])
+  monthHistoryId String?
+}
+
+model Item {
+  id         String @id @default(cuid())
+  name       String
+  itemPrice  Float
+  quantity   Int
+  totalPrice Float // itemPrice * quantity (harus dihitung saat transaksi dibuat)
+
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  transactionId String
+}
+
+model MonthHistory {
+  id           String @id @default(cuid())
+  year         Int
+  month        Int // 1 = Januari, 2 = Februari, dst.
+  totalIncome  Float  @default(0) // Total pemasukan bulan ini
+  totalExpense Float  @default(0) // Total pengeluaran bulan ini
+
+  transactions  Transaction[]
+  yearHistory   YearHistory?  @relation(fields: [yearHistoryId], references: [id])
+  yearHistoryId String?
+}
+
+model YearHistory {
+  id           String @id @default(cuid())
+  year         Int // Tahun transaksi
+  totalIncome  Float  @default(0) // Total pemasukan tahun ini
+  totalExpense Float  @default(0) // Total pengeluaran tahun ini
+
+  months MonthHistory[]
+}
