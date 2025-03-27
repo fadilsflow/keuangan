@@ -47,6 +47,28 @@ export function ChartLabaRugi() {
         enabled: !!date.from && !!date.to,
     });
 
+    const calculations = React.useMemo(() => {
+        if (!labaRugi) return {
+            laba: 0,
+            isProfit: false,
+            percentage: 0
+        };
+
+        const totalPendapatan = labaRugi.pendapatan || 0;
+        const totalPengeluaran = labaRugi.pengeluaran || 0;
+        const laba = totalPendapatan - totalPengeluaran;
+
+        const percentage = totalPendapatan === 0 ? 0 : (laba / totalPendapatan) * 100;
+
+        return {
+            laba,
+            isProfit: laba >= 0,
+            percentage: Math.abs(percentage)
+        };
+    }, [labaRugi]);
+
+    const { laba, isProfit, percentage } = calculations;
+
     const chartData = React.useMemo(() => {
         if (!labaRugi) return [];
         return [
@@ -83,7 +105,6 @@ export function ChartLabaRugi() {
         },
     } satisfies ChartConfig;
 
-    const isProfit = (labaRugi?.laba || 0) > 0;
     const dateRangeText = date.from && date.to
         ? `${date.from.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })} - ${date.to.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`
         : "Pilih rentang tanggal";
@@ -106,15 +127,6 @@ export function ChartLabaRugi() {
             <CardContent className="flex flex-col md:flex-row gap-4 p-4">
                 <div className="flex-1 space-y-3 min-w-0">
                     <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: chartConfig.hpp.color }}></div>
-                                <span className="text-sm text-muted-foreground">HPP</span>
-                            </div>
-                            <span className="text-sm font-medium" style={{ color: chartConfig.hpp.color }}>
-                                {formatRupiah(labaRugi?.hpp || 0)}
-                            </span>
-                        </div>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: chartConfig.pendapatan.color }}></div>
@@ -142,10 +154,10 @@ export function ChartLabaRugi() {
                                 ) : (
                                     <TrendingDown className="h-4 w-4 text-red-600" />
                                 )}
-                                <span className="font-medium">Laba/Rugi</span>
+                                <span className="font-medium">Total {isProfit ? 'Laba' : 'Rugi'}</span>
                             </div>
                             <span className={`font-bold ${isProfit ? 'text-green-600' : 'text-red-600'}`}>
-                                {formatRupiah(labaRugi?.laba || 0)}
+                                {formatRupiah(Math.abs(laba))}
                             </span>
                         </div>
                         <div className="text-xs text-muted-foreground mt-1 text-right">
@@ -192,17 +204,24 @@ export function ChartLabaRugi() {
                                             >
                                                 <tspan
                                                     x={viewBox.cx}
-                                                    y={viewBox.cy}
+                                                    y={viewBox.cy - 10}
                                                     className={`fill-current text-xl font-bold ${isProfit ? 'text-green-600' : 'text-red-600'}`}
                                                 >
-                                                    {formatRupiah(labaRugi?.laba || 0)}
+                                                    {percentage.toFixed(1)}%
                                                 </tspan>
                                                 <tspan
                                                     x={viewBox.cx}
-                                                    y={viewBox.cy + 20}
+                                                    y={viewBox.cy + 10}
                                                     className="fill-muted-foreground text-xs"
                                                 >
                                                     {isProfit ? 'Laba' : 'Rugi'}
+                                                </tspan>
+                                                <tspan
+                                                    x={viewBox.cx}
+                                                    y={viewBox.cy + 25}
+                                                    className="fill-muted-foreground text-[10px]"
+                                                >
+                                                    dari pendapatan
                                                 </tspan>
                                             </text>
                                         );

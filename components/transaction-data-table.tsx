@@ -10,12 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { formatRupiah } from "@/lib/utils";
@@ -151,7 +146,7 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
         )}
       </div>
 
-      <div className="rounded-lg border">
+      <div className="rounded-lg ">
         <Table>
           <TableHeader>
             <TableRow>
@@ -196,43 +191,20 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
                   <TableCell>{transaction.relatedParty}</TableCell>
                   <TableCell>
                     <span
-                      className={
-                        transaction.type === "pemasukan"
-                          ? "text-green-600 font-medium"
-                          : "text-red-600 font-medium"
-                      }
+                      className={`px-2 py-1 rounded-full text-sm font-normal ${transaction.type === "pemasukan"
+                        ? "border bg-green-100 dark:bg-green-500/40"
+                        : "bg-red-100 dark:bg-red-500/40"
+                        }`}
                     >
                       {transaction.type === "pemasukan" ? "Pemasukan" : "Pengeluaran"}
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
                     <span
-                      className={
-                        transaction.type === "pemasukan"
-                          ? "text-green-600 font-medium"
-                          : "text-red-600 font-medium"
-                      }
+
                     >
                       {formatRupiah(transaction.amountTotal)}
                     </span>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={() => handleDelete(transaction.id)}
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Hapus
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))

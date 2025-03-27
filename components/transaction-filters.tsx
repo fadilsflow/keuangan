@@ -11,7 +11,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-
 import { DatePickerWithRange } from "./ui/date-range-picker";
 
 const categories = [
@@ -26,8 +25,7 @@ interface Filters {
   search: string;
   type: string;
   category: string;
-  startDate: Date | undefined;
-  endDate: Date | undefined;
+  dateRange?: { from: Date; to: Date } | undefined;
 }
 
 interface TransactionFiltersProps {
@@ -39,8 +37,7 @@ export function TransactionFilters({ onFilterChange }: TransactionFiltersProps) 
     search: "",
     type: "all",
     category: "all",
-    startDate: undefined,
-    endDate: undefined,
+    dateRange: undefined,
   });
 
   const handleFilterChange = (key: keyof Filters, value: any) => {
@@ -54,34 +51,34 @@ export function TransactionFilters({ onFilterChange }: TransactionFiltersProps) 
       search: "",
       type: "all",
       category: "all",
-      startDate: undefined,
-      endDate: undefined,
+      dateRange: undefined,
     };
     setFilters(resetFilters);
     onFilterChange(resetFilters);
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center">
-        <div className="flex-1">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Cari transaksi..."
-              className="pl-8"
-              value={filters.search}
-              onChange={(e) => handleFilterChange("search", e.target.value)}
-            />
-          </div>
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-end gap-3">
+        {/* Search Input */}
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Cari transaksi..."
+            className="w-full pl-9"
+            value={filters.search}
+            onChange={(e) => handleFilterChange("search", e.target.value)}
+          />
         </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+
+        {/* Type Select */}
+        <div className="flex-1 min-w-[150px]">
           <Select
             value={filters.type}
             onValueChange={(value) => handleFilterChange("type", value)}
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Jenis Transaksi" />
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Jenis" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Semua Transaksi</SelectItem>
@@ -89,12 +86,15 @@ export function TransactionFilters({ onFilterChange }: TransactionFiltersProps) 
               <SelectItem value="pengeluaran">Pengeluaran</SelectItem>
             </SelectContent>
           </Select>
+        </div>
 
+        {/* Category Select */}
+        <div className="flex-1 min-w-[150px]">
           <Select
             value={filters.category}
             onValueChange={(value) => handleFilterChange("category", value)}
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Kategori" />
             </SelectTrigger>
             <SelectContent>
@@ -106,17 +106,25 @@ export function TransactionFilters({ onFilterChange }: TransactionFiltersProps) 
               ))}
             </SelectContent>
           </Select>
+        </div>
 
+        {/* Date Range Picker */}
+        <div className="flex-1 min-w-[250px]">
           <DatePickerWithRange
             date={filters.dateRange}
-            onDateChange={(date) => handleFilterChange("dateRange", date)}
+            onDateChange={(range) => handleFilterChange("dateRange", range)}
           />
-
         </div>
-        <Button variant="outline" onClick={handleReset}>
+
+        {/* Reset Button */}
+        <Button
+          variant="outline"
+          onClick={handleReset}
+          className="flex-1 min-w-[100px]"
+        >
           Reset
         </Button>
       </div>
     </div>
   );
-} 
+}
