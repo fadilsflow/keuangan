@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { DatePicker } from "@/components/ui/date-picker";
+
 import { DatePickerWithRange } from "./ui/date-range-picker";
 
 const categories = [

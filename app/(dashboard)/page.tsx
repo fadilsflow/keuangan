@@ -14,7 +14,7 @@ export default function Home() {
       <div className="w-full max-w-sm">
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Keuangan.</CardTitle>
+            <CardTitle className="text-2xl">CashLog.</CardTitle>
             <CardDescription>Aplikasi untuk mencatat keuangan.</CardDescription>
           </CardHeader>
           <CardContent>

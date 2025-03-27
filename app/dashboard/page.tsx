@@ -1,7 +1,6 @@
 "use client"
 import { AppSidebar } from "@/components/app-sidebar"
-import { ChartAreaInteractive } from "@/components/chart-area-interactive"
-import { DataTable } from "@/components/data-table"
+
 import { SectionCards } from "@/components/section-cards"
 import { SiteHeader } from "@/components/site-header"
 import { TransactionHistoryTable } from "@/components/transaction-history-table"
@@ -10,10 +9,9 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
-import { TransactionForm } from "../components/forms/TransactionForm"
+
 import { ChartLabaRugi } from "@/components/chart-laba-rugi"
 
-import data from "./data.json"
 
 export default function Page() {
   return (
@@ -51,10 +49,7 @@ export default function Page() {
                 <TransactionHistoryTable />
               </div>
 
-              <div className="px-4 lg:px-6">
-                <ChartAreaInteractive />
-              </div>
-              <DataTable data={data} />
+
             </div>
           </div>
         </div>

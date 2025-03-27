@@ -12,7 +12,6 @@ import {
     Card,
     CardContent,
     CardDescription,
-    CardFooter,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
@@ -20,7 +19,6 @@ import {
     ChartConfig,
     ChartContainer,
     ChartTooltip,
-    ChartTooltipContent,
 } from "@/components/ui/chart"
 
 async function fetchLabaRugi(startDate: Date, endDate: Date) {
@@ -52,159 +50,169 @@ export function ChartLabaRugi() {
     const chartData = React.useMemo(() => {
         if (!labaRugi) return [];
         return [
-            { name: "HPP", value: labaRugi.hpp || 0, fill: "hsl(var(--chart-1))" },
-            { name: "Pendapatan", value: labaRugi.pendapatan || 0, fill: "hsl(var(--chart-2))" },
-            { name: "Pengeluaran", value: labaRugi.pengeluaran || 0, fill: "hsl(var(--chart-3))" },
+            {
+                name: "HPP",
+                value: labaRugi.hpp || 0,
+                fill: "hsl(25, 95%, 53%)"
+            },
+            {
+                name: "Pendapatan",
+                value: labaRugi.pendapatan || 0,
+                fill: "hsl(142, 76%, 36%)"
+            },
+            {
+                name: "Pengeluaran",
+                value: labaRugi.pengeluaran || 0,
+                fill: "hsl(346, 87%, 43%)"
+            },
         ];
     }, [labaRugi]);
 
     const chartConfig = {
         hpp: {
             label: "HPP",
-            color: "hsl(var(--chart-1))",
+            color: "hsl(25, 95%, 53%)",
         },
         pendapatan: {
             label: "Pendapatan",
-            color: "hsl(var(--chart-2))",
+            color: "hsl(142, 76%, 36%)",
         },
         pengeluaran: {
             label: "Pengeluaran",
-            color: "hsl(var(--chart-3))",
+            color: "hsl(346, 87%, 43%)",
         },
     } satisfies ChartConfig;
 
     const isProfit = (labaRugi?.laba || 0) > 0;
+    const dateRangeText = date.from && date.to
+        ? `${date.from.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })} - ${date.to.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`
+        : "Pilih rentang tanggal";
 
     return (
-        <Card className="flex flex-col">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <Card className="w-full">
+            <CardHeader className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
                 <div>
-                    <CardTitle>Laporan Laba Rugi</CardTitle>
-                    <CardDescription>
-                        {date.from && date.to ? (
-                            <>
-                                {date.from.toLocaleDateString('id-ID', {
-                                    day: 'numeric',
-                                    month: 'long',
-                                    year: 'numeric'
-                                })} - {date.to.toLocaleDateString('id-ID', {
-                                    day: 'numeric',
-                                    month: 'long',
-                                    year: 'numeric'
-                                })}
-                            </>
-                        ) : (
-                            "Pilih rentang tanggal"
-                        )}
+                    <CardTitle className="text-lg">Laporan Laba Rugi</CardTitle>
+                    <CardDescription className="line-clamp-1">
+                        {dateRangeText}
                     </CardDescription>
                 </div>
                 <DatePickerWithRange
                     date={date}
                     onDateChange={setDate}
+                    className="w-full sm:w-auto"
                 />
             </CardHeader>
-            <CardContent className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-4">
-                    <div className="grid gap-2">
+            <CardContent className="flex flex-col md:flex-row gap-4 p-4">
+                <div className="flex-1 space-y-3 min-w-0">
+                    <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">HPP</span>
-                            <span className="text-sm font-medium">{formatRupiah(labaRugi?.hpp || 0)}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">Pendapatan</span>
-                            <span className="text-sm font-medium text-green-600">{formatRupiah(labaRugi?.pendapatan || 0)}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">Pengeluaran</span>
-                            <span className="text-sm font-medium text-red-600">{formatRupiah(labaRugi?.pengeluaran || 0)}</span>
-                        </div>
-                        <div className="border-t pt-2">
-                            <div className="flex items-center justify-between font-medium">
-                                <span>Laba/Rugi</span>
-                                <span className={isProfit ? 'text-green-600' : 'text-red-600'}>
-                                    {formatRupiah(labaRugi?.laba || 0)}
-                                </span>
+                            <div className="flex items-center gap-2">
+                                <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: chartConfig.hpp.color }}></div>
+                                <span className="text-sm text-muted-foreground">HPP</span>
                             </div>
+                            <span className="text-sm font-medium" style={{ color: chartConfig.hpp.color }}>
+                                {formatRupiah(labaRugi?.hpp || 0)}
+                            </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: chartConfig.pendapatan.color }}></div>
+                                <span className="text-sm text-muted-foreground">Pendapatan</span>
+                            </div>
+                            <span className="text-sm font-medium" style={{ color: chartConfig.pendapatan.color }}>
+                                {formatRupiah(labaRugi?.pendapatan || 0)}
+                            </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: chartConfig.pengeluaran.color }}></div>
+                                <span className="text-sm text-muted-foreground">Pengeluaran</span>
+                            </div>
+                            <span className="text-sm font-medium" style={{ color: chartConfig.pengeluaran.color }}>
+                                {formatRupiah(labaRugi?.pengeluaran || 0)}
+                            </span>
+                        </div>
+                    </div>
+                    <div className="border-t pt-3">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                {isProfit ? (
+                                    <TrendingUp className="h-4 w-4 text-green-600" />
+                                ) : (
+                                    <TrendingDown className="h-4 w-4 text-red-600" />
+                                )}
+                                <span className="font-medium">Laba/Rugi</span>
+                            </div>
+                            <span className={`font-bold ${isProfit ? 'text-green-600' : 'text-red-600'}`}>
+                                {formatRupiah(labaRugi?.laba || 0)}
+                            </span>
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1 text-right">
+                            Periode {date.from?.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
                         </div>
                     </div>
                 </div>
-                <ChartContainer config={chartConfig} className="aspect-square">
-                    <PieChart>
-                        <ChartTooltip
-                            cursor={false}
-                            content={({ payload }) => {
-                                if (payload && payload[0]) {
-                                    return (
+
+                <div className="flex-1 min-w-0 h-64 md:h-auto">
+                    <ChartContainer config={chartConfig} className="h-full">
+                        <PieChart>
+                            <ChartTooltip
+                                cursor={false}
+                                content={({ payload }) => (
+                                    payload?.[0] && (
                                         <div className="rounded-lg border bg-background p-2 shadow-sm">
                                             <div className="grid grid-cols-2 gap-2">
                                                 <span className="font-medium">{payload[0].name}</span>
-                                                <span className="font-medium">{formatRupiah(payload[0].value as number)}</span>
+                                                <span className="font-medium text-right">
+                                                    {formatRupiah(payload[0].value as number)}
+                                                </span>
                                             </div>
                                         </div>
                                     )
-                                }
-                                return null
-                            }}
-                        />
-                        <Pie
-                            data={chartData}
-                            dataKey="value"
-                            nameKey="name"
-                            innerRadius={60}
-                            outerRadius={80}
-                            paddingAngle={2}
-                        >
-                            <Label
-                                content={({ viewBox }) => {
-                                    if (!viewBox || !("cx" in viewBox) || !("cy" in viewBox)) return null;
-                                    return (
-                                        <text
-                                            x={viewBox.cx}
-                                            y={viewBox.cy}
-                                            textAnchor="middle"
-                                            dominantBaseline="middle"
-                                        >
-                                            <tspan
+                                )}
+                            />
+                            <Pie
+                                data={chartData}
+                                dataKey="value"
+                                nameKey="name"
+                                innerRadius={60}
+                                outerRadius={80}
+                                paddingAngle={2}
+                            >
+                                <Label
+                                    content={({ viewBox }) => {
+                                        if (!viewBox || !("cx" in viewBox) || !("cy" in viewBox)) return null;
+                                        return (
+                                            <text
                                                 x={viewBox.cx}
                                                 y={viewBox.cy}
-                                                className={`fill-current text-2xl font-bold ${isProfit ? 'text-green-600' : 'text-red-600'
-                                                    }`}
+                                                textAnchor="middle"
+                                                dominantBaseline="middle"
                                             >
-                                                {formatRupiah(labaRugi?.laba || 0)}
-                                            </tspan>
-                                            <tspan
-                                                x={viewBox.cx}
-                                                y={viewBox.cy + 20}
-                                                className="fill-muted-foreground text-xs"
-                                            >
-                                                {isProfit ? 'Laba' : 'Rugi'}
-                                            </tspan>
-                                        </text>
-                                    );
-                                }}
-                            />
-                        </Pie>
-                    </PieChart>
-                </ChartContainer>
-            </CardContent>
-            <CardFooter className="flex items-center justify-between pt-4">
-                <div className="flex items-center gap-2 text-sm font-medium">
-                    {isProfit ? (
-                        <>
-                            <TrendingUp className="h-4 w-4 text-green-600" />
-                            <span className="text-green-600">Profit</span>
-                        </>
-                    ) : (
-                        <>
-                            <TrendingDown className="h-4 w-4 text-red-600" />
-                            <span className="text-red-600">Loss</span>
-                        </>
-                    )}
+                                                <tspan
+                                                    x={viewBox.cx}
+                                                    y={viewBox.cy}
+                                                    className={`fill-current text-xl font-bold ${isProfit ? 'text-green-600' : 'text-red-600'}`}
+                                                >
+                                                    {formatRupiah(labaRugi?.laba || 0)}
+                                                </tspan>
+                                                <tspan
+                                                    x={viewBox.cx}
+                                                    y={viewBox.cy + 20}
+                                                    className="fill-muted-foreground text-xs"
+                                                >
+                                                    {isProfit ? 'Laba' : 'Rugi'}
+                                                </tspan>
+                                            </text>
+                                        );
+                                    }}
+                                />
+                            </Pie>
+                        </PieChart>
+                    </ChartContainer>
                 </div>
-                <span className="text-xs text-muted-foreground">
-                    Data periode {date.from?.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
-                </span>
-            </CardFooter>
+            </CardContent>
         </Card>
     );
 }
