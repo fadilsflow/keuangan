@@ -83,7 +83,6 @@ npx prisma migrate reset
 4. Push to branch (`git push origin feature/AmazingFeature`)
 5. Open Pull Request
 
-## License
 
 MIT [LICENSE](LICENSE)
 
