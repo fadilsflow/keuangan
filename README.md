@@ -85,5 +85,5 @@ npx prisma migrate reset
 
 ## License
 
-MIT License - Lihat [LICENSE](LICENSE) untuk detail lebih lanjut.
+MIT [LICENSE](LICENSE)
 
