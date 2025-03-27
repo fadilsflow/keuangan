@@ -73,28 +73,19 @@ export function ChartLabaRugi() {
         if (!labaRugi) return [];
         return [
             {
-                name: "HPP",
-                value: labaRugi.hpp || 0,
-                fill: "hsl(25, 95%, 53%)"
-            },
-            {
                 name: "Pendapatan",
-                value: labaRugi.pendapatan || 0,
+                value: Math.abs(labaRugi.pendapatan || 0),
                 fill: "hsl(142, 76%, 36%)"
             },
             {
                 name: "Pengeluaran",
-                value: labaRugi.pengeluaran || 0,
+                value: Math.abs(labaRugi.pengeluaran || 0),
                 fill: "hsl(346, 87%, 43%)"
             },
         ];
     }, [labaRugi]);
 
     const chartConfig = {
-        hpp: {
-            label: "HPP",
-            color: "hsl(25, 95%, 53%)",
-        },
         pendapatan: {
             label: "Pendapatan",
             color: "hsl(142, 76%, 36%)",
@@ -106,31 +97,29 @@ export function ChartLabaRugi() {
     } satisfies ChartConfig;
 
     const dateRangeText = date.from && date.to
-        ? `${date.from.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })} - ${date.to.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`
+        ? `${date.from.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}`
         : "Pilih rentang tanggal";
 
     return (
-        <Card className="w-full">
-            <CardHeader className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-                <div>
-                    <CardTitle className="text-lg">Laporan Laba Rugi</CardTitle>
-                    <CardDescription className="line-clamp-1">
-                        {dateRangeText}
-                    </CardDescription>
+        <Card className="w-full h-full">
+            <CardHeader className="flex items-center gap-x-20 pb-2">
+                <div className="space-y-1">
+                    <CardTitle className="text-base font-medium">Laba Rugi</CardTitle>
+                    <CardDescription>{dateRangeText}</CardDescription>
                 </div>
                 <DatePickerWithRange
                     date={date}
-                    onDateChange={setDate}
-                    className="w-full sm:w-auto"
+                    onDateChange={(date) => setDate(date || { from: new Date(), to: new Date() })}
+                    className="w-[230px] "
                 />
             </CardHeader>
-            <CardContent className="flex flex-col md:flex-row gap-4 p-4">
-                <div className="flex-1 space-y-3 min-w-0">
+            <CardContent className="space-y-6">
+                <div className="space-y-4">
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: chartConfig.pendapatan.color }}></div>
-                                <span className="text-sm text-muted-foreground">Pendapatan</span>
+                                <div className="h-2 w-2 rounded-full" style={{ backgroundColor: chartConfig.pendapatan.color }}></div>
+                                <span className="text-sm">Pendapatan</span>
                             </div>
                             <span className="text-sm font-medium" style={{ color: chartConfig.pendapatan.color }}>
                                 {formatRupiah(labaRugi?.pendapatan || 0)}
@@ -138,15 +127,15 @@ export function ChartLabaRugi() {
                         </div>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: chartConfig.pengeluaran.color }}></div>
-                                <span className="text-sm text-muted-foreground">Pengeluaran</span>
+                                <div className="h-2 w-2 rounded-full" style={{ backgroundColor: chartConfig.pengeluaran.color }}></div>
+                                <span className="text-sm">Pengeluaran</span>
                             </div>
                             <span className="text-sm font-medium" style={{ color: chartConfig.pengeluaran.color }}>
-                                {formatRupiah(labaRugi?.pengeluaran || 0)}
+                                -{formatRupiah(labaRugi?.pengeluaran || 0)}
                             </span>
                         </div>
                     </div>
-                    <div className="border-t pt-3">
+                    <div className="border-t pt-2">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 {isProfit ? (
@@ -154,20 +143,17 @@ export function ChartLabaRugi() {
                                 ) : (
                                     <TrendingDown className="h-4 w-4 text-red-600" />
                                 )}
-                                <span className="font-medium">Total {isProfit ? 'Laba' : 'Rugi'}</span>
+                                <span className="text-sm font-medium">Total {isProfit ? 'Laba' : 'Rugi'}</span>
                             </div>
-                            <span className={`font-bold ${isProfit ? 'text-green-600' : 'text-red-600'}`}>
+                            <span className={`font-medium ${isProfit ? 'text-green-600' : 'text-red-600'}`}>
                                 {formatRupiah(Math.abs(laba))}
                             </span>
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-1 text-right">
-                            Periode {date.from?.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
                         </div>
                     </div>
                 </div>
 
-                <div className="flex-1 min-w-0 h-64 md:h-auto">
-                    <ChartContainer config={chartConfig} className="h-full">
+                <div className="h-[250px]">
+                    <ChartContainer config={chartConfig}>
                         <PieChart>
                             <ChartTooltip
                                 cursor={false}
@@ -175,9 +161,10 @@ export function ChartLabaRugi() {
                                     payload?.[0] && (
                                         <div className="rounded-lg border bg-background p-2 shadow-sm">
                                             <div className="grid grid-cols-2 gap-2">
-                                                <span className="font-medium">{payload[0].name}</span>
-                                                <span className="font-medium text-right">
-                                                    {formatRupiah(payload[0].value as number)}
+                                                <span className="text-sm">{payload[0].name}</span>
+                                                <span className="text-sm font-medium text-right">
+                                                    {payload[0].name === "Pengeluaran" ? "-" : ""}
+                                                    {formatRupiah(Math.abs(payload[0].value as number))}
                                                 </span>
                                             </div>
                                         </div>
@@ -188,40 +175,37 @@ export function ChartLabaRugi() {
                                 data={chartData}
                                 dataKey="value"
                                 nameKey="name"
-                                innerRadius={60}
-                                outerRadius={80}
+                                innerRadius={70}
+                                outerRadius={90}
                                 paddingAngle={2}
+                                startAngle={90}
+                                endAngle={450}
                             >
                                 <Label
                                     content={({ viewBox }) => {
                                         if (!viewBox || !("cx" in viewBox) || !("cy" in viewBox)) return null;
+                                        const cx = viewBox.cx ?? 0;
+                                        const cy = viewBox.cy ?? 0;
                                         return (
                                             <text
-                                                x={viewBox.cx}
-                                                y={viewBox.cy}
+                                                x={cx}
+                                                y={cy}
                                                 textAnchor="middle"
                                                 dominantBaseline="middle"
                                             >
                                                 <tspan
-                                                    x={viewBox.cx}
-                                                    y={viewBox.cy - 10}
+                                                    x={cx}
+                                                    y={cy - 10}
                                                     className={`fill-current text-xl font-bold ${isProfit ? 'text-green-600' : 'text-red-600'}`}
                                                 >
                                                     {percentage.toFixed(1)}%
                                                 </tspan>
                                                 <tspan
-                                                    x={viewBox.cx}
-                                                    y={viewBox.cy + 10}
-                                                    className="fill-muted-foreground text-xs"
+                                                    x={cx}
+                                                    y={cy + 10}
+                                                    className="fill-muted-foreground text-sm"
                                                 >
                                                     {isProfit ? 'Laba' : 'Rugi'}
-                                                </tspan>
-                                                <tspan
-                                                    x={viewBox.cx}
-                                                    y={viewBox.cy + 25}
-                                                    className="fill-muted-foreground text-[10px]"
-                                                >
-                                                    dari pendapatan
                                                 </tspan>
                                             </text>
                                         );

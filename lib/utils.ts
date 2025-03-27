@@ -54,3 +54,7 @@ export function formatRupiah(amount: number): string {
     maximumFractionDigits: 0,
   }).format(amount);
 }
+
+export function formatDateForInput(date: Date) {
+  return date.toISOString().slice(0, 16); // Format: YYYY-MM-DDThh:mm
+}

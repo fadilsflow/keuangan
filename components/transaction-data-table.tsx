@@ -16,8 +16,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { formatRupiah } from "@/lib/utils";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { MoreHorizontal, Trash2 } from "lucide-react";
+import { MoreHorizontal, Trash2, TrendingUp, TrendingDown, Pencil } from "lucide-react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface TransactionDataTableProps {
   filters: {
@@ -66,6 +73,7 @@ async function deleteMultipleTransactions(ids: string[]) {
 export function TransactionDataTable({ filters }: TransactionDataTableProps) {
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ["transactions", filters],
@@ -92,6 +100,7 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
     },
     onError: () => {
       toast.error("Gagal menghapus transaksi terpilih");
+      
     },
   });
 
@@ -109,6 +118,10 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
     } else {
       setSelectedRows(selectedRows.filter((rowId) => rowId !== id));
     }
+  };
+
+  const handleEdit = (id: string) => {
+    router.push(`/transactions/${id}/edit`);
   };
 
   const handleDelete = (id: string) => {
@@ -132,7 +145,7 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-lg font-semibold">Daftar Transaksi</h2>
+
         {selectedRows.length > 0 && (
           <Button
             variant="destructive"
@@ -146,10 +159,10 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
         )}
       </div>
 
-      <div className="rounded-lg ">
-        <Table>
+      <div className="overflow-hidden rounded-lg border">
+        <Table className="rounded-lg">
           <TableHeader>
-            <TableRow>
+            <TableRow className="bg-muted/50 ">
               <TableHead className="w-12">
                 <Checkbox
                   checked={selectedRows.length === transactions.length}
@@ -161,20 +174,24 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
               <TableHead>Kategori</TableHead>
               <TableHead>Pihak Terkait</TableHead>
               <TableHead>Jenis</TableHead>
-              <TableHead className="text-right">Total</TableHead>
-              <TableHead className="w-12"></TableHead>
+              <TableHead >Total</TableHead>
+              <TableHead >Aksi</TableHead>
+
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody className="**:data-[slot=table-cell]:first:w-8">
             {transactions.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-4">
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   Tidak ada transaksi
                 </TableCell>
               </TableRow>
             ) : (
               transactions.map((transaction: any) => (
-                <TableRow key={transaction.id}>
+                <TableRow
+                  key={transaction.id}
+                  className="transition-colors hover:bg-muted/50"
+                >
                   <TableCell>
                     <Checkbox
                       checked={selectedRows.includes(transaction.id)}
@@ -191,22 +208,51 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
                   <TableCell>{transaction.relatedParty}</TableCell>
                   <TableCell>
                     <span
-                      className={`px-2 py-1 rounded-full text-sm font-normal ${transaction.type === "pemasukan"
-                        ? "border bg-green-100 dark:bg-green-500/40"
-                        : "bg-red-100 dark:bg-red-500/40"
-                        }`}
+                      className={`px-2.5 py-1.5 rounded text-muted-foreground text-xs border  font-medium inline-flex items-center gap-1 ${transaction.type === "pemasukan"}`}
                     >
-                      {transaction.type === "pemasukan" ? "Pemasukan" : "Pengeluaran"}
+                      {transaction.type === "pemasukan" ? (
+                        <>
+                          <TrendingUp className="w-4 h-4 text-green-600 mr-1 " />
+                          Pemasukan
+                        </>
+                      ) : (
+                        <>
+                          <TrendingDown className="w-4 h-4   text-red-600 mr-1 " />
+                          Pengeluaran
+                        </>
+                      )}
                     </span>
                   </TableCell>
-                  <TableCell className="text-right">
-                    <span
-
-                    >
+                  <TableCell >
+                    <span >
                       {formatRupiah(transaction.amountTotal)}
                     </span>
                   </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleEdit(transaction.id)}>
+                          <Pencil className="w-4 h-4 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleDelete(transaction.id)}
+                          className="text-red-600"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Hapus
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
+
+
               ))
             )}
           </TableBody>

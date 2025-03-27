@@ -1,17 +1,13 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatRupiah } from "@/lib/utils";
-import {
-    Bar,
-    BarChart,
-    ResponsiveContainer,
-    XAxis,
-    YAxis,
-    Tooltip,
-    Legend,
-} from "recharts";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+
+interface CategoryItem {
+    category: string;
+    total: number;
+}
 
 async function fetchCategoryStats() {
     const response = await fetch("/api/transactions/category-stats");
@@ -27,73 +23,66 @@ export function TransactionCharts() {
 
     if (isLoading) return <div>Loading...</div>;
 
-    return (
-        <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Pemasukan per Kategori</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <ResponsiveContainer width="100%" height={350}>
-                        <BarChart data={stats?.income || []}>
-                            <XAxis
-                                dataKey="category"
-                                tickLine={false}
-                                axisLine={false}
-                                fontSize={12}
-                            />
-                            <YAxis
-                                tickFormatter={(value) => formatRupiah(value)}
-                                tickLine={false}
-                                axisLine={false}
-                                fontSize={12}
-                            />
-                            <Tooltip
-                                formatter={(value: number) => formatRupiah(value)}
-                                labelStyle={{ color: "black" }}
-                            />
-                            <Bar
-                                dataKey="total"
-                                fill="#22c55e"
-                                radius={[4, 4, 0, 0]}
-                            />
-                        </BarChart>
-                    </ResponsiveContainer>
-                </CardContent>
-            </Card>
+    const CategoryChart = ({ title, data, isIncome }: {
+        title: string,
+        data: CategoryItem[],
+        isIncome: boolean
+    }) => {
+        if (!data || data.length === 0) return null;
 
+        const totalAmount = data.reduce((sum: number, item: CategoryItem) => sum + item.total, 0);
+
+        return (
             <Card>
                 <CardHeader>
-                    <CardTitle>Pengeluaran per Kategori</CardTitle>
+                    <CardTitle>{title}</CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <ResponsiveContainer width="100%" height={350}>
-                        <BarChart data={stats?.expense || []}>
-                            <XAxis
-                                dataKey="category"
-                                tickLine={false}
-                                axisLine={false}
-                                fontSize={12}
-                            />
-                            <YAxis
-                                tickFormatter={(value) => formatRupiah(value)}
-                                tickLine={false}
-                                axisLine={false}
-                                fontSize={12}
-                            />
-                            <Tooltip
-                                formatter={(value: number) => formatRupiah(value)}
-                                labelStyle={{ color: "black" }}
-                            />
-                            <Bar
-                                dataKey="total"
-                                fill="#ef4444"
-                                radius={[4, 4, 0, 0]}
-                            />
-                        </BarChart>
-                    </ResponsiveContainer>
+                <CardContent className="space-y-4">
+                    {data.map((item: CategoryItem, index: number) => {
+                        const percentage = ((item.total / totalAmount) * 100).toFixed(0);
+
+                        return (
+                            <div key={index} className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm text-muted-foreground">
+                                        {item.category} ({percentage}%)
+                                    </span>
+                                    <span className="text-sm font-medium">
+                                        {formatRupiah(item.total)}
+                                    </span>
+                                </div>
+
+                                <div className="h-2 w-full rounded-full bg-secondary">
+                                    <div
+                                        className={`h-2 rounded-full ${isIncome
+                                            ? 'bg-green-500'
+                                            : 'bg-red-500'
+                                            }`}
+                                        style={{ width: `${percentage}%` }}
+                                    />
+                                </div>
+                            </div>
+                        );
+                    })}
                 </CardContent>
             </Card>
+        );
+    };
+
+    return (
+        <div className="grid gap-6 md:grid-cols-2">
+            <CategoryChart
+                title="Pemasukan per Kategori"
+                data={stats?.income}
+                isIncome={true}
+            />
+            <CategoryChart
+                title="Pengeluaran per Kategori"
+                data={stats?.expense}
+                isIncome={false}
+            />
         </div>
     );
-} 
+}
+
+export default TransactionCharts;

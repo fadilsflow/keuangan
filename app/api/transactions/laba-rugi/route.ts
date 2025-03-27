@@ -27,31 +27,25 @@ export async function GET(request: Request) {
             },
         });
 
-        // Calculate totals
+        // Calculate totals - hanya pemasukan dan pengeluaran
         const totals = transactions.reduce(
             (acc, transaction) => {
                 if (transaction.type === "pemasukan") {
                     acc.pendapatan += transaction.amountTotal;
                 } else {
-                    // Untuk pengeluaran, pisahkan antara HPP dan pengeluaran lain
-                    if (transaction.category === "Bahan Baku" ||
-                        transaction.category === "Tenaga Kerja" ||
-                        transaction.category === "Overhead") {
-                        acc.hpp += transaction.amountTotal;
-                    } else {
-                        acc.pengeluaran += transaction.amountTotal;
-                    }
+                    acc.pengeluaran += transaction.amountTotal;
                 }
                 return acc;
             },
-            { pendapatan: 0, hpp: 0, pengeluaran: 0 }
+            { pendapatan: 0, pengeluaran: 0 }
         );
 
-        // Hitung laba/rugi
-        const laba = totals.pendapatan - totals.hpp - totals.pengeluaran;
+        // Hitung laba/rugi langsung dari selisih pemasukan dan pengeluaran
+        const laba = totals.pendapatan - totals.pengeluaran;
 
         return NextResponse.json({
-            ...totals,
+            pendapatan: totals.pendapatan,
+            pengeluaran: totals.pengeluaran,
             laba,
         });
     } catch (error) {
