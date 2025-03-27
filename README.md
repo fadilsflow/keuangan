@@ -42,10 +42,6 @@ Aplikasi manajemen keuangan berbasis web untuk mencatat dan menganalisis transak
 - PostgreSQL
 - Zod Schema Validation
 
-### Deployment
-- Vercel (Frontend & API)
-- Supabase (Database)
-
 ## Instalasi
 
 ```bash
@@ -64,69 +60,6 @@ npx prisma migrate dev
 
 # Run development server
 npm run dev
-```
-
-## Environment Variables
-
-```env
-# Database
-DATABASE_URL="postgresql://..."
-
-# Auth (jika menggunakan)
-NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your-secret"
-
-# Upload (jika menggunakan)
-UPLOAD_API_KEY="your-api-key"
-```
-
-## Project Structure
-
-```
-├── app/                   # Next.js app router
-│   ├── api/              # API routes
-│   ├── dashboard/        # Dashboard pages
-│   └── transactions/     # Transaction pages
-├── components/           # React components
-│   ├── ui/              # UI components
-│   └── forms/           # Form components
-├── lib/                 # Utilities & configs
-├── prisma/              # Database schema
-└── public/              # Static files
-```
-
-## API Routes
-
-### Transactions
-- `GET /api/transactions` - List transaksi
-- `POST /api/transactions` - Create transaksi
-- `GET /api/transactions/[id]` - Detail transaksi
-- `PUT /api/transactions/[id]` - Update transaksi
-- `DELETE /api/transactions/[id]` - Delete transaksi
-
-### Analytics
-- `GET /api/transactions/laba-rugi` - Data laba rugi
-- `GET /api/transactions/chart` - Data untuk charts
-
-## Development
-
-### Commands
-
-```bash
-# Run development
-npm run dev
-
-# Build production
-npm run build
-
-# Start production
-npm start
-
-# Run tests
-npm test
-
-# Run linter
-npm run lint
 ```
 
 ### Database Migrations
@@ -149,23 +82,6 @@ npx prisma migrate reset
 3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to branch (`git push origin feature/AmazingFeature`)
 5. Open Pull Request
-
-## Roadmap
-
-### v1.0 - Core Features ✅
-- Basic transaction management
-- Dashboard analytics
-- Transaction history
-
-### v1.1 - Master Data 🚧
-- Category management
-- Related party management
-- Data consistency
-
-### v1.2 - Enhancements (Planning)
-- Advanced reporting
-- Export/Import
-- Bulk operations
 
 ## License
 
