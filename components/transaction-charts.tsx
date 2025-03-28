@@ -3,22 +3,35 @@
 import { useQuery } from "@tanstack/react-query";
 import { formatRupiah } from "@/lib/utils";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { DateRange } from "react-day-picker";
 
 interface CategoryItem {
     category: string;
     total: number;
 }
 
-async function fetchCategoryStats() {
-    const response = await fetch("/api/transactions/category-stats");
+async function fetchCategoryStats(dateRange: DateRange) {
+    const params = new URLSearchParams();
+    if (dateRange?.from) {
+        params.append('from', dateRange.from.toISOString());
+    }
+    if (dateRange?.to) {
+        params.append('to', dateRange.to.toISOString());
+    }
+
+    const response = await fetch(`/api/transactions/category-stats?${params.toString()}`);
     if (!response.ok) throw new Error("Failed to fetch category stats");
     return response.json();
 }
 
-export function TransactionCharts() {
+interface TransactionChartsProps {
+    dateRange: DateRange;
+}
+
+export function TransactionCharts({ dateRange }: TransactionChartsProps) {
     const { data: stats, isLoading } = useQuery({
-        queryKey: ["categoryStats"],
-        queryFn: fetchCategoryStats,
+        queryKey: ["categoryStats", dateRange?.from, dateRange?.to],
+        queryFn: () => fetchCategoryStats(dateRange),
     });
 
     if (isLoading) return <div>Loading...</div>;
@@ -28,7 +41,23 @@ export function TransactionCharts() {
         data: CategoryItem[],
         isIncome: boolean
     }) => {
-        if (!data || data.length === 0) return null;
+        if (!data || data.length === 0) {
+            return (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>{title}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex flex-col items-center justify-center py-6 text-center">
+                        <p className="text-muted-foreground mb-2">
+                            Tidak ada data untuk periode yang dipilih
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                            Coba pilih periode yang berbeda atau tambahkan transaksi baru
+                        </p>
+                    </CardContent>
+                </Card>
+            );
+        }
 
         const totalAmount = data.reduce((sum: number, item: CategoryItem) => sum + item.total, 0);
 

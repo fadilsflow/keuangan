@@ -1,7 +1,8 @@
 "use client";
 
 import { ErrorBoundary } from "@/app/components/error-boundary";
-import { TransactionForm } from "@/app/components/forms/TransactionForm";
+import { TransactionForm } from "@/components/forms/TransactionForm";
+
 
 export default function NewTransactionPage() {
   return (
@@ -11,7 +12,7 @@ export default function NewTransactionPage() {
       </div>
       <div className="rounded-lg border bg-card p-6">
         <ErrorBoundary>
-          <TransactionForm />
+          <TransactionForm mode="create" />
         </ErrorBoundary>
       </div>
     </div>

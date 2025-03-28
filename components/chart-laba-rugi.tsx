@@ -102,15 +102,15 @@ export function ChartLabaRugi() {
 
     return (
         <Card className="w-full h-full">
-            <CardHeader className="flex items-center gap-x-20 pb-2">
-                <div className="space-y-1">
-                    <CardTitle className="text-base font-medium">Laba Rugi</CardTitle>
+            <CardHeader className="flex items-cente  pb-2">
+                <div className="space-y-1 w-full">
+                    <CardTitle className="text-base font-medium ">Laba Rugi</CardTitle>
                     <CardDescription>{dateRangeText}</CardDescription>
                 </div>
                 <DatePickerWithRange
                     date={date}
                     onDateChange={(date) => setDate(date || { from: new Date(), to: new Date() })}
-                    className="w-[230px] "
+                    className="w-full "
                 />
             </CardHeader>
             <CardContent className="space-y-6">

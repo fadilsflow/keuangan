@@ -10,16 +10,19 @@ export const TransactionItemSchema = z.object({
 })
 
 export const TransactionCreateSchema = z.object({
-  id: z.string().optional(),
-  date: z.union([z.string(), z.date()]),
-  description: z.string().min(1, "Deskripsi harus diisi"),
-  category: z.string().min(1, "Kategori harus dipilih"),
-  relatedParty: z.string().min(1, "Pihak terkait harus diisi"),
-  amountTotal: z.number().min(0, "Total tidak boleh negatif"),
+  date: z.string().or(z.date()),
+  description: z.string().min(1, "Deskripsi wajib diisi"),
+  category: z.string().min(1, "Kategori wajib diisi"),
+  relatedParty: z.string().min(1, "Pihak terkait wajib diisi"),
   type: z.enum(["pemasukan", "pengeluaran"]),
+  amountTotal: z.number(),
   paymentImg: z.string().optional(),
-  monthHistoryId: z.string().optional(),
-  items: z.array(TransactionItemSchema)
+  items: z.array(z.object({
+    name: z.string().min(1, "Nama item wajib diisi"),
+    itemPrice: z.number().min(0, "Harga tidak boleh negatif"),
+    quantity: z.number().min(1, "Jumlah minimal 1"),
+    totalPrice: z.number()
+  }))
 })
 
 export type TransactionItem = z.infer<typeof TransactionItemSchema>

@@ -16,7 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { formatRupiah } from "@/lib/utils";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { MoreHorizontal, Trash2, TrendingUp, TrendingDown, Pencil } from "lucide-react";
+import { MoreHorizontal, Trash2, TrendingUp, TrendingDown, Pencil, ChevronDown, ChevronUp, Package } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import {
@@ -25,6 +25,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
+import { Badge } from "@/components/ui/badge"
 
 interface TransactionDataTableProps {
   filters: {
@@ -36,6 +42,14 @@ interface TransactionDataTableProps {
       to: Date;
     };
   };
+}
+
+interface Item {
+  id: string;
+  name: string;
+  itemPrice: number;
+  quantity: number;
+  totalPrice: number;
 }
 
 async function fetchTransactions(filters: TransactionDataTableProps["filters"]) {
@@ -74,6 +88,7 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const queryClient = useQueryClient();
   const router = useRouter();
+  const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
 
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ["transactions", filters],
@@ -100,7 +115,7 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
     },
     onError: () => {
       toast.error("Gagal menghapus transaksi terpilih");
-      
+
     },
   });
 
@@ -174,6 +189,7 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
               <TableHead>Kategori</TableHead>
               <TableHead>Pihak Terkait</TableHead>
               <TableHead>Jenis</TableHead>
+              <TableHead >Item</TableHead>
               <TableHead >Total</TableHead>
               <TableHead >Aksi</TableHead>
 
@@ -206,6 +222,7 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
                   <TableCell>{transaction.description}</TableCell>
                   <TableCell>{transaction.category}</TableCell>
                   <TableCell>{transaction.relatedParty}</TableCell>
+
                   <TableCell>
                     <span
                       className={`px-2.5 py-1.5 rounded text-muted-foreground text-xs border  font-medium inline-flex items-center gap-1 ${transaction.type === "pemasukan"}`}
@@ -222,6 +239,29 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
                         </>
                       )}
                     </span>
+                  </TableCell>
+                  <TableCell className="max-w-[300px]">
+                    <div className="space-y-1 rounded-md border px-2 py-1 ">
+                      {transaction.items.map((item: Item, index: number) => (
+                        <div
+                          key={item.id}
+                          className="flex items-center justify-between gap-2 text-sm"
+                        >
+                          <div className="flex items-center gap-1.5 min-w-0">
+                          
+                            <span className="truncate">
+                              {item.name}
+                            </span>
+                            <span className="shrink-0 text-xs text-muted-foreground">
+                              {item.quantity}x
+                            </span>
+                          </div>
+                          <span className="shrink-0 tabular-nums text-xs font-medium">
+                            {formatRupiah(item.totalPrice)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </TableCell>
                   <TableCell >
                     <span >

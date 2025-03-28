@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query"
 import { formatRupiah } from "@/lib/utils"
 import { Wallet, ListOrdered, TrendingDown, TrendingUpIcon } from "lucide-react"
+import { DateRange } from "react-day-picker"
 
 import {
   Card,
@@ -11,18 +12,30 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 
-async function fetchDashboardStats() {
-  const response = await fetch("/api/dashboard/stats")
-  if (!response.ok) {
-    throw new Error("Failed to fetch stats")
+async function fetchDashboardStats(dateRange: DateRange) {
+  const params = new URLSearchParams();
+  if (dateRange?.from) {
+    params.append('from', dateRange.from.toISOString());
   }
-  return response.json()
+  if (dateRange?.to) {
+    params.append('to', dateRange.to.toISOString());
+  }
+
+  const response = await fetch(`/api/dashboard/stats?${params.toString()}`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch stats");
+  }
+  return response.json();
 }
 
-export function SectionCards() {
+interface SectionCardsProps {
+  dateRange: DateRange;
+}
+
+export function SectionCards({ dateRange }: SectionCardsProps) {
   const { data: stats } = useQuery({
-    queryKey: ["dashboardStats"],
-    queryFn: fetchDashboardStats,
+    queryKey: ["dashboardStats", dateRange?.from, dateRange?.to],
+    queryFn: () => fetchDashboardStats(dateRange),
     initialData: {
       totalPemasukan: 0,
       totalPengeluaran: 0,

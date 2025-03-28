@@ -81,7 +81,7 @@ export function TransactionFilters({ onFilterChange }: TransactionFiltersProps) 
               <SelectValue placeholder="Jenis" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Semua Transaksi</SelectItem>
+              <SelectItem value="all">Jenis</SelectItem>
               <SelectItem value="pemasukan">Pemasukan</SelectItem>
               <SelectItem value="pengeluaran">Pengeluaran</SelectItem>
             </SelectContent>
@@ -98,7 +98,7 @@ export function TransactionFilters({ onFilterChange }: TransactionFiltersProps) 
               <SelectValue placeholder="Kategori" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Semua Kategori</SelectItem>
+              <SelectItem value="all">Kategori</SelectItem>
               {categories.map((category) => (
                 <SelectItem key={category} value={category}>
                   {category}
@@ -109,7 +109,7 @@ export function TransactionFilters({ onFilterChange }: TransactionFiltersProps) 
         </div>
 
         {/* Date Range Picker */}
-        <div className="flex-1 min-w-[250px]">
+        <div className="flex-1 ">
           <DatePickerWithRange
             date={filters.dateRange}
             onDateChange={(range) => handleFilterChange("dateRange", range)}
@@ -120,7 +120,7 @@ export function TransactionFilters({ onFilterChange }: TransactionFiltersProps) 
         <Button
           variant="outline"
           onClick={handleReset}
-          className="flex-1 min-w-[100px]"
+          className="flex-1 "
         >
           Reset
         </Button>

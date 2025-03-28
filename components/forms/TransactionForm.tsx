@@ -241,9 +241,9 @@ export function TransactionForm({
                                 <FormLabel>Tanggal</FormLabel>
                                 <FormControl>
                                     <Input
-                                        type="datetime-local"
+                                        type="date"
                                         {...field}
-                                        value={typeof field.value === 'string' ? field.value : formatDateForInput(field.value)}
+                                        value={typeof field.value === 'string' ? field.value.split('T')[0] : formatDateForInput(field.value).split('T')[0]}
                                     />
                                 </FormControl>
                                 <FormMessage />
