@@ -45,7 +45,7 @@ export default function RecentTransactions() {
                     </span>
                 </CardDescription>
             </CardHeader>
-            <CardContent className="flex-1 min-h-0">
+            <CardContent className="flex-1 max-h-xl">
                 <ScrollArea className="h-[calc(100%-1rem)] pr-4">
                     <div className="relative">
                         {/* Timeline line */}

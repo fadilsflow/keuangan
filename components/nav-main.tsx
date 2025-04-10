@@ -24,6 +24,7 @@ export function NavMain({
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
         <SidebarMenu>
+                
           <SidebarMenuItem className="flex items-center gap-2">
             <Link href="/transactions/new" passHref>
               <SidebarMenuButton
