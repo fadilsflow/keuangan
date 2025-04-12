@@ -118,7 +118,6 @@ export function ChartLabaRugi() {
                     <DatePickerWithRange
                         date={date}
                         setDate={setDate}
-                        className="w-[300px]"
                     />
                 </div>
             </CardHeader>

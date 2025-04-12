@@ -30,6 +30,61 @@
 
 ## Pending Tasks (By Priority)
 
+### Highest Priority
+- [ ] **Organization Management System**
+  - [ ] **Required Organization Flow**
+    - [ ] Create middleware to check organization status
+      - [ ] Check if user has any organizations
+      - [ ] Check if user has selected an organization
+      - [ ] Redirect to appropriate page based on checks
+    - [ ] Implement organization creation page (/create-organization)
+      - [ ] Create simple form with organization details
+        - [ ] Organization name
+        - [ ] Organization slug (auto-generated from name)
+        - [ ] Organization logo (optional)
+        - [ ] Organization description (optional)
+      - [ ] Add validation using Zod schema
+      - [ ] Implement error handling
+      - [ ] Add loading states
+      - [ ] Redirect to dashboard after creation
+    - [ ] Implement organization selection page (/switch-organization)
+      - [ ] Create card-based organization list
+        - [ ] Organization logo/avatar
+        - [ ] Organization name
+        - [ ] Role in organization
+        - [ ] Last active status
+      - [ ] Add search/filter functionality
+      - [ ] Implement organization switching logic
+      - [ ] Add loading states
+      - [ ] Handle empty state (no organizations)
+  
+  - [ ] **Organization Management Dashboard (/organizations/manage)**
+    - [ ] Organization Settings
+      - [ ] Update organization details
+      - [ ] Manage organization branding
+      - [ ] Configure organization preferences
+    - [ ] Member Management
+      - [ ] View all members and their roles
+      - [ ] Invite new members
+      - [ ] Manage member permissions
+      - [ ] Remove members
+    - [ ] Billing & Subscription (if needed)
+      - [ ] View current plan
+      - [ ] Manage payment methods
+      - [ ] View billing history
+  
+  - [ ] **Account Management (/account)**
+    - [ ] Profile Settings
+      - [ ] Update user information
+      - [ ] Change password/security settings
+      - [ ] Manage email preferences
+    - [ ] Connected Accounts
+      - [ ] View organization memberships
+      - [ ] Manage organization invitations
+    - [ ] Activity Log
+      - [ ] View recent actions
+      - [ ] Session management
+
 ### High Priority
 - [ ] **Cloudinary Image Upload**
   - [ ] Implement secure upload functionality for payment proofs
@@ -74,11 +129,46 @@
 - Add integration tests for the user+organization permission system
 - Add validation for foreign key relationships in master data models
 
+## Technical Considerations
+- Use Clerk's organization management APIs:
+  - GET /organizations/{organization_id} for fetching org details
+  - POST /organizations for creating new organizations
+  - PATCH /organizations/{organization_id} for updating org settings
+  - GET /organizations/{organization_id}/memberships for member management
+- Implement proper role-based access control (RBAC) for organization management
+- Consider implementing organization-specific settings/preferences
+- Use optimistic updates for better UX in organization switching
+- Implement proper error boundaries for organization-related operations
+- Consider implementing organization deletion with proper safeguards
+- Add audit logging for important organization changes
+
+## UI/UX Considerations
+- Organization Creation:
+  - Simple, focused form layout
+  - Clear validation feedback
+  - Progress indicator for multi-step process (if needed)
+  
+- Organization Switching:
+  - Grid layout for organization cards
+  - Clear visual hierarchy
+  - Quick search/filter capability
+  - Smooth transitions between organizations
+  
+- Organization Management:
+  - Clear navigation between different settings
+  - Proper confirmation dialogs for destructive actions
+  - Responsive design for all screen sizes
+  - Loading states for all async operations
+
 ## Next Steps
-1. Begin implementing the Cloudinary image upload functionality
-2. Integrate master data with the transaction form by implementing Combobox/Autocomplete
-3. Implement the Organization Switcher UI component
-4. Regenerate Prisma client to fix type issues with new models 
+1. Begin implementing the organization middleware for flow control
+2. Create the organization creation page with basic functionality
+3. Implement the organization switcher UI with card layout
+4. Develop the organization management dashboard
+5. Add account management features
+6. Begin implementing the Cloudinary image upload functionality
+7. Integrate master data with the transaction form by implementing Combobox/Autocomplete
+8. Regenerate Prisma client to fix type issues with new models 
 
 
 note:
