@@ -4,6 +4,7 @@ export const ItemSchema = z.object({
   name: z.string().min(1, "Nama item harus diisi"),
   itemPrice: z.number().positive("Harga item harus positif"),
   quantity: z.number().int().positive("Kuantitas harus bilangan bulat positif"),
+  masterItemId: z.string().optional(),
 });
 
 export const TransactionCreateSchema = z.object({
@@ -17,6 +18,8 @@ export const TransactionCreateSchema = z.object({
   paymentImg: z.string().optional(),
   type: z.enum(["pemasukan", "pengeluaran"]).default("pengeluaran"),
   items: z.array(ItemSchema).min(1, "Minimal satu item harus diisi"),
+  organizationId: z.string().min(1, "Organization ID is required"),
+  userId: z.string().min(1, "User ID is required"),
 });
 
 export const TransactionUpdateSchema = z.object({
@@ -30,6 +33,8 @@ export const TransactionUpdateSchema = z.object({
   amountTotal: z.number().positive("Total harus positif").optional(),
   paymentImg: z.string().optional(),
   type: z.enum(["pemasukan", "pengeluaran"]).optional(),
+  organizationId: z.string().min(1, "Organization ID is required").optional(),
+  userId: z.string().min(1, "User ID is required").optional(),
 });
 
 export const IdParamSchema = z.object({

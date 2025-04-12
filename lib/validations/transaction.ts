@@ -6,7 +6,8 @@ export const TransactionItemSchema = z.object({
   itemPrice: z.number().min(0, "Harga item tidak boleh negatif"),
   quantity: z.number().min(1, "Kuantitas minimal 1"),
   totalPrice: z.number().optional(),
-  transactionId: z.string().optional()
+  transactionId: z.string().optional(),
+  masterItemId: z.string().optional()
 })
 
 export const TransactionCreateSchema = z.object({
@@ -21,7 +22,8 @@ export const TransactionCreateSchema = z.object({
     name: z.string().min(1, "Nama item wajib diisi"),
     itemPrice: z.number().min(0, "Harga tidak boleh negatif"),
     quantity: z.number().min(1, "Jumlah minimal 1"),
-    totalPrice: z.number()
+    totalPrice: z.number(),
+    masterItemId: z.string().optional()
   }))
 })
 

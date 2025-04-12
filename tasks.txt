@@ -1,0 +1,81 @@
+# Financial Management Application - Task List
+
+## Completed Tasks
+- [x] **Organization ID Integration (Highest Priority)**
+  - [x] Added organizationId and userId fields to Transaction and Item models
+  - [x] Updated Prisma schema with appropriate indexes
+  - [x] Created database migrations with default values for existing records
+  - [x] Updated transaction API routes to filter by organizationId
+  - [x] Implemented validation logic to prevent cross-organization data access
+  - [x] Added authentication checks using Clerk
+  - [x] Created ExtendedTransaction interface for proper typing
+  - [x] Updated transaction history route with org filtering
+  - [x] Updated category stats route with org filtering
+  - [x] Added permission checks to transaction by ID route
+  - [x] Created tests for transaction creation with organizationId
+
+- [x] **Master Data Management (/data-master)**
+  - [x] Created interfaces for Categories, Related Parties, and Master Items
+  - [x] Implemented CRUD operations for each entity type
+  - [x] Enforced organization-specific data segregation
+  - [x] Added search, filtering, and pagination capabilities
+  - [x] Created frontend components for managing master data
+  - [x] Added form validation using Zod schemas
+
+## Pending Tasks (By Priority)
+
+### High Priority
+- [ ] **Cloudinary Image Upload**
+  - [ ] Implement secure upload functionality for payment proofs
+  - [ ] Add backend handling for pre-signed URLs
+  - [ ] Include validation for file type and size (max 2MB)
+  - [ ] Add image preview and removal functionality
+
+- [ ] **Master Data Integration in Transaction Form**
+  - [ ] Implement Combobox/Autocomplete for selecting Categories, Related Parties, Items
+  - [ ] Add Popover functionality for adding new master data during transaction creation
+  - [ ] Include dynamic transaction item management (add/remove/edit items)
+  - [ ] Calculate totals automatically based on item quantities and prices
+
+- [ ] **Organization Switcher UI**
+  - [ ] Implement Clerk's <OrganizationSwitcher /> component
+  - [ ] Ensure clear visual indication of active organization
+  - [ ] Add organization context throughout the application
+
+### Medium Priority
+- [ ] **Reporting System (/report)**
+  - [ ] Create aggregated reports from transaction data by organization
+  - [ ] Implement report types:
+    - [ ] Monthly/Yearly Summaries
+    - [ ] Category-based Reports
+    - [ ] Period Comparisons
+    - [ ] Related Party Analysis
+  - [ ] Add export functionality (PDF/Excel)
+  - [ ] Implement print capability
+
+### Low Priority
+- [ ] **Enhanced Transaction Actions**
+  - [ ] Add Print Detail functionality
+  - [ ] Implement Download Invoice feature
+  - [ ] Create receipt/invoice templates
+
+## Implementation Notes
+- All queries now filter by both organizationId and userId to ensure data isolation
+- Added type extensions to handle fields not yet recognized by TypeScript
+- For transactions and items, used type assertion to handle the new fields when TypeScript doesn't recognize them
+- Test coverage is basic; should be expanded to cover all API endpoints
+- Added proper error handling for cases when user is not authenticated or no organization is selected
+- Used temporary type casting (prisma as any) for new models until Prisma client is regenerated
+
+## Technical Debt
+- Need to regenerate Prisma client types to properly include organizationId and userId and master data models
+- Consider creating a helper function to handle the common auth checks across all API routes
+- Improve type safety rather than using 'any' type assertions
+- Add integration tests for the user+organization permission system
+- Add validation for foreign key relationships in master data models
+
+## Next Steps
+1. Begin implementing the Cloudinary image upload functionality
+2. Integrate master data with the transaction form by implementing Combobox/Autocomplete
+3. Implement the Organization Switcher UI component
+4. Regenerate Prisma client to fix type issues with new models 

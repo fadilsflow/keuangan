@@ -22,12 +22,17 @@ export class TransactionService {
             amountTotal: data.amountTotal,
             paymentImg: data.paymentImg || "",
             type: data.type,
+            organizationId: data.organizationId,
+            userId: data.userId,
             items: {
               create: data.items.map((item) => ({
                 name: item.name,
                 itemPrice: item.itemPrice,
                 quantity: item.quantity,
                 totalPrice: item.itemPrice * item.quantity,
+                organizationId: data.organizationId,
+                userId: data.userId,
+                ...(item.masterItemId && { masterItemId: item.masterItemId }),
               })),
             },
           },

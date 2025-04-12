@@ -1,9 +1,28 @@
-
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
+import { auth } from "@clerk/nextjs/server"
 
 export async function GET() {
     try {
+        // Get organization ID and user ID from Clerk auth
+        const { orgId, userId } = await auth();
+        
+        // If no organization is selected, return error
+        if (!orgId) {
+            return NextResponse.json(
+                { error: "No organization selected" },
+                { status: 403 }
+            );
+        }
+
+        // If no user is authenticated, return error
+        if (!userId) {
+            return NextResponse.json(
+                { error: "Unauthorized" },
+                { status: 401 }
+            );
+        }
+
         // Ambil data transaksi 90 hari terakhir
         const startDate = new Date()
         startDate.setDate(startDate.getDate() - 90)
@@ -13,7 +32,9 @@ export async function GET() {
             where: {
                 date: {
                     gte: startDate
-                }
+                },
+                organizationId: orgId,
+                userId: userId
             },
             _sum: {
                 amountTotal: true
@@ -37,7 +58,9 @@ export async function GET() {
                 date: {
                     gte: startDate
                 },
-                type: 'pemasukan'
+                type: 'pemasukan',
+                organizationId: orgId,
+                userId: userId
             },
             _sum: {
                 amountTotal: true
@@ -50,7 +73,9 @@ export async function GET() {
                 date: {
                     gte: startDate
                 },
-                type: 'pengeluaran'
+                type: 'pengeluaran',
+                organizationId: orgId,
+                userId: userId
             },
             _sum: {
                 amountTotal: true
@@ -85,7 +110,7 @@ export async function GET() {
         // Isi data kosong untuk tanggal yang tidak memiliki transaksi
         const filledData = []
         const endDate = new Date()
-        let currentDate = new Date(startDate)
+        const currentDate = new Date(startDate)
 
         while (currentDate <= endDate) {
             const dateStr = currentDate.toISOString().split('T')[0]

@@ -1,0 +1,474 @@
+# Financial Management Application PRD
+**Version 1.1** | **Last Updated: April 12, 2025**
+
+## 1. Executive Summary
+This Product Requirements Document outlines the development plan for modernizing a financial management application, transitioning from a semi-functional state to a complete multi-tenant system with comprehensive transaction management capabilities. The application aims to replace manual financial record-keeping with a digital system that provides transaction recording, master data management, reporting, and analytical dashboards supporting multiple organizations per user.
+
+### 1.1 Current Status
+The application is partially developed with basic authentication (Clerk), CRUD functionality for transactions (needing organization ID integration and relational data master connections), an overview dashboard, and a transaction listing page with filters. The transaction form exists but requires adjustments for image uploads, master data integration, and schema alignment.
+
+### 1.2 Business Objectives
+- Increase efficiency in financial management processes
+- Facilitate financial data analysis for decision-making
+- Improve data accuracy and integrity
+- Support users managing multiple business entities
+- Provide comprehensive financial insights via reports and dashboards
+
+## 2. User Personas & Journeys
+
+### 2.1 Primary Personas
+1. **Accountant/Regular User** (Current Development Focus)
+   - **Characteristics:** Manages day-to-day financial transactions
+   - **Goals:** Quickly record accurate transactions, manage master data, review history, generate operational reports
+   - **Needs:** Efficient UI, simplified organization navigation, clear data entry workflows
+
+2. **Owner** (Future Development)
+   - **Characteristics:** Oversees financial performance of one or more organizations
+   - **Goals:** Monitor performance via dashboards and reports
+   - **Needs:** Clear data visualization, easy access to cross-organizational information, read-only interfaces
+
+### 2.2 Key User Journeys
+
+#### Accountant User Journey
+1. **Authentication & Organization Selection**
+   - Login → Select active organization → Access system features
+   
+2. **Transaction Recording**
+   - Select organization → Open transaction form → Fill details (select Category/Party via relation, input TransactionItems) → Upload proof (Cloudinary) → Save (with organizationId)
+   
+3. **Transaction Review**
+   - Select organization → Open Transaction page → Filter/Search → View details (including items, categories, parties) → Edit/Delete/Print/Download Invoice
+   
+4. **Financial Analysis**
+   - Select organization → Open Dashboard/Reports → Select report type & period → View results (calculated from `Transaction`) → Export/Print
+   
+5. **Master Data Management**
+   - Select organization → Open Master Data page → Manage `Category`/`RelatedParty`/`Item` for that organization
+
+## 3. Technical Architecture
+
+### 3.1 Technology Stack
+- **Frontend:** Next.js (App Router), React, Tailwind CSS, shadcn/ui
+- **Backend:** Next.js API Routes / Server Actions
+- **Database:** 
+  - Development: SQLite
+  - Production: PostgreSQL (VPS)
+- **Authentication:** Clerk (including Organization & Role management)
+- **Media Storage:** Cloudinary
+- **State Management:** React Context API / React Query
+
+### 3.2 Data Model (Prisma Schema)
+
+```prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite" // Change to "postgresql" for production
+  url      = env("DATABASE_URL")
+}
+
+model Transaction {
+  id              String            @id @default(cuid())
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  date            DateTime
+  description     String?
+  amountTotal     Decimal           // Use Decimal for currency
+  paymentImg      String?           // Cloudinary URL
+  type            TransactionType   // Enum (INCOME/EXPENSE)
+  organizationId  String            @index // REQUIRED
+
+  categoryId      String?
+  pihakTerkaitId  String?
+
+  category        Category?         @relation(fields: [categoryId], references: [id])
+  pihakTerkait    PihakTerkait?     @relation(fields: [pihakTerkaitId], references: [id])
+  items           TransactionItem[]
+
+  @@index([organizationId, date])
+  @@index([organizationId, type])
+  @@index([date])    // Additional index for date-based queries
+}
+
+model TransactionItem {
+  id              String            @id @default(cuid())
+  name            String
+  itemPrice       Decimal           // Unit price
+  quantity        Decimal           // Quantity (allowing fractional values)
+  // totalPrice calculated on-the-fly (itemPrice * quantity)
+  transactionId   String
+  organizationId  String            @index // REQUIRED
+  
+  itemMasterId    String?           // Optional reference to master item
+
+  transaction     Transaction       @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+model Category {
+  id              String            @id @default(cuid())
+  name            String
+  type            TransactionType   // Enum
+  organizationId  String            @index // REQUIRED
+  description     String?           // Optional description
+
+  transactions    Transaction[]
+
+  @@unique([name, type, organizationId])
+  @@index([organizationId, type])
+}
+
+model PihakTerkait {
+  id              String            @id @default(cuid())
+  name            String
+  alamat          String?
+  telepon         String?
+  email           String?
+  type            TransactionType   // Enum
+  organizationId  String            @index // REQUIRED
+  notes           String?           // Optional notes field
+
+  transactions    Transaction[]
+
+  @@unique([name, type, organizationId])
+  @@index([organizationId, type])
+}
+
+model Item { // Master Item
+  id              String            @id @default(cuid())
+  name            String
+  type            TransactionType   // Enum
+  organizationId  String            @index // REQUIRED
+  defaultPrice    Decimal?          // Optional default price
+  unit            String?           // Optional measurement unit
+
+  @@unique([name, type, organizationId])
+  @@index([organizationId, type])
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+```
+
+### 3.3 System Components & Integrations
+
+#### 3.3.1 Core Components
+- **Authentication Module:** Clerk-based auth with organization management
+- **Transaction Management System:** CRUD operations with related entities
+- **Master Data Management System:** Categories, Related Parties, and Item Masters
+- **Reporting Engine:** On-the-fly aggregation and analysis
+- **Dashboard System:** Visual representation of key metrics
+
+#### 3.3.2. External Integrations
+- **Clerk SDK:** Authentication, user/organization data, role management (`membership.role`), `OrganizationSwitcher`
+- **Cloudinary API:** Image upload and storage
+- **PDF Generation:** For reports and invoices (using a library like pdfmake or react-pdf)
+
+#### 3.3.3 API Structure
+All APIs must enforce organization-based data segregation by including `organizationId` from the Clerk session.
+
+| Endpoint                        | Method | Purpose                                      | Access    |
+|---------------------------------|--------|----------------------------------------------|-----------|
+| `/api/transactions`             | GET    | List transactions with filtering             | All       |
+| `/api/transactions`             | POST   | Create new transaction                       | Accountant|
+| `/api/transactions/:id`         | GET    | Get transaction details                      | All       |
+| `/api/transactions/:id`         | PUT    | Update transaction                           | Accountant|
+| `/api/transactions/:id`         | DELETE | Delete transaction                           | Accountant|
+| `/api/categories`               | GET    | List categories                              | All       |
+| `/api/categories`               | POST   | Create category                              | Accountant|
+| `/api/pihak-terkait`            | GET    | List related parties                         | All       |
+| `/api/pihak-terkait`            | POST   | Create related party                         | Accountant|
+| `/api/items`                    | GET    | List master items                            | All       |
+| `/api/items`                    | POST   | Create master item                           | Accountant|
+| `/api/reports/summary`          | GET    | Get financial summary                        | All       |
+| `/api/reports/category`         | GET    | Get category-based reports                   | All       |
+| `/api/reports/monthly`          | GET    | Get monthly reports                          | All       |
+| `/api/reports/yearly`           | GET    | Get yearly reports                           | All       |
+
+## 4. Feature Specifications
+
+### 4.1 Existing Features (Requiring Enhancement)
+
+#### 4.1.1 Authentication & Organization Management (Clerk)
+- **Current State:** Basic authentication implemented
+- **Required Changes:**
+  - Integrate `organizationId` into all queries and data storage
+  - Implement `<OrganizationSwitcher />` in UI
+  - Add role-based access control checks
+
+#### 4.1.2 Transaction CRUD (For Accountants)
+- **Current State:** Basic CRUD functionality
+- **Required Changes:**
+  - Update schema relationships (Category/PihakTerkait, TransactionItems)
+  - Integrate `organizationId` filtering
+  - Implement Cloudinary upload
+  - Remove updates to `Month/YearHistory`
+  - Add validation for required fields and data integrity
+
+#### 4.1.3 Dashboard Overview (`/dashboard`)
+- **Current State:** Shows organization financial summary
+- **Required Changes:**
+  - Query data directly from `Transaction` (not `Month/YearHistory`)
+  - Filter by `organizationId`
+  - Enhance visualizations with more detailed metrics
+  - Optimize for performance with large datasets
+
+#### 4.1.4 Transaction List (`/transaction`)
+- **Current State:** Displays organization transactions in table with filters
+- **Required Changes:**
+  - Update query with new schema (include relations)
+  - Filter by `organizationId`
+  - Add Print Detail & Download Invoice actions
+  - Enhance filtering and sorting capabilities
+
+#### 4.1.5 Transaction Form (`/transactions/new` & Edit)
+- **Current State:** Basic input form exists
+- **Required Changes:**
+  - Update fields for new schema (Category/PihakTerkait selection, TransactionItems)
+  - Implement Cloudinary upload (max 2MB)
+  - Save with `organizationId`
+  - Add validation and error handling
+  - Implement item management interface
+
+### 4.2 New Features to Develop
+
+#### 4.2.1 Organization ID Integration
+**Priority: Highest**
+- Ensure `organizationId` from Clerk is consistently used in all data operations
+- Implement middleware to inject `organizationId` into all requests
+- Add validation to prevent cross-organization data access
+
+#### 4.2.2 Cloudinary Image Upload
+**Priority: High**
+- Implement secure upload functionality for payment proofs
+- Add backend handling for pre-signed URLs
+- Include validation for file type and size (max 2MB)
+- Add image preview and removal functionality
+
+#### 4.2.3 Master Data Management (`/data-master`)
+**Priority: High**
+- Create interfaces for managing Categories, Related Parties, and Master Items
+- Implement CRUD operations for each entity type
+- Enforce organization-specific data segregation
+- Add search, filtering, and pagination capabilities
+
+#### 4.2.4 Master Data Integration in Transaction Form
+**Priority: High**
+- Implement `Combobox`/`Autocomplete` for selecting Categories, Related Parties, Items
+- Add `Popover` functionality for adding new master data during transaction creation
+- Include dynamic transaction item management (add/remove/edit items)
+- Calculate totals automatically based on item quantities and prices
+
+#### 4.2.5 Reporting System (`/report`)
+**Priority: Medium**
+- Create aggregated reports from transaction data by organization
+- Implement report types:
+  - Monthly/Yearly Summaries
+  - Category-based Reports
+  - Period Comparisons
+  - Related Party Analysis
+- Add export functionality (PDF/Excel)
+- Implement print capability
+
+#### 4.2.6 Enhanced Transaction Actions
+**Priority: Low**
+- Add Print Detail functionality
+- Implement Download Invoice feature
+- Create receipt/invoice templates
+
+#### 4.2.7 Organization Switcher UI
+**Priority: High**
+- Implement Clerk's `<OrganizationSwitcher />` component
+- Ensure clear visual indication of active organization
+- Add organization context throughout the application
+
+## 5. Development Roadmap
+
+### 5.1 Phase 1: Schema Migration & Organization Foundation (Week 1-2)
+- **Tasks:**
+  - Back up database
+  - Update `schema.prisma` to recommended version
+  - Run `prisma migrate dev`
+  - Update backend logic for CRUD operations
+  - Implement `<OrganizationSwitcher />`
+  - Set up Cloudinary integration
+
+### 5.2 Phase 2: Master Data Management (Week 3-4)
+- **Tasks:**
+  - Create CRUD APIs for master data entities
+  - Build UI for master data management
+  - Implement organization filtering
+  - Add validation and error handling
+
+### 5.3 Phase 3: Transaction Form Enhancement (Week 5-6)
+- **Tasks:**
+  - Update transaction form with master data integration
+  - Implement Combobox/Autocomplete selection
+  - Add Popover for new item creation
+  - Build transaction item management interface
+  - Integrate Cloudinary upload
+
+### 5.4 Phase 4: Reporting System (Week 7-8)
+- **Tasks:**
+  - Create APIs for report data aggregation
+  - Build report UI with filters and visualizations
+  - Implement PDF/Excel export functionality
+  - Add print capability
+
+### 5.5 Phase 5: Refinement & Role Implementation (Week 9-10)
+- **Tasks:**
+  - Add Print/Download Invoice actions to transaction list
+  - Implement Owner role restrictions
+  - Conduct comprehensive testing (functional, role-based, multi-org)
+  - Fix bugs and optimize performance
+
+## 6. UI/UX Guidelines
+
+### 6.1 Design Principles
+- Consistent shadcn/ui component usage
+- Responsive design for all screen sizes
+- Efficient data input workflows
+- Clear visual feedback (loading states, success/error messages)
+- Intuitive data visualization
+- Consistent organization context indication
+
+### 6.2 Key UI Components
+- **Organization Switcher:** Prominent placement in header
+- **Navigation:** Sidebar with role-based visibility
+- **Dashboard:** Charts and KPI cards
+- **Transaction List:** Filterable, sortable table with action buttons
+- **Forms:** Progressive disclosure, inline validation, autocomplete
+- **Master Data:** Tabbed interface with table views
+
+### 6.3 Mobile Considerations
+- Collapsible sidebar navigation
+- Responsive tables with horizontal scrolling
+- Simplified forms with full-width inputs
+- Touch-friendly interface elements
+
+## 7. Technical Considerations
+
+### 7.1 Performance Optimization
+- Database indexing for frequent queries
+- Query optimization for reporting functions
+- Pagination for large data sets
+- Caching strategies where appropriate
+- Lazy loading of components
+
+### 7.2 Security Measures
+- Organization-based data isolation
+- Role-based access control
+- Server-side validation
+- Secure API endpoints
+- Environment variable protection
+
+### 7.3 Infrastructure Requirements
+- VPS for hosting Next.js application
+- PostgreSQL database server
+- Cloudinary account with appropriate plan
+- Environment variable configuration
+- Backup strategy
+
+## 8. Risks and Mitigations
+
+### 8.1 Schema Migration Complexity
+- **Risk:** Data loss or inconsistency during schema changes
+- **Mitigation:** 
+  - Full database backup before migration
+  - Staged migration approach if possible
+  - Comprehensive testing after refactoring
+  - Rollback plan if issues arise
+
+### 8.2 Reporting Performance
+- **Risk:** On-the-fly report generation may be slow with large datasets
+- **Mitigation:**
+  - Proper database indexing
+  - Query optimization
+  - Data caching where appropriate
+  - Default date range limitations
+  - Pagination and incremental loading
+
+### 8.3 Cloudinary Integration
+- **Risk:** Security concerns with API keys, handling errors
+- **Mitigation:**
+  - Store keys in environment variables
+  - Server-side validation
+  - Comprehensive error handling
+  - File size and type restrictions
+
+### 8.4 Multi-Organization Data Consistency
+- **Risk:** Data leakage between organizations
+- **Mitigation:**
+  - Strict enforcement of `organizationId` in all queries
+  - Middleware checks for organization access
+  - Comprehensive testing across organizations
+  - Audit logging for suspicious activities
+
+### 8.5 Role Implementation
+- **Risk:** Incorrect access control, security issues
+- **Mitigation:**
+  - Double-layered checks (frontend and backend)
+  - Comprehensive testing of both roles
+  - Clear separation of concerns in code
+
+## 9. Testing Strategy
+
+### 9.1 Unit Testing
+- Component-level tests for UI elements
+- Function-level tests for utility functions
+- API endpoint tests
+
+### 9.2 Integration Testing
+- End-to-end workflows
+- Cross-component functionality
+- API chains
+
+### 9.3 Organization & Role Testing
+- Multi-organization data isolation verification
+- Role-based access restriction validation
+- Organization switching functionality
+
+### 9.4 Performance Testing
+- Report generation with large datasets
+- Transaction list loading with filters
+- Dashboard rendering speed
+
+## 10. Appendices
+
+### 10.1 Environment Variables
+```
+
+
+# Clerk
+
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY=
+
+# Cloudinary
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+CLOUDINARY_URL=
+
+
+```
+
+### 10.2 Reference Resources
+- [Clerk Documentation](https://clerk.dev/docs)
+- [Cloudinary Documentation](https://cloudinary.com/documentation)
+- [Prisma Documentation](https://www.prisma.io/docs)
+- [shadcn/ui Documentation](https://ui.shadcn.com)
+- [Next.js App Router Documentation](https://nextjs.org/docs/app)
+
+### 10.3 Glossary
+- **Organization:** A business entity managed within the system
+- **Transaction:** A financial record (income or expense)
+- **TransactionItem:** Individual line items within a transaction
+- **Category:** Classification for transactions
+- **PihakTerkait:** Related party involved in a transaction
+- **Item:** Master record of items used in transactions

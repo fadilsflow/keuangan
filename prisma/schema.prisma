@@ -8,31 +8,46 @@ datasource db {
 }
 
 model Transaction {
-  id           String   @id @default(cuid())
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  date         DateTime
-  description  String
-  category     String
-  relatedParty String
-  amountTotal  Float
-  paymentImg   String   @default("")
-  type         String   @default("pengeluaran")
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  date          DateTime
+  description   String
+  category      String
+  relatedParty  String
+  amountTotal   Float
+  paymentImg    String   @default("")
+  type          String   @default("pengeluaran")
+  organizationId String
+  userId        String
 
   items          Item[]
   monthHistory   MonthHistory? @relation(fields: [monthHistoryId], references: [id])
   monthHistoryId String?
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([organizationId, userId])
 }
 
 model Item {
-  id         String @id @default(cuid())
-  name       String
-  itemPrice  Float
-  quantity   Int
-  totalPrice Float // itemPrice * quantity (harus dihitung saat transaksi dibuat)
+  id           String @id @default(cuid())
+  name         String
+  itemPrice    Float
+  quantity     Int
+  totalPrice   Float // itemPrice * quantity (harus dihitung saat transaksi dibuat)
+  organizationId String
+  userId       String
+  masterItemId String?
 
   transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
   transactionId String
+  masterItem    MasterItem? @relation(fields: [masterItemId], references: [id])
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([transactionId])
+  @@index([masterItemId])
 }
 
 model MonthHistory {
@@ -56,4 +71,54 @@ model YearHistory {
   totalExpense Float  @default(0)
 
   months MonthHistory[]
+}
+
+// Master Data Models
+model Category {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  type          String   @default("expense")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  organizationId String
+  userId        String
+
+  @@index([organizationId])
+  @@index([userId])
+  @@unique([name, organizationId, type])
+}
+
+model RelatedParty {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  contactInfo   String?
+  type          String   @default("expense")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  organizationId String
+  userId        String
+
+  @@index([organizationId])
+  @@index([userId])
+  @@unique([name, organizationId, type])
+}
+
+model MasterItem {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  defaultPrice  Float
+  type          String   @default("expense")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  organizationId String
+  userId        String
+  
+  items         Item[]
+
+  @@index([organizationId])
+  @@index([userId])
+  @@unique([name, organizationId, type])
 }

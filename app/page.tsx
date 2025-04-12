@@ -6,7 +6,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { SignedIn, SignedOut, SignInButton, SignUpButton } from "@clerk/nextjs";
 import Link from "next/link";
+
 
 export default function Home() {
   return (
@@ -17,10 +19,16 @@ export default function Home() {
             <CardTitle className="text-2xl">CashLog.</CardTitle>
             <CardDescription>Aplikasi untuk mencatat keuangan.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col gap-2">
             <Button className="w-full " variant={"outline"} asChild>
-              <Link href="/dashboard">Dashboard</Link>
+            <SignedOut>
+              <Button variant={"outline"} asChild><SignInButton /></Button>
+              <Button variant={"outline"} asChild ><SignUpButton /></Button>
+          </SignedOut>
             </Button>
+            <SignedIn>
+            <Button asChild><Link href="/dashboard">Dashboard</Link></Button>
+          </SignedIn>
           </CardContent>
         </Card>
       </div>
