@@ -22,6 +22,12 @@
   - [x] Created frontend components for managing master data
   - [x] Added form validation using Zod schemas
 
+- [x] **Master Data Integration in Transaction Form**
+  - [x] Implement Combobox/Autocomplete for selecting Categories, Related Parties, Items
+  - [x] Add Popover functionality for adding new master data during transaction creation
+  - [x] Include dynamic transaction item management (add/remove/edit items)
+  - [x] Calculate totals automatically based on item quantities and prices
+
 ## Pending Tasks (By Priority)
 
 ### High Priority
@@ -30,12 +36,6 @@
   - [ ] Add backend handling for pre-signed URLs
   - [ ] Include validation for file type and size (max 2MB)
   - [ ] Add image preview and removal functionality
-
-- [ ] **Master Data Integration in Transaction Form**
-  - [ ] Implement Combobox/Autocomplete for selecting Categories, Related Parties, Items
-  - [ ] Add Popover functionality for adding new master data during transaction creation
-  - [ ] Include dynamic transaction item management (add/remove/edit items)
-  - [ ] Calculate totals automatically based on item quantities and prices
 
 - [ ] **Organization Switcher UI**
   - [ ] Implement Clerk's <OrganizationSwitcher /> component
@@ -56,7 +56,7 @@
 ### Low Priority
 - [ ] **Enhanced Transaction Actions**
   - [ ] Add Print Detail functionality
-  - [ ] Implement Download Invoice feature
+  - [ ] Implement Download pdf Invoice feature
   - [ ] Create receipt/invoice templates
 
 ## Implementation Notes
@@ -79,3 +79,11 @@
 2. Integrate master data with the transaction form by implementing Combobox/Autocomplete
 3. Implement the Organization Switcher UI component
 4. Regenerate Prisma client to fix type issues with new models 
+
+
+note:
+when need anything about User Id or etc, use this: 
+```
+import { auth } from "@clerk/nextjs/server";
+const { userId, orgId } = await auth();
+```

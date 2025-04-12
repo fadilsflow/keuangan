@@ -2,7 +2,6 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { RelatedPartyUpdateSchema } from "@/lib/validations/related-party";
-import { PrismaClient } from "@prisma/client";
 
 export async function GET(
   request: Request,
