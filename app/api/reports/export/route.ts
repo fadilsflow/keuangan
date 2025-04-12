@@ -907,233 +907,191 @@ async function generatePDF(
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
     
-    // For 'all' transaction type, we need to show both income and expense columns
-    const valueColumns = transactionType === 'all' 
-      ? ['Pemasukan', 'Pengeluaran'] 
-      : [transactionType === 'income' ? 'Pemasukan' : 'Pengeluaran'];
-    
-    const nameKey = reportType === 'category' ? 'category' : 'relatedParty';
-    const titleColumn = reportType === 'category' ? 'Kategori' : 'Pihak Terkait';
-    
-    // Set column configuration based on transaction type
-    const columns = [titleColumn, ...valueColumns];
-    
-    // Adjust column widths based on number of columns
-    const titleWidth = (pageWidth - 2 * margin) * (transactionType === 'all' ? 0.4 : 0.6);
-    const valueWidth = (pageWidth - 2 * margin - titleWidth) / valueColumns.length;
-    const colWidths = [titleWidth, ...valueColumns.map(() => valueWidth)];
-    
-    // Draw header
-    let x = margin;
-    for (let i = 0; i < columns.length; i++) {
-      doc.rect(x, y, colWidths[i], lineHeight);
-      doc.text(columns[i], x + colWidths[i] / 2, y + lineHeight / 2, { align: 'center' as const, baseline: 'middle' as const });
-      x += colWidths[i];
-    }
-    y += lineHeight;
-    
-    // Draw data rows
-    doc.setFont("helvetica", "normal");
-    reportData.forEach((item: any) => {
-      if (y > doc.internal.pageSize.height - 20) {
-        doc.addPage();
-        y = 20;
+    // For 'all' transaction type, we need to show separate tables for income and expense
+    if (transactionType === 'all') {
+      const nameKey = reportType === 'category' ? 'category' : 'relatedParty';
+      const titleColumn = reportType === 'category' ? 'Kategori' : 'Pihak Terkait';
+      
+      // Filter data based on transaction type
+      const incomeData = reportData.filter((item: any) => item.type === 'income');
+      const expenseData = reportData.filter((item: any) => item.type === 'expense');
+      
+      // Income section header
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text('Pemasukan', pageWidth / 2, y, { align: 'center' as const });
+      y += 10;
+      
+      // Income table
+      doc.setFontSize(12);
+      const incomeColumns = [titleColumn, 'Total'];
+      const incomeColWidths = [(pageWidth - 2 * margin) * 0.7, (pageWidth - 2 * margin) * 0.3];
+      
+      // Draw header
+      let x = margin;
+      for (let i = 0; i < incomeColumns.length; i++) {
+        doc.rect(x, y, incomeColWidths[i], lineHeight);
+        doc.text(incomeColumns[i], x + incomeColWidths[i] / 2, y + lineHeight / 2, { align: 'center' as const, baseline: 'middle' as const });
+        x += incomeColWidths[i];
       }
+      y += lineHeight;
       
-      x = margin;
-      
-      // Prepare values based on transaction type
-      let values = [item[nameKey]];
-      
-      if (transactionType === 'all') {
-        values.push(
-          formatRupiah(item.income || 0),
-          formatRupiah(item.expense || 0)
-        );
+      // Draw income data rows
+      doc.setFont("helvetica", "normal");
+      if (incomeData.length > 0) {
+        incomeData.forEach((item: any) => {
+          if (y > doc.internal.pageSize.height - 20) {
+            doc.addPage();
+            y = 20;
+          }
+          
+          x = margin;
+          const values = [item[nameKey], formatRupiah(item.income || 0)];
+          
+          for (let i = 0; i < values.length; i++) {
+            doc.rect(x, y, incomeColWidths[i], lineHeight);
+            const alignOpt = i === 0 
+              ? { align: 'left' as const, baseline: 'middle' as const } 
+              : { align: 'right' as const, baseline: 'middle' as const };
+            const textX = i === 0 ? x + 2 : x + incomeColWidths[i] - 2;
+            doc.text(values[i], textX, y + lineHeight / 2, alignOpt);
+            x += incomeColWidths[i];
+          }
+          
+          y += lineHeight;
+        });
       } else {
-        values.push(formatRupiah(transactionType === 'income' ? item.income || 0 : item.expense || 0));
+        // No income data
+        x = margin;
+        doc.rect(x, y, incomeColWidths[0] + incomeColWidths[1], lineHeight);
+        const message = `Tidak ada data ${titleColumn.toLowerCase()} pemasukan`;
+        doc.text(message, x + 2, y + lineHeight / 2, { baseline: 'middle' as const });
+        y += lineHeight;
       }
       
-      for (let i = 0; i < values.length; i++) {
+      // Add space before expense section
+      y += 10;
+      
+      // Expense section header
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text('Pengeluaran', pageWidth / 2, y, { align: 'center' as const });
+      y += 10;
+      
+      // Expense table
+      doc.setFontSize(12);
+      const expenseColumns = [titleColumn, 'Total'];
+      const expenseColWidths = [(pageWidth - 2 * margin) * 0.7, (pageWidth - 2 * margin) * 0.3];
+      
+      // Draw header
+      x = margin;
+      for (let i = 0; i < expenseColumns.length; i++) {
+        doc.rect(x, y, expenseColWidths[i], lineHeight);
+        doc.text(expenseColumns[i], x + expenseColWidths[i] / 2, y + lineHeight / 2, { align: 'center' as const, baseline: 'middle' as const });
+        x += expenseColWidths[i];
+      }
+      y += lineHeight;
+      
+      // Draw expense data rows
+      doc.setFont("helvetica", "normal");
+      if (expenseData.length > 0) {
+        expenseData.forEach((item: any) => {
+          if (y > doc.internal.pageSize.height - 20) {
+            doc.addPage();
+            y = 20;
+          }
+          
+          x = margin;
+          const values = [item[nameKey], formatRupiah(item.expense || 0)];
+          
+          for (let i = 0; i < values.length; i++) {
+            doc.rect(x, y, expenseColWidths[i], lineHeight);
+            const alignOpt = i === 0 
+              ? { align: 'left' as const, baseline: 'middle' as const } 
+              : { align: 'right' as const, baseline: 'middle' as const };
+            const textX = i === 0 ? x + 2 : x + expenseColWidths[i] - 2;
+            doc.text(values[i], textX, y + lineHeight / 2, alignOpt);
+            x += expenseColWidths[i];
+          }
+          
+          y += lineHeight;
+        });
+      } else {
+        // No expense data
+        x = margin;
+        doc.rect(x, y, expenseColWidths[0] + expenseColWidths[1], lineHeight);
+        const message = `Tidak ada data ${titleColumn.toLowerCase()} pengeluaran`;
+        doc.text(message, x + 2, y + lineHeight / 2, { baseline: 'middle' as const });
+        y += lineHeight;
+      }
+    } else {
+      // Original code for single transaction type
+      const valueColumns = [transactionType === 'income' ? 'Pemasukan' : 'Pengeluaran'];
+      
+      const nameKey = reportType === 'category' ? 'category' : 'relatedParty';
+      const titleColumn = reportType === 'category' ? 'Kategori' : 'Pihak Terkait';
+      
+      // Set column configuration based on transaction type
+      const columns = [titleColumn, ...valueColumns];
+      
+      // Adjust column widths based on number of columns
+      const titleWidth = (pageWidth - 2 * margin) * 0.6;
+      const valueWidth = (pageWidth - 2 * margin - titleWidth);
+      const colWidths = [titleWidth, valueWidth];
+      
+      // Draw header
+      let x = margin;
+      for (let i = 0; i < columns.length; i++) {
         doc.rect(x, y, colWidths[i], lineHeight);
-        const alignOpt = i === 0 
-          ? { align: 'left' as const, baseline: 'middle' as const } 
-          : { align: 'right' as const, baseline: 'middle' as const };
-        const textX = i === 0 ? x + 2 : x + colWidths[i] - 2;
-        doc.text(values[i], textX, y + lineHeight / 2, alignOpt);
+        doc.text(columns[i], x + colWidths[i] / 2, y + lineHeight / 2, { align: 'center' as const, baseline: 'middle' as const });
         x += colWidths[i];
       }
-      
       y += lineHeight;
-    });
-
+      
+      // Draw data rows
+      doc.setFont("helvetica", "normal");
+      reportData.forEach((item: any) => {
+        if (y > doc.internal.pageSize.height - 20) {
+          doc.addPage();
+          y = 20;
+        }
+        
+        x = margin;
+        
+        // Prepare values based on transaction type
+        let values = [item[nameKey]];
+        values.push(formatRupiah(transactionType === 'income' ? item.income || 0 : item.expense || 0));
+        
+        for (let i = 0; i < values.length; i++) {
+          doc.rect(x, y, colWidths[i], lineHeight);
+          const alignOpt = i === 0 
+            ? { align: 'left' as const, baseline: 'middle' as const } 
+            : { align: 'right' as const, baseline: 'middle' as const };
+          const textX = i === 0 ? x + 2 : x + colWidths[i] - 2;
+          doc.text(values[i], textX, y + lineHeight / 2, alignOpt);
+          x += colWidths[i];
+        }
+        
+        y += lineHeight;
+      });
+    }
   } else if (reportType === 'items') {
     // Items report
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
     
-    const columns = ['Item', 'Jumlah', 'Total'];
-    const colWidths = [(pageWidth - 2 * margin) * 0.5, (pageWidth - 2 * margin) * 0.2, (pageWidth - 2 * margin) * 0.3];
-    
-    // Draw header
-    let x = margin;
-    for (let i = 0; i < columns.length; i++) {
-      doc.rect(x, y, colWidths[i], lineHeight);
-      doc.text(columns[i], x + colWidths[i] / 2, y + lineHeight / 2, { align: 'center' as const, baseline: 'middle' as const });
-      x += colWidths[i];
-    }
-    y += lineHeight;
-    
-    // Draw data rows
-    doc.setFont("helvetica", "normal");
-    reportData.forEach((item: any) => {
-      if (y > doc.internal.pageSize.height - 20) {
-        doc.addPage();
-        y = 20;
-      }
+    if (transactionType === 'all') {
+      // Filter data based on transaction type
+      const incomeItems = reportData.filter((item: any) => item.type === 'income');
+      const expenseItems = reportData.filter((item: any) => item.type === 'expense');
       
-      x = margin;
-      const values = [
-        item.itemName,
-        item.quantity.toString(),
-        formatRupiah(item.totalAmount)
-      ];
-      
-      for (let i = 0; i < values.length; i++) {
-        doc.rect(x, y, colWidths[i], lineHeight);
-        const alignOpt = i === 0 ? { align: 'left' as const, baseline: 'middle' as const } : { align: 'right' as const, baseline: 'middle' as const };
-        const textX = i === 0 ? x + 2 : x + colWidths[i] - 2;
-        doc.text(values[i], textX, y + lineHeight / 2, alignOpt);
-        x += colWidths[i];
-      }
-      
-      y += lineHeight;
-    });
-
-  } else if (reportType === 'summary') {
-    // Add total information
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text('Total:', margin, y);
-    doc.text(formatRupiah(reportData.total || 0), pageWidth - margin, y, { align: 'right' as const });
-    y += 10;
-    
-    doc.text('Jumlah Transaksi:', margin, y);
-    doc.text((reportData.transactionCount || 0).toString(), pageWidth - margin, y, { align: 'right' as const });
-    y += 20;
-    
-    // Top Categories - only if categories exist
-    if (reportData.categories && reportData.categories.length > 0) {
+      // Income section header
       doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Kategori Teratas', margin, y);
-      y += 15;
+      doc.setFont("helvetica", "bold");
+      doc.text('Item Pemasukan', pageWidth / 2, y, { align: 'center' as const });
+      y += 10;
       
-      // Categories table
-      doc.setFontSize(12);
-      const catColumns = ['Kategori', 'Nominal'];
-      const catColWidths = [(pageWidth - 2 * margin) * 0.7, (pageWidth - 2 * margin) * 0.3];
-      
-      // Draw header
-      let x = margin;
-      for (let i = 0; i < catColumns.length; i++) {
-        doc.rect(x, y, catColWidths[i], lineHeight);
-        doc.text(catColumns[i], x + catColWidths[i] / 2, y + lineHeight / 2, { align: 'center' as const, baseline: 'middle' as const });
-        x += catColWidths[i];
-      }
-      y += lineHeight;
-      
-      // Draw data rows
-      doc.setFont("helvetica", "normal");
-      reportData.categories.slice(0, 5).forEach((cat: any) => {
-        if (y > doc.internal.pageSize.height - 20) {
-          doc.addPage();
-          y = 20;
-        }
-        
-        x = margin;
-        const values = [cat.name || 'Unknown', formatRupiah(cat.total || 0)];
-        
-        for (let i = 0; i < values.length; i++) {
-          doc.rect(x, y, catColWidths[i], lineHeight);
-          const alignOpt = i === 0 ? { align: 'left' as const, baseline: 'middle' as const } : { align: 'right' as const, baseline: 'middle' as const };
-          const textX = i === 0 ? x + 2 : x + catColWidths[i] - 2;
-          doc.text(values[i], textX, y + lineHeight / 2, alignOpt);
-          x += catColWidths[i];
-        }
-        
-        y += lineHeight;
-      });
-      
-      y += 15;
-    } else {
-      // No categories available
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'italic');
-      doc.text('Tidak ada data kategori tersedia', margin, y);
-      y += 15;
-    }
-    
-    // Top Related Parties - only if they exist
-    if (reportData.relatedParties && reportData.relatedParties.length > 0) {
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Pihak Terkait Teratas', margin, y);
-      y += 15;
-      
-      // Related parties table
-      doc.setFontSize(12);
-      const partyColumns = ['Pihak Terkait', 'Nominal'];
-      const partyColWidths = [(pageWidth - 2 * margin) * 0.7, (pageWidth - 2 * margin) * 0.3];
-      
-      // Draw header
-      let x = margin;
-      for (let i = 0; i < partyColumns.length; i++) {
-        doc.rect(x, y, partyColWidths[i], lineHeight);
-        doc.text(partyColumns[i], x + partyColWidths[i] / 2, y + lineHeight / 2, { align: 'center' as const, baseline: 'middle' as const });
-        x += partyColWidths[i];
-      }
-      y += lineHeight;
-      
-      // Draw data rows
-      doc.setFont("helvetica", "normal");
-      reportData.relatedParties.slice(0, 5).forEach((party: any) => {
-        if (y > doc.internal.pageSize.height - 20) {
-          doc.addPage();
-          y = 20;
-        }
-        
-        x = margin;
-        const values = [party.name || 'Unknown', formatRupiah(party.total || 0)];
-        
-        for (let i = 0; i < values.length; i++) {
-          doc.rect(x, y, partyColWidths[i], lineHeight);
-          const alignOpt = i === 0 ? { align: 'left' as const, baseline: 'middle' as const } : { align: 'right' as const, baseline: 'middle' as const };
-          const textX = i === 0 ? x + 2 : x + partyColWidths[i] - 2;
-          doc.text(values[i], textX, y + lineHeight / 2, alignOpt);
-          x += partyColWidths[i];
-        }
-        
-        y += lineHeight;
-      });
-      
-      y += 15;
-    } else {
-      // No related parties available
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'italic');
-      doc.text('Tidak ada data pihak terkait tersedia', margin, y);
-      y += 15;
-    }
-    
-    // Only add items if they exist
-    if (reportData.items && reportData.items.length > 0) {
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Item Teratas', margin, y);
-      y += 15;
-      
-      // Items table
+      // Income items table
       doc.setFontSize(12);
       const itemColumns = ['Item', 'Jumlah', 'Total'];
       const itemColWidths = [(pageWidth - 2 * margin) * 0.5, (pageWidth - 2 * margin) * 0.2, (pageWidth - 2 * margin) * 0.3];
@@ -1147,32 +1105,464 @@ async function generatePDF(
       }
       y += lineHeight;
       
+      // Draw income items data rows
+      doc.setFont("helvetica", "normal");
+      if (incomeItems.length > 0) {
+        incomeItems.forEach((item: any) => {
+          if (y > doc.internal.pageSize.height - 20) {
+            doc.addPage();
+            y = 20;
+          }
+          
+          x = margin;
+          const values = [
+            item.itemName,
+            item.quantity.toString(),
+            formatRupiah(item.totalAmount)
+          ];
+          
+          for (let i = 0; i < values.length; i++) {
+            doc.rect(x, y, itemColWidths[i], lineHeight);
+            const alignOpt = i === 0 ? { align: 'left' as const, baseline: 'middle' as const } : { align: 'right' as const, baseline: 'middle' as const };
+            const textX = i === 0 ? x + 2 : x + itemColWidths[i] - 2;
+            doc.text(values[i], textX, y + lineHeight / 2, alignOpt);
+            x += itemColWidths[i];
+          }
+          
+          y += lineHeight;
+        });
+      } else {
+        // No income items
+        x = margin;
+        doc.rect(x, y, itemColWidths[0] + itemColWidths[1] + itemColWidths[2], lineHeight);
+        const message = "Tidak ada data item pemasukan";
+        doc.text(message, x + 2, y + lineHeight / 2, { baseline: 'middle' as const });
+        y += lineHeight;
+      }
+      
+      // Add space before expense section
+      y += 10;
+      
+      // Expense section header
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text('Item Pengeluaran', pageWidth / 2, y, { align: 'center' as const });
+      y += 10;
+      
+      // Expense items table
+      doc.setFontSize(12);
+      
+      // Draw header
+      x = margin;
+      for (let i = 0; i < itemColumns.length; i++) {
+        doc.rect(x, y, itemColWidths[i], lineHeight);
+        doc.text(itemColumns[i], x + itemColWidths[i] / 2, y + lineHeight / 2, { align: 'center' as const, baseline: 'middle' as const });
+        x += itemColWidths[i];
+      }
+      y += lineHeight;
+      
+      // Draw expense items data rows
+      doc.setFont("helvetica", "normal");
+      if (expenseItems.length > 0) {
+        expenseItems.forEach((item: any) => {
+          if (y > doc.internal.pageSize.height - 20) {
+            doc.addPage();
+            y = 20;
+          }
+          
+          x = margin;
+          const values = [
+            item.itemName,
+            item.quantity.toString(),
+            formatRupiah(item.totalAmount)
+          ];
+          
+          for (let i = 0; i < values.length; i++) {
+            doc.rect(x, y, itemColWidths[i], lineHeight);
+            const alignOpt = i === 0 ? { align: 'left' as const, baseline: 'middle' as const } : { align: 'right' as const, baseline: 'middle' as const };
+            const textX = i === 0 ? x + 2 : x + itemColWidths[i] - 2;
+            doc.text(values[i], textX, y + lineHeight / 2, alignOpt);
+            x += itemColWidths[i];
+          }
+          
+          y += lineHeight;
+        });
+      } else {
+        // No expense items
+        x = margin;
+        doc.rect(x, y, itemColWidths[0] + itemColWidths[1] + itemColWidths[2], lineHeight);
+        const message = "Tidak ada data item pengeluaran";
+        doc.text(message, x + 2, y + lineHeight / 2, { baseline: 'middle' as const });
+        y += lineHeight;
+      }
+    } else {
+      // Original code for single transaction type
+      const columns = ['Item', 'Jumlah', 'Total'];
+      const colWidths = [(pageWidth - 2 * margin) * 0.5, (pageWidth - 2 * margin) * 0.2, (pageWidth - 2 * margin) * 0.3];
+      
+      // Draw header
+      let x = margin;
+      for (let i = 0; i < columns.length; i++) {
+        doc.rect(x, y, colWidths[i], lineHeight);
+        doc.text(columns[i], x + colWidths[i] / 2, y + lineHeight / 2, { align: 'center' as const, baseline: 'middle' as const });
+        x += colWidths[i];
+      }
+      y += lineHeight;
+      
       // Draw data rows
       doc.setFont("helvetica", "normal");
-      reportData.items.slice(0, 5).forEach((item: any) => {
+      reportData.forEach((item: any) => {
         if (y > doc.internal.pageSize.height - 20) {
           doc.addPage();
           y = 20;
         }
         
         x = margin;
-        const values = [item.name || 'Unknown', (item.quantity || 0).toString(), formatRupiah(item.total || 0)];
+        const values = [
+          item.itemName,
+          item.quantity.toString(),
+          formatRupiah(item.totalAmount)
+        ];
         
         for (let i = 0; i < values.length; i++) {
-          doc.rect(x, y, itemColWidths[i], lineHeight);
+          doc.rect(x, y, colWidths[i], lineHeight);
           const alignOpt = i === 0 ? { align: 'left' as const, baseline: 'middle' as const } : { align: 'right' as const, baseline: 'middle' as const };
-          const textX = i === 0 ? x + 2 : x + itemColWidths[i] - 2;
+          const textX = i === 0 ? x + 2 : x + colWidths[i] - 2;
           doc.text(values[i], textX, y + lineHeight / 2, alignOpt);
-          x += itemColWidths[i];
+          x += colWidths[i];
         }
         
         y += lineHeight;
       });
-    } else {
-      // No items available
+    }
+  } else if (reportType === 'summary') {
+    // For "all" transaction type, show both income and expense summaries
+    if (transactionType === 'all') {
+      // Income section
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Ringkasan Pemasukan', pageWidth / 2, y, { align: 'center' as const });
+      y += 15;
+      
+      // Income totals
       doc.setFontSize(12);
-      doc.setFont('helvetica', 'italic');
-      doc.text('Tidak ada data item tersedia', margin, y);
+      doc.setFont("helvetica", "bold");
+      doc.text('Total:', margin, y);
+      doc.text(formatRupiah(reportData.income.total || 0), pageWidth - margin, y, { align: 'right' as const });
+      y += 10;
+      
+      doc.text('Jumlah Transaksi:', margin, y);
+      doc.text((reportData.income.transactionCount || 0).toString(), pageWidth - margin, y, { align: 'right' as const });
+      y += 20;
+      
+      // Income categories
+      if (reportData.income.categories && reportData.income.categories.length > 0) {
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Kategori Teratas - Pemasukan', margin, y);
+        y += 15;
+        
+        // Categories table
+        doc.setFontSize(12);
+        const catColumns = ['Kategori', 'Nominal'];
+        const catColWidths = [(pageWidth - 2 * margin) * 0.7, (pageWidth - 2 * margin) * 0.3];
+        
+        // Draw header
+        let x = margin;
+        for (let i = 0; i < catColumns.length; i++) {
+          doc.rect(x, y, catColWidths[i], lineHeight);
+          doc.text(catColumns[i], x + catColWidths[i] / 2, y + lineHeight / 2, { align: 'center' as const, baseline: 'middle' as const });
+          x += catColWidths[i];
+        }
+        y += lineHeight;
+        
+        // Draw data rows
+        doc.setFont("helvetica", "normal");
+        reportData.income.categories.slice(0, 5).forEach((cat: any) => {
+          if (y > doc.internal.pageSize.height - 20) {
+            doc.addPage();
+            y = 20;
+          }
+          
+          x = margin;
+          const values = [cat.name || 'Unknown', formatRupiah(cat.total || 0)];
+          
+          for (let i = 0; i < values.length; i++) {
+            doc.rect(x, y, catColWidths[i], lineHeight);
+            const alignOpt = i === 0 ? { align: 'left' as const, baseline: 'middle' as const } : { align: 'right' as const, baseline: 'middle' as const };
+            const textX = i === 0 ? x + 2 : x + catColWidths[i] - 2;
+            doc.text(values[i], textX, y + lineHeight / 2, alignOpt);
+            x += catColWidths[i];
+          }
+          
+          y += lineHeight;
+        });
+        
+        y += 15;
+      }
+      
+      // Income related parties
+      if (reportData.income.relatedParties && reportData.income.relatedParties.length > 0) {
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Pihak Terkait Teratas - Pemasukan', margin, y);
+        y += 15;
+        
+        // Parties table
+        doc.setFontSize(12);
+        const partyColumns = ['Pihak Terkait', 'Nominal'];
+        const partyColWidths = [(pageWidth - 2 * margin) * 0.7, (pageWidth - 2 * margin) * 0.3];
+        
+        // Draw header
+        let x = margin;
+        for (let i = 0; i < partyColumns.length; i++) {
+          doc.rect(x, y, partyColWidths[i], lineHeight);
+          doc.text(partyColumns[i], x + partyColWidths[i] / 2, y + lineHeight / 2, { align: 'center' as const, baseline: 'middle' as const });
+          x += partyColWidths[i];
+        }
+        y += lineHeight;
+        
+        // Draw data rows
+        doc.setFont("helvetica", "normal");
+        reportData.income.relatedParties.slice(0, 5).forEach((party: any) => {
+          if (y > doc.internal.pageSize.height - 20) {
+            doc.addPage();
+            y = 20;
+          }
+          
+          x = margin;
+          const values = [party.name || 'Unknown', formatRupiah(party.total || 0)];
+          
+          for (let i = 0; i < values.length; i++) {
+            doc.rect(x, y, partyColWidths[i], lineHeight);
+            const alignOpt = i === 0 ? { align: 'left' as const, baseline: 'middle' as const } : { align: 'right' as const, baseline: 'middle' as const };
+            const textX = i === 0 ? x + 2 : x + partyColWidths[i] - 2;
+            doc.text(values[i], textX, y + lineHeight / 2, alignOpt);
+            x += partyColWidths[i];
+          }
+          
+          y += lineHeight;
+        });
+        
+        y += 15;
+      }
+      
+      // Income items
+      if (reportData.income.items && reportData.income.items.length > 0) {
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Item Teratas - Pemasukan', margin, y);
+        y += 15;
+        
+        // Items table
+        doc.setFontSize(12);
+        const itemColumns = ['Item', 'Jumlah', 'Total'];
+        const itemColWidths = [(pageWidth - 2 * margin) * 0.5, (pageWidth - 2 * margin) * 0.2, (pageWidth - 2 * margin) * 0.3];
+        
+        // Draw header
+        let x = margin;
+        for (let i = 0; i < itemColumns.length; i++) {
+          doc.rect(x, y, itemColWidths[i], lineHeight);
+          doc.text(itemColumns[i], x + itemColWidths[i] / 2, y + lineHeight / 2, { align: 'center' as const, baseline: 'middle' as const });
+          x += itemColWidths[i];
+        }
+        y += lineHeight;
+        
+        // Draw data rows
+        doc.setFont("helvetica", "normal");
+        reportData.income.items.slice(0, 5).forEach((item: any) => {
+          if (y > doc.internal.pageSize.height - 20) {
+            doc.addPage();
+            y = 20;
+          }
+          
+          x = margin;
+          const values = [item.name || 'Unknown', (item.quantity || 0).toString(), formatRupiah(item.total || 0)];
+          
+          for (let i = 0; i < values.length; i++) {
+            doc.rect(x, y, itemColWidths[i], lineHeight);
+            const alignOpt = i === 0 ? { align: 'left' as const, baseline: 'middle' as const } : { align: 'right' as const, baseline: 'middle' as const };
+            const textX = i === 0 ? x + 2 : x + itemColWidths[i] - 2;
+            doc.text(values[i], textX, y + lineHeight / 2, alignOpt);
+            x += itemColWidths[i];
+          }
+          
+          y += lineHeight;
+        });
+        
+        y += 20;
+      }
+      
+      // Start Expense section (add a page if near end)
+      if (y > doc.internal.pageSize.height - 100) {
+        doc.addPage();
+        y = 20;
+      }
+      
+      // Expense section header
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Ringkasan Pengeluaran', pageWidth / 2, y, { align: 'center' as const });
+      y += 15;
+      
+      // Expense totals
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text('Total:', margin, y);
+      doc.text(formatRupiah(reportData.expense.total || 0), pageWidth - margin, y, { align: 'right' as const });
+      y += 10;
+      
+      doc.text('Jumlah Transaksi:', margin, y);
+      doc.text((reportData.expense.transactionCount || 0).toString(), pageWidth - margin, y, { align: 'right' as const });
+      y += 20;
+      
+      // Expense categories
+      if (reportData.expense.categories && reportData.expense.categories.length > 0) {
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Kategori Teratas - Pengeluaran', margin, y);
+        y += 15;
+        
+        // Categories table
+        doc.setFontSize(12);
+        const catColumns = ['Kategori', 'Nominal'];
+        const catColWidths = [(pageWidth - 2 * margin) * 0.7, (pageWidth - 2 * margin) * 0.3];
+        
+        // Draw header
+        let x = margin;
+        for (let i = 0; i < catColumns.length; i++) {
+          doc.rect(x, y, catColWidths[i], lineHeight);
+          doc.text(catColumns[i], x + catColWidths[i] / 2, y + lineHeight / 2, { align: 'center' as const, baseline: 'middle' as const });
+          x += catColWidths[i];
+        }
+        y += lineHeight;
+        
+        // Draw data rows
+        doc.setFont("helvetica", "normal");
+        reportData.expense.categories.slice(0, 5).forEach((cat: any) => {
+          if (y > doc.internal.pageSize.height - 20) {
+            doc.addPage();
+            y = 20;
+          }
+          
+          x = margin;
+          const values = [cat.name || 'Unknown', formatRupiah(cat.total || 0)];
+          
+          for (let i = 0; i < values.length; i++) {
+            doc.rect(x, y, catColWidths[i], lineHeight);
+            const alignOpt = i === 0 ? { align: 'left' as const, baseline: 'middle' as const } : { align: 'right' as const, baseline: 'middle' as const };
+            const textX = i === 0 ? x + 2 : x + catColWidths[i] - 2;
+            doc.text(values[i], textX, y + lineHeight / 2, alignOpt);
+            x += catColWidths[i];
+          }
+          
+          y += lineHeight;
+        });
+        
+        y += 15;
+      }
+      
+      // Expense related parties
+      if (reportData.expense.relatedParties && reportData.expense.relatedParties.length > 0) {
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Pihak Terkait Teratas - Pengeluaran', margin, y);
+        y += 15;
+        
+        // Parties table
+        doc.setFontSize(12);
+        const partyColumns = ['Pihak Terkait', 'Nominal'];
+        const partyColWidths = [(pageWidth - 2 * margin) * 0.7, (pageWidth - 2 * margin) * 0.3];
+        
+        // Draw header
+        let x = margin;
+        for (let i = 0; i < partyColumns.length; i++) {
+          doc.rect(x, y, partyColWidths[i], lineHeight);
+          doc.text(partyColumns[i], x + partyColWidths[i] / 2, y + lineHeight / 2, { align: 'center' as const, baseline: 'middle' as const });
+          x += partyColWidths[i];
+        }
+        y += lineHeight;
+        
+        // Draw data rows
+        doc.setFont("helvetica", "normal");
+        reportData.expense.relatedParties.slice(0, 5).forEach((party: any) => {
+          if (y > doc.internal.pageSize.height - 20) {
+            doc.addPage();
+            y = 20;
+          }
+          
+          x = margin;
+          const values = [party.name || 'Unknown', formatRupiah(party.total || 0)];
+          
+          for (let i = 0; i < values.length; i++) {
+            doc.rect(x, y, partyColWidths[i], lineHeight);
+            const alignOpt = i === 0 ? { align: 'left' as const, baseline: 'middle' as const } : { align: 'right' as const, baseline: 'middle' as const };
+            const textX = i === 0 ? x + 2 : x + partyColWidths[i] - 2;
+            doc.text(values[i], textX, y + lineHeight / 2, alignOpt);
+            x += partyColWidths[i];
+          }
+          
+          y += lineHeight;
+        });
+        
+        y += 15;
+      }
+      
+      // Expense items
+      if (reportData.expense.items && reportData.expense.items.length > 0) {
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Item Teratas - Pengeluaran', margin, y);
+        y += 15;
+        
+        // Items table
+        doc.setFontSize(12);
+        const itemColumns = ['Item', 'Jumlah', 'Total'];
+        const itemColWidths = [(pageWidth - 2 * margin) * 0.5, (pageWidth - 2 * margin) * 0.2, (pageWidth - 2 * margin) * 0.3];
+        
+        // Draw header
+        let x = margin;
+        for (let i = 0; i < itemColumns.length; i++) {
+          doc.rect(x, y, itemColWidths[i], lineHeight);
+          doc.text(itemColumns[i], x + itemColWidths[i] / 2, y + lineHeight / 2, { align: 'center' as const, baseline: 'middle' as const });
+          x += itemColWidths[i];
+        }
+        y += lineHeight;
+        
+        // Draw data rows
+        doc.setFont("helvetica", "normal");
+        reportData.expense.items.slice(0, 5).forEach((item: any) => {
+          if (y > doc.internal.pageSize.height - 20) {
+            doc.addPage();
+            y = 20;
+          }
+          
+          x = margin;
+          const values = [item.name || 'Unknown', (item.quantity || 0).toString(), formatRupiah(item.total || 0)];
+          
+          for (let i = 0; i < values.length; i++) {
+            doc.rect(x, y, itemColWidths[i], lineHeight);
+            const alignOpt = i === 0 ? { align: 'left' as const, baseline: 'middle' as const } : { align: 'right' as const, baseline: 'middle' as const };
+            const textX = i === 0 ? x + 2 : x + itemColWidths[i] - 2;
+            doc.text(values[i], textX, y + lineHeight / 2, alignOpt);
+            x += itemColWidths[i];
+          }
+          
+          y += lineHeight;
+        });
+      }
+    } else {
+      // Original code for single transaction type (income or expense)
+      // Add total information
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text('Total:', margin, y);
+      doc.text(formatRupiah(reportData.total || 0), pageWidth - margin, y, { align: 'right' as const });
+      y += 10;
+      
+      doc.text('Jumlah Transaksi:', margin, y);
+      doc.text((reportData.transactionCount || 0).toString(), pageWidth - margin, y, { align: 'right' as const });
+      y += 20;
     }
   }
 
