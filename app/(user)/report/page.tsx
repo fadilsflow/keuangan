@@ -19,19 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatRupiah } from "@/lib/utils";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 // Report types
 const REPORT_TYPES = [
@@ -42,9 +30,6 @@ const REPORT_TYPES = [
   { value: "items", label: "Laporan Item" },
   { value: "summary", label: "Laporan Ringkasan" },
 ];
-
-// Colors for charts
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8"];
 
 export default function ReportPage() {
   const [date, setDate] = useState<DateRange | undefined>({
@@ -117,174 +102,678 @@ export default function ReportPage() {
     window.open(`/api/reports/export?${params.toString()}`, "_blank");
   };
 
-  const renderChart = () => {
+  const renderReport = () => {
     if (!reportData || (Array.isArray(reportData) && reportData.length === 0)) return null;
 
     switch (reportType) {
       case "monthly":
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>Laporan Bulanan</CardTitle>
+              <CardDescription>
+                {date?.from && date?.to ? 
+                  `${format(date.from, "d MMMM yyyy", { locale: id })} - ${format(date.to, "d MMMM yyyy", { locale: id })}` : ''}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Bulan</TableHead>
+                    <TableHead>Tahun</TableHead>
+                    <TableHead className="text-right">Pemasukan</TableHead>
+                    <TableHead className="text-right">Pengeluaran</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reportData.map((item, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{format(new Date(2021, item.month - 1), "MMMM", { locale: id })}</TableCell>
+                      <TableCell>{item.year}</TableCell>
+                      <TableCell className="text-right">{formatRupiah(item.income)}</TableCell>
+                      <TableCell className="text-right">{formatRupiah(item.expense)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        );
+
       case "yearly":
         return (
-          <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={reportData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis 
-                dataKey={reportType === "monthly" ? "month" : "year"} 
-                tickFormatter={(value) => 
-                  reportType === "monthly" 
-                    ? format(new Date(2021, value - 1), "MMMM", { locale: id })
-                    : value.toString()
-                }
-              />
-              <YAxis tickFormatter={(value) => formatRupiah(value)} />
-              <Tooltip 
-                formatter={(value: number) => formatRupiah(value)}
-                labelFormatter={(label) => 
-                  reportType === "monthly"
-                    ? format(new Date(2021, label - 1), "MMMM", { locale: id })
-                    : label.toString()
-                }
-              />
-              <Legend />
-              <Bar dataKey="income" name="Pemasukan" fill="#0088FE" />
-              <Bar dataKey="expense" name="Pengeluaran" fill="#FF8042" />
-            </BarChart>
-          </ResponsiveContainer>
+          <Card>
+            <CardHeader>
+              <CardTitle>Laporan Tahunan</CardTitle>
+              <CardDescription>
+                {date?.from && date?.to ? 
+                  `${format(date.from, "d MMMM yyyy", { locale: id })} - ${format(date.to, "d MMMM yyyy", { locale: id })}` : ''}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Tahun</TableHead>
+                    <TableHead className="text-right">Pemasukan</TableHead>
+                    <TableHead className="text-right">Pengeluaran</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reportData.map((item, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{item.year}</TableCell>
+                      <TableCell className="text-right">{formatRupiah(item.income)}</TableCell>
+                      <TableCell className="text-right">{formatRupiah(item.expense)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         );
 
       case "category":
         return (
-          <ResponsiveContainer width="100%" height={400}>
-            <PieChart>
-              <Pie
-                data={reportData}
-                dataKey={transactionType === "income" ? "income" : "expense"}
-                nameKey="category"
-                cx="50%"
-                cy="50%"
-                outerRadius={150}
-                fill="#8884d8"
-                label={(entry) => `${entry.category}: ${formatRupiah(transactionType === "income" ? entry.income : entry.expense)}`}
-              >
-                {reportData.map((entry: any, index: number) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip formatter={(value: number) => formatRupiah(value)} />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
+          <Card>
+            <CardHeader>
+              <CardTitle>Laporan Kategori</CardTitle>
+              <CardDescription>
+                {date?.from && date?.to ? 
+                  `${format(date.from, "d MMMM yyyy", { locale: id })} - ${format(date.to, "d MMMM yyyy", { locale: id })}` : ''}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {transactionType !== "all" ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Kategori</TableHead>
+                      <TableHead className="text-right">
+                        {transactionType === "income" ? "Pemasukan" : "Pengeluaran"}
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {reportData.map((item, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{item.category}</TableCell>
+                        <TableCell className="text-right">
+                          {formatRupiah(transactionType === "income" ? item.income : item.expense)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="space-y-8">
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Pemasukan</h3>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Kategori</TableHead>
+                          <TableHead className="text-right">Jumlah</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {reportData
+                          .filter((item: any) => item.income > 0)
+                          .map((item: any, index: number) => (
+                            <TableRow key={`income-${index}`}>
+                              <TableCell>{item.category}</TableCell>
+                              <TableCell className="text-right">
+                                {formatRupiah(item.income)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        {reportData.filter((item: any) => item.income > 0).length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={2} className="text-center text-muted-foreground">
+                              Tidak ada data pemasukan
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Pengeluaran</h3>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Kategori</TableHead>
+                          <TableHead className="text-right">Jumlah</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {reportData
+                          .filter((item: any) => item.expense > 0)
+                          .map((item: any, index: number) => (
+                            <TableRow key={`expense-${index}`}>
+                              <TableCell>{item.category}</TableCell>
+                              <TableCell className="text-right">
+                                {formatRupiah(item.expense)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        {reportData.filter((item: any) => item.expense > 0).length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={2} className="text-center text-muted-foreground">
+                              Tidak ada data pengeluaran
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         );
 
       case "related-party":
         return (
-          <ResponsiveContainer width="100%" height={400}>
-            <PieChart>
-              <Pie
-                data={reportData}
-                dataKey={transactionType === "income" ? "income" : "expense"}
-                nameKey="relatedParty"
-                cx="50%"
-                cy="50%"
-                outerRadius={150}
-                fill="#8884d8"
-                label={(entry) => `${entry.relatedParty}: ${formatRupiah(transactionType === "income" ? entry.income : entry.expense)}`}
-              >
-                {reportData.map((entry: any, index: number) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip formatter={(value: number) => formatRupiah(value)} />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
+          <Card>
+            <CardHeader>
+              <CardTitle>Laporan Pihak Terkait</CardTitle>
+              <CardDescription>
+                {date?.from && date?.to ? 
+                  `${format(date.from, "d MMMM yyyy", { locale: id })} - ${format(date.to, "d MMMM yyyy", { locale: id })}` : ''}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {transactionType !== "all" ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Pihak Terkait</TableHead>
+                      <TableHead className="text-right">
+                        {transactionType === "income" ? "Pemasukan" : "Pengeluaran"}
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {reportData.map((item, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{item.relatedParty}</TableCell>
+                        <TableCell className="text-right">
+                          {formatRupiah(transactionType === "income" ? item.income : item.expense)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="space-y-8">
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Pemasukan</h3>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Pihak Terkait</TableHead>
+                          <TableHead className="text-right">Jumlah</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {reportData
+                          .filter((item: any) => item.income > 0)
+                          .map((item: any, index: number) => (
+                            <TableRow key={`income-${index}`}>
+                              <TableCell>{item.relatedParty}</TableCell>
+                              <TableCell className="text-right">
+                                {formatRupiah(item.income)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        {reportData.filter((item: any) => item.income > 0).length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={2} className="text-center text-muted-foreground">
+                              Tidak ada data pemasukan
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Pengeluaran</h3>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Pihak Terkait</TableHead>
+                          <TableHead className="text-right">Jumlah</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {reportData
+                          .filter((item: any) => item.expense > 0)
+                          .map((item: any, index: number) => (
+                            <TableRow key={`expense-${index}`}>
+                              <TableCell>{item.relatedParty}</TableCell>
+                              <TableCell className="text-right">
+                                {formatRupiah(item.expense)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        {reportData.filter((item: any) => item.expense > 0).length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={2} className="text-center text-muted-foreground">
+                              Tidak ada data pengeluaran
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         );
 
       case "items":
         return (
-          <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={reportData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="itemName" />
-              <YAxis tickFormatter={(value) => formatRupiah(value)} />
-              <Tooltip formatter={(value: number) => formatRupiah(value)} />
-              <Legend />
-              <Bar dataKey="totalAmount" name="Total" fill="#0088FE" />
-              <Bar dataKey="quantity" name="Jumlah" fill="#00C49F" />
-            </BarChart>
-          </ResponsiveContainer>
+          <Card>
+            <CardHeader>
+              <CardTitle>Laporan Item</CardTitle>
+              <CardDescription>
+                {date?.from && date?.to ? 
+                  `${format(date.from, "d MMMM yyyy", { locale: id })} - ${format(date.to, "d MMMM yyyy", { locale: id })}` : ''}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {transactionType !== "all" ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Item</TableHead>
+                      <TableHead className="text-right">Jumlah</TableHead>
+                      <TableHead className="text-right">Total</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {reportData.map((item, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{item.itemName}</TableCell>
+                        <TableCell className="text-right">{item.quantity}</TableCell>
+                        <TableCell className="text-right">{formatRupiah(item.totalAmount)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="space-y-8">
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Pemasukan</h3>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Item</TableHead>
+                          <TableHead className="text-right">Jumlah</TableHead>
+                          <TableHead className="text-right">Total</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {reportData
+                          .filter((item: any) => item.type === "income")
+                          .map((item: any, index: number) => (
+                            <TableRow key={`income-${index}`}>
+                              <TableCell>{item.itemName}</TableCell>
+                              <TableCell className="text-right">{item.quantity}</TableCell>
+                              <TableCell className="text-right">{formatRupiah(item.totalAmount)}</TableCell>
+                            </TableRow>
+                          ))}
+                        {reportData.filter((item: any) => item.type === "income").length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={3} className="text-center text-muted-foreground">
+                              Tidak ada data pemasukan
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Pengeluaran</h3>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Item</TableHead>
+                          <TableHead className="text-right">Jumlah</TableHead>
+                          <TableHead className="text-right">Total</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {reportData
+                          .filter((item: any) => item.type === "expense")
+                          .map((item: any, index: number) => (
+                            <TableRow key={`expense-${index}`}>
+                              <TableCell>{item.itemName}</TableCell>
+                              <TableCell className="text-right">{item.quantity}</TableCell>
+                              <TableCell className="text-right">{formatRupiah(item.totalAmount)}</TableCell>
+                            </TableRow>
+                          ))}
+                        {reportData.filter((item: any) => item.type === "expense").length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={3} className="text-center text-muted-foreground">
+                              Tidak ada data pengeluaran
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         );
 
       case "summary":
         if (reportType === "summary" && reportData) {
           return (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {transactionType !== "all" ? (
+                // Single transaction type (income or expense)
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">Total {transactionType === "income" ? "Pemasukan" : "Pengeluaran"}</CardTitle>
+                    <CardTitle>
+                      Total {transactionType === "income" ? "Pemasukan" : "Pengeluaran"}
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-2xl font-bold">{formatRupiah(reportData.total || 0)}</p>
                     <p className="text-muted-foreground">Dari {reportData.transactionCount || 0} transaksi</p>
                   </CardContent>
                 </Card>
-              </div>
-
-              {reportData.categories && reportData.categories.length > 0 ? (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Kategori Teratas</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={reportData.categories.slice(0, 5)}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis tickFormatter={(value) => formatRupiah(value)} />
-                      <Tooltip formatter={(value: number) => formatRupiah(value)} />
-                      <Bar dataKey="total" name="Total" fill="#0088FE" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
               ) : (
-                <div className="bg-muted p-4 rounded-md">
-                  <p className="text-muted-foreground text-center">Tidak ada data kategori tersedia</p>
+                // Show both income and expense summaries
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle>Total Pemasukan</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-2xl font-bold">{formatRupiah(reportData.income?.total || 0)}</p>
+                      <p className="text-muted-foreground">Dari {reportData.income?.transactionCount || 0} transaksi</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle>Total Pengeluaran</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-2xl font-bold">{formatRupiah(reportData.expense?.total || 0)}</p>
+                      <p className="text-muted-foreground">Dari {reportData.expense?.transactionCount || 0} transaksi</p>
+                    </CardContent>
+                  </Card>
                 </div>
               )}
 
-              {reportData.relatedParties && reportData.relatedParties.length > 0 ? (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Pihak Terkait Teratas</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={reportData.relatedParties.slice(0, 5)}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis tickFormatter={(value) => formatRupiah(value)} />
-                      <Tooltip formatter={(value: number) => formatRupiah(value)} />
-                      <Bar dataKey="total" name="Total" fill="#00C49F" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+              {/* Categories Section */}
+              {transactionType !== "all" ? (
+                // Single transaction type categories
+                reportData.categories && reportData.categories.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Kategori Teratas</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Kategori</TableHead>
+                            <TableHead className="text-right">Total</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {reportData.categories.slice(0, 5).map((item: any, index: number) => (
+                            <TableRow key={index}>
+                              <TableCell>{item.name}</TableCell>
+                              <TableCell className="text-right">{formatRupiah(item.total)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
+                )
               ) : (
-                <div className="bg-muted p-4 rounded-md">
-                  <p className="text-muted-foreground text-center">Tidak ada data pihak terkait tersedia</p>
+                // Both income and expense categories
+                <div className="space-y-6">
+                  {reportData.income?.categories && reportData.income.categories.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Kategori Pemasukan Teratas</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Kategori</TableHead>
+                              <TableHead className="text-right">Total</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {reportData.income.categories.slice(0, 5).map((item: any, index: number) => (
+                              <TableRow key={`income-${index}`}>
+                                <TableCell>{item.name}</TableCell>
+                                <TableCell className="text-right">{formatRupiah(item.total)}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {reportData.expense?.categories && reportData.expense.categories.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Kategori Pengeluaran Teratas</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Kategori</TableHead>
+                              <TableHead className="text-right">Total</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {reportData.expense.categories.slice(0, 5).map((item: any, index: number) => (
+                              <TableRow key={`expense-${index}`}>
+                                <TableCell>{item.name}</TableCell>
+                                <TableCell className="text-right">{formatRupiah(item.total)}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </CardContent>
+                    </Card>
+                  )}
                 </div>
               )}
 
-              {reportData.items && reportData.items.length > 0 ? (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Item Teratas</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={reportData.items.slice(0, 5)}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis tickFormatter={(value) => formatRupiah(value)} />
-                      <Tooltip formatter={(value: number) => formatRupiah(value)} />
-                      <Bar dataKey="total" name="Total" fill="#FFBB28" />
-                      <Bar dataKey="quantity" name="Jumlah" fill="#FF8042" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+              {/* Related Parties Section */}
+              {transactionType !== "all" ? (
+                // Single transaction type related parties
+                reportData.relatedParties && reportData.relatedParties.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Pihak Terkait Teratas</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Pihak Terkait</TableHead>
+                            <TableHead className="text-right">Total</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {reportData.relatedParties.slice(0, 5).map((item: any, index: number) => (
+                            <TableRow key={index}>
+                              <TableCell>{item.name}</TableCell>
+                              <TableCell className="text-right">{formatRupiah(item.total)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
+                )
               ) : (
-                <div className="bg-muted p-4 rounded-md">
-                  <p className="text-muted-foreground text-center">Tidak ada data item tersedia</p>
+                // Both income and expense related parties
+                <div className="space-y-6">
+                  {reportData.income?.relatedParties && reportData.income.relatedParties.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Pihak Terkait Pemasukan Teratas</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Pihak Terkait</TableHead>
+                              <TableHead className="text-right">Total</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {reportData.income.relatedParties.slice(0, 5).map((item: any, index: number) => (
+                              <TableRow key={`income-${index}`}>
+                                <TableCell>{item.name}</TableCell>
+                                <TableCell className="text-right">{formatRupiah(item.total)}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {reportData.expense?.relatedParties && reportData.expense.relatedParties.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Pihak Terkait Pengeluaran Teratas</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Pihak Terkait</TableHead>
+                              <TableHead className="text-right">Total</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {reportData.expense.relatedParties.slice(0, 5).map((item: any, index: number) => (
+                              <TableRow key={`expense-${index}`}>
+                                <TableCell>{item.name}</TableCell>
+                                <TableCell className="text-right">{formatRupiah(item.total)}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              )}
+
+              {/* Items Section */}
+              {transactionType !== "all" ? (
+                // Single transaction type items
+                reportData.items && reportData.items.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Item Teratas</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Item</TableHead>
+                            <TableHead className="text-right">Jumlah</TableHead>
+                            <TableHead className="text-right">Total</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {reportData.items.slice(0, 5).map((item: any, index: number) => (
+                            <TableRow key={index}>
+                              <TableCell>{item.name}</TableCell>
+                              <TableCell className="text-right">{item.quantity}</TableCell>
+                              <TableCell className="text-right">{formatRupiah(item.total)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
+                )
+              ) : (
+                // Both income and expense items
+                <div className="space-y-6">
+                  {reportData.income?.items && reportData.income.items.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Item Pemasukan Teratas</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Item</TableHead>
+                              <TableHead className="text-right">Jumlah</TableHead>
+                              <TableHead className="text-right">Total</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {reportData.income.items.slice(0, 5).map((item: any, index: number) => (
+                              <TableRow key={`income-${index}`}>
+                                <TableCell>{item.name}</TableCell>
+                                <TableCell className="text-right">{item.quantity}</TableCell>
+                                <TableCell className="text-right">{formatRupiah(item.total)}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {reportData.expense?.items && reportData.expense.items.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Item Pengeluaran Teratas</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Item</TableHead>
+                              <TableHead className="text-right">Jumlah</TableHead>
+                              <TableHead className="text-right">Total</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {reportData.expense.items.slice(0, 5).map((item: any, index: number) => (
+                              <TableRow key={`expense-${index}`}>
+                                <TableCell>{item.name}</TableCell>
+                                <TableCell className="text-right">{item.quantity}</TableCell>
+                                <TableCell className="text-right">{formatRupiah(item.total)}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </CardContent>
+                    </Card>
+                  )}
                 </div>
               )}
             </div>
@@ -332,36 +821,26 @@ export default function ReportPage() {
               date={date}
               setDate={setDate}
             />
+          </div>
 
-            <div className="flex gap-2">
-              <Button onClick={handleExportPDF} variant="outline">
-                <Download className="mr-2 h-4 w-4" />
-                Export PDF
-              </Button>
-              <Button onClick={handleExportExcel} variant="outline">
-                <Download className="mr-2 h-4 w-4" />
-                Export Excel
-              </Button>
-            </div>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={handleExportPDF} variant="outline">
+              <Download className="mr-2 h-4 w-4" />
+              Export PDF
+            </Button>
+            <Button onClick={handleExportExcel} variant="outline">
+              <Download className="mr-2 h-4 w-4" />
+              Export Excel
+            </Button>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {REPORT_TYPES.find((t) => t.value === reportType)?.label}
-          </CardTitle>
-          <CardDescription>
-            Periode: {date?.from ? format(date.from, "d MMMM yyyy", { locale: id }) : ""} -{" "}
-            {date?.to ? format(date.to, "d MMMM yyyy", { locale: id }) : ""}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {shouldShowTransactionTypeTabs && (
+      {shouldShowTransactionTypeTabs && (
+        <Card>
+          <CardContent className="pt-6">
             <Tabs 
               defaultValue={transactionType} 
-              className="mb-6"
               onValueChange={(value) => setTransactionType(value as "all" | "income" | "expense")}
             >
               <TabsList className="grid w-full max-w-md grid-cols-3">
@@ -370,21 +849,23 @@ export default function ReportPage() {
                 <TabsTrigger value="expense">Pengeluaran</TabsTrigger>
               </TabsList>
             </Tabs>
-          )}
+          </CardContent>
+        </Card>
+      )}
 
-          {isLoading ? (
-            <div className="flex justify-center items-center h-[400px]">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-            </div>
-          ) : reportData ? (
-            renderChart()
-          ) : (
-            <div className="flex justify-center items-center h-[400px] text-muted-foreground">
-              Tidak ada data untuk ditampilkan
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {isLoading ? (
+        <div className="flex justify-center items-center h-[400px]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        </div>
+      ) : reportData ? (
+        renderReport()
+      ) : (
+        <Card>
+          <CardContent className="flex justify-center items-center h-[400px] text-muted-foreground">
+            Tidak ada data untuk ditampilkan
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 } 

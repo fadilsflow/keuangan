@@ -328,7 +328,8 @@ export async function generateSummaryReport(orgId: string, startDate: Date, endD
 
   // Aggregate data
   transactions.forEach(transaction => {
-    const type = (transaction.type === "income" || transaction.type === "pemasukan") ? "income" : "expense";
+    const isIncome = transaction.type === "income" || transaction.type === "pemasukan";
+    const type = isIncome ? "income" : "expense";
     
     // Add to total and count
     summary[type].total += transaction.amountTotal;

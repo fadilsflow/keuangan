@@ -248,8 +248,6 @@ function ChartTooltipContent({
   )
 }
 
-const ChartLegend = RechartsPrimitive.Legend
-
 function ChartLegendContent({
   className,
   hideIcon = false,
@@ -270,33 +268,39 @@ function ChartLegendContent({
   return (
     <div
       className={cn(
-        "flex items-center justify-center gap-4",
-        verticalAlign === "top" ? "pb-3" : "pt-3",
+        "flex flex-wrap items-center gap-x-4 gap-y-2",
+        {
+          "flex-row text-xs": verticalAlign !== "right",
+          "flex-col text-xs items-start": verticalAlign === "right",
+        },
         className
       )}
     >
-      {payload.map((item) => {
-        const key = `${nameKey || item.dataKey || "value"}`
+      {payload.map((item, index) => {
+        const key = `${nameKey || item.dataKey || item.value || "value"}`
         const itemConfig = getPayloadConfigFromPayload(config, item, key)
+        const iconColor = item.payload?.fill || item.color
 
         return (
-          <div
-            key={item.value}
-            className={cn(
-              "[&>svg]:text-muted-foreground flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3"
-            )}
-          >
-            {itemConfig?.icon && !hideIcon ? (
+          <div key={index} className="flex items-center gap-1.5">
+            {itemConfig?.icon ? (
               <itemConfig.icon />
             ) : (
-              <div
-                className="h-2 w-2 shrink-0 rounded-[2px]"
-                style={{
-                  backgroundColor: item.color,
-                }}
-              />
+              !hideIcon && (
+                <div
+                  className="h-2.5 w-2.5 rounded-[2px] bg-(--color-bg) border border-(--color-border)"
+                  style={
+                    {
+                      "--color-bg": iconColor,
+                      "--color-border": iconColor,
+                    } as React.CSSProperties
+                  }
+                />
+              )
             )}
-            {itemConfig?.label}
+            <div className="whitespace-nowrap">
+              {itemConfig?.label || item.value}
+            </div>
           </div>
         )
       })}
@@ -304,50 +308,32 @@ function ChartLegendContent({
   )
 }
 
-// Helper to extract item config from a payload.
 function getPayloadConfigFromPayload(
   config: ChartConfig,
   payload: unknown,
   key: string
 ) {
-  if (typeof payload !== "object" || payload === null) {
-    return undefined
-  }
-
-  const payloadPayload =
-    "payload" in payload &&
-    typeof payload.payload === "object" &&
-    payload.payload !== null
-      ? payload.payload
-      : undefined
-
-  let configLabelKey: string = key
-
   if (
-    key in payload &&
-    typeof payload[key as keyof typeof payload] === "string"
+    typeof payload !== "object" ||
+    !payload ||
+    !key ||
+    !config ||
+    Array.isArray(payload)
   ) {
-    configLabelKey = payload[key as keyof typeof payload] as string
-  } else if (
-    payloadPayload &&
-    key in payloadPayload &&
-    typeof payloadPayload[key as keyof typeof payloadPayload] === "string"
-  ) {
-    configLabelKey = payloadPayload[
-      key as keyof typeof payloadPayload
-    ] as string
+    return null
   }
 
-  return configLabelKey in config
-    ? config[configLabelKey]
-    : config[key as keyof typeof config]
+  const validEntry = Object.entries(config).find(([configKey]) => {
+    return configKey === key
+  })
+
+  return validEntry ? validEntry[1] : null
 }
 
 export {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  ChartLegend,
   ChartLegendContent,
-  ChartStyle,
+  useChart,
 }

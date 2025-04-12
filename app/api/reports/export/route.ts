@@ -77,7 +77,7 @@ export async function GET(request: Request) {
     const endDate = searchParams.get("endDate");
     const transactionType = searchParams.get("transactionType") || "all";
     const format = searchParams.get("format") || "pdf"; // pdf or excel
-    
+
     if (!reportType || !startDate || !endDate) {
       return new NextResponse("Missing required parameters", { status: 400 });
     }
@@ -800,7 +800,7 @@ async function generatePDF(
   doc.setFont("helvetica", "bold");
   doc.text(orgName, pageWidth / 2, y, { align: 'center' as const });
   y += 12;
-
+  
   // Add title
   const title = getReportTitle(reportType, transactionType);
   doc.setFontSize(16);
@@ -820,7 +820,7 @@ async function generatePDF(
   // Generate report based on type
   if (reportType === 'monthly') {
     // Draw table header manually
-    doc.setFontSize(12);
+  doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
     
     // Define columns
@@ -883,11 +883,11 @@ async function generatePDF(
     // Draw data rows
     doc.setFont("helvetica", "normal");
     reportData.forEach((item: any) => {
-      if (y > doc.internal.pageSize.height - 20) {
-        doc.addPage();
-        y = 20;
-      }
-      
+    if (y > doc.internal.pageSize.height - 20) {
+      doc.addPage();
+      y = 20;
+    }
+
       x = margin;
       const values = [item.year.toString(), formatRupiah(item.income), formatRupiah(item.expense)];
       
@@ -920,7 +920,7 @@ async function generatePDF(
       doc.setFontSize(14);
       doc.setFont("helvetica", "bold");
       doc.text('Pemasukan', pageWidth / 2, y, { align: 'center' as const });
-      y += 10;
+    y += 10;
       
       // Income table
       doc.setFontSize(12);
