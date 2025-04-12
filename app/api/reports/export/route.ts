@@ -14,13 +14,41 @@ import jsPDF from "jspdf";
 import { formatRupiah } from "@/lib/utils";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
+import { cookies } from "next/headers";
 
-// Add a server-side function to get org name
+// Server-side function to get organization name
 async function getOrganizationName(orgId: string | null | undefined): Promise<string> {
   if (!orgId) return "Organization";
   
   try {
-    // Return default for now as we can't directly access the Clerk API here
+    // Get active organization name from the session claims
+    const { sessionClaims } = await auth();
+    
+    // Check if we have org_id and org_metadata
+    if (sessionClaims && sessionClaims.org_id) {
+      // Check if we have org_metadata with name
+      if (sessionClaims.org_metadata && 
+          typeof sessionClaims.org_metadata === 'object' && 
+          'name' in sessionClaims.org_metadata &&
+          sessionClaims.org_metadata.name) {
+        return String(sessionClaims.org_metadata.name);
+      }
+      
+      // Fallback to org_name if available
+      if (sessionClaims.org_name) {
+        return String(sessionClaims.org_name);
+      }
+      
+      // Fallback to capitalizing org_slug if available
+      if (sessionClaims.org_slug) {
+        // Convert slug to display name (replace hyphens with spaces and capitalize each word)
+        return String(sessionClaims.org_slug)
+          .split('-')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+      }
+    }
+    
     return "Organization";
   } catch (error) {
     console.error("Error fetching organization name:", error);
