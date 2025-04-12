@@ -229,27 +229,65 @@ async function generateExcel(
     worksheet.getColumn('expense').numFmt = 'Rp#,##0.00';
     
   } else if (reportType === 'category') {
-    // For 'all' transaction type, we need columns for both income and expense
+    // For 'all' transaction type, we need separate tables for income and expense
     if (transactionType === 'all') {
-      worksheet.columns = [
-        { header: 'Kategori', key: 'category', width: 25 },
-        { header: 'Pemasukan', key: 'income', width: 20 },
-        { header: 'Pengeluaran', key: 'expense', width: 20 },
-      ];
+      // First create income table
+      worksheet.mergeCells('A4:C4');
+      worksheet.getCell('A4').value = 'Pemasukan';
+      worksheet.getCell('A4').font = { bold: true, size: 14 };
+      worksheet.getCell('A4').alignment = { horizontal: 'center' };
       
-      reportData.forEach((item: any) => {
-        worksheet.addRow({
-          category: item.category,
-          income: item.income || 0,
-          expense: item.expense || 0
+      worksheet.getCell('A5').value = 'Kategori';
+      worksheet.getCell('B5').value = 'Total';
+      worksheet.getCell('A5').font = { bold: true };
+      worksheet.getCell('B5').font = { bold: true };
+      
+      let currentRow = 6;
+      // Filter for income categories
+      const incomeCategories = reportData.filter((item: any) => item.type === 'income');
+      if (incomeCategories.length > 0) {
+        incomeCategories.forEach((item: any) => {
+          worksheet.getCell(`A${currentRow}`).value = item.category;
+          worksheet.getCell(`B${currentRow}`).value = item.income || 0;
+          worksheet.getCell(`B${currentRow}`).numFmt = 'Rp#,##0.00';
+          currentRow++;
         });
-      });
+      } else {
+        worksheet.getCell(`A${currentRow}`).value = 'Tidak ada data kategori pemasukan';
+        currentRow++;
+      }
       
-      // Format currency columns
-      worksheet.getColumn('income').numFmt = 'Rp#,##0.00';
-      worksheet.getColumn('expense').numFmt = 'Rp#,##0.00';
+      // Add space between tables
+      currentRow += 2;
+      
+      // Then create expense table
+      worksheet.mergeCells(`A${currentRow}:C${currentRow}`);
+      worksheet.getCell(`A${currentRow}`).value = 'Pengeluaran';
+      worksheet.getCell(`A${currentRow}`).font = { bold: true, size: 14 };
+      worksheet.getCell(`A${currentRow}`).alignment = { horizontal: 'center' };
+      currentRow++;
+      
+      worksheet.getCell(`A${currentRow}`).value = 'Kategori';
+      worksheet.getCell(`B${currentRow}`).value = 'Total';
+      worksheet.getCell(`A${currentRow}`).font = { bold: true };
+      worksheet.getCell(`B${currentRow}`).font = { bold: true };
+      currentRow++;
+      
+      // Filter for expense categories
+      const expenseCategories = reportData.filter((item: any) => item.type === 'expense');
+      if (expenseCategories.length > 0) {
+        expenseCategories.forEach((item: any) => {
+          worksheet.getCell(`A${currentRow}`).value = item.category;
+          worksheet.getCell(`B${currentRow}`).value = item.expense || 0;
+          worksheet.getCell(`B${currentRow}`).numFmt = 'Rp#,##0.00';
+          currentRow++;
+        });
+      } else {
+        worksheet.getCell(`A${currentRow}`).value = 'Tidak ada data kategori pengeluaran';
+        currentRow++;
+      }
     } else {
-      // Single column for either income or expense
+      // Single column for either income or expense (no change to this part)
       const valueType = transactionType === 'income' ? 'Pemasukan' : 'Pengeluaran';
       const valueKey = transactionType === 'income' ? 'income' : 'expense';
       
@@ -268,29 +306,66 @@ async function generateExcel(
       // Format currency column
       worksheet.getColumn('value').numFmt = 'Rp#,##0.00';
     }
-    
   } else if (reportType === 'related-party') {
-    // For 'all' transaction type, we need columns for both income and expense
+    // For 'all' transaction type, we need separate tables for income and expense
     if (transactionType === 'all') {
-      worksheet.columns = [
-        { header: 'Pihak Terkait', key: 'relatedParty', width: 25 },
-        { header: 'Pemasukan', key: 'income', width: 20 },
-        { header: 'Pengeluaran', key: 'expense', width: 20 },
-      ];
+      // First create income table
+      worksheet.mergeCells('A4:C4');
+      worksheet.getCell('A4').value = 'Pemasukan';
+      worksheet.getCell('A4').font = { bold: true, size: 14 };
+      worksheet.getCell('A4').alignment = { horizontal: 'center' };
       
-      reportData.forEach((item: any) => {
-        worksheet.addRow({
-          relatedParty: item.relatedParty,
-          income: item.income || 0,
-          expense: item.expense || 0
+      worksheet.getCell('A5').value = 'Pihak Terkait';
+      worksheet.getCell('B5').value = 'Total';
+      worksheet.getCell('A5').font = { bold: true };
+      worksheet.getCell('B5').font = { bold: true };
+      
+      let currentRow = 6;
+      // Filter for income related parties
+      const incomeParties = reportData.filter((item: any) => item.type === 'income');
+      if (incomeParties.length > 0) {
+        incomeParties.forEach((item: any) => {
+          worksheet.getCell(`A${currentRow}`).value = item.relatedParty;
+          worksheet.getCell(`B${currentRow}`).value = item.income || 0;
+          worksheet.getCell(`B${currentRow}`).numFmt = 'Rp#,##0.00';
+          currentRow++;
         });
-      });
+      } else {
+        worksheet.getCell(`A${currentRow}`).value = 'Tidak ada data pihak terkait pemasukan';
+        currentRow++;
+      }
       
-      // Format currency columns
-      worksheet.getColumn('income').numFmt = 'Rp#,##0.00';
-      worksheet.getColumn('expense').numFmt = 'Rp#,##0.00';
+      // Add space between tables
+      currentRow += 2;
+      
+      // Then create expense table
+      worksheet.mergeCells(`A${currentRow}:C${currentRow}`);
+      worksheet.getCell(`A${currentRow}`).value = 'Pengeluaran';
+      worksheet.getCell(`A${currentRow}`).font = { bold: true, size: 14 };
+      worksheet.getCell(`A${currentRow}`).alignment = { horizontal: 'center' };
+      currentRow++;
+      
+      worksheet.getCell(`A${currentRow}`).value = 'Pihak Terkait';
+      worksheet.getCell(`B${currentRow}`).value = 'Total';
+      worksheet.getCell(`A${currentRow}`).font = { bold: true };
+      worksheet.getCell(`B${currentRow}`).font = { bold: true };
+      currentRow++;
+      
+      // Filter for expense related parties
+      const expenseParties = reportData.filter((item: any) => item.type === 'expense');
+      if (expenseParties.length > 0) {
+        expenseParties.forEach((item: any) => {
+          worksheet.getCell(`A${currentRow}`).value = item.relatedParty;
+          worksheet.getCell(`B${currentRow}`).value = item.expense || 0;
+          worksheet.getCell(`B${currentRow}`).numFmt = 'Rp#,##0.00';
+          currentRow++;
+        });
+      } else {
+        worksheet.getCell(`A${currentRow}`).value = 'Tidak ada data pihak terkait pengeluaran';
+        currentRow++;
+      }
     } else {
-      // Single column for either income or expense
+      // Single column for either income or expense (no change to this part)
       const valueType = transactionType === 'income' ? 'Pemasukan' : 'Pengeluaran';
       const valueKey = transactionType === 'income' ? 'income' : 'expense';
       
@@ -309,25 +384,88 @@ async function generateExcel(
       // Format currency column
       worksheet.getColumn('value').numFmt = 'Rp#,##0.00';
     }
-    
   } else if (reportType === 'items') {
-    worksheet.columns = [
-      { header: 'Item', key: 'itemName', width: 25 },
-      { header: 'Jumlah', key: 'quantity', width: 15 },
-      { header: 'Total', key: 'totalAmount', width: 20 },
-    ];
-    
-    reportData.forEach((item: any) => {
-      worksheet.addRow({
-        itemName: item.itemName,
-        quantity: item.quantity,
-        totalAmount: item.totalAmount
+    if (transactionType === 'all') {
+      // First create income table
+      worksheet.mergeCells('A4:D4');
+      worksheet.getCell('A4').value = 'Pemasukan';
+      worksheet.getCell('A4').font = { bold: true, size: 14 };
+      worksheet.getCell('A4').alignment = { horizontal: 'center' };
+      
+      worksheet.getCell('A5').value = 'Item';
+      worksheet.getCell('B5').value = 'Jumlah';
+      worksheet.getCell('C5').value = 'Total';
+      worksheet.getCell('A5').font = { bold: true };
+      worksheet.getCell('B5').font = { bold: true };
+      worksheet.getCell('C5').font = { bold: true };
+      
+      let currentRow = 6;
+      // Filter for income items
+      const incomeItems = reportData.filter((item: any) => item.type === 'income');
+      if (incomeItems.length > 0) {
+        incomeItems.forEach((item: any) => {
+          worksheet.getCell(`A${currentRow}`).value = item.itemName;
+          worksheet.getCell(`B${currentRow}`).value = item.quantity;
+          worksheet.getCell(`C${currentRow}`).value = item.totalAmount;
+          worksheet.getCell(`C${currentRow}`).numFmt = 'Rp#,##0.00';
+          currentRow++;
+        });
+      } else {
+        worksheet.getCell(`A${currentRow}`).value = 'Tidak ada data item pemasukan';
+        currentRow++;
+      }
+      
+      // Add space between tables
+      currentRow += 2;
+      
+      // Then create expense table
+      worksheet.mergeCells(`A${currentRow}:D${currentRow}`);
+      worksheet.getCell(`A${currentRow}`).value = 'Pengeluaran';
+      worksheet.getCell(`A${currentRow}`).font = { bold: true, size: 14 };
+      worksheet.getCell(`A${currentRow}`).alignment = { horizontal: 'center' };
+      currentRow++;
+      
+      worksheet.getCell(`A${currentRow}`).value = 'Item';
+      worksheet.getCell(`B${currentRow}`).value = 'Jumlah';
+      worksheet.getCell(`C${currentRow}`).value = 'Total';
+      worksheet.getCell(`A${currentRow}`).font = { bold: true };
+      worksheet.getCell(`B${currentRow}`).font = { bold: true };
+      worksheet.getCell(`C${currentRow}`).font = { bold: true };
+      currentRow++;
+      
+      // Filter for expense items
+      const expenseItems = reportData.filter((item: any) => item.type === 'expense');
+      if (expenseItems.length > 0) {
+        expenseItems.forEach((item: any) => {
+          worksheet.getCell(`A${currentRow}`).value = item.itemName;
+          worksheet.getCell(`B${currentRow}`).value = item.quantity;
+          worksheet.getCell(`C${currentRow}`).value = item.totalAmount;
+          worksheet.getCell(`C${currentRow}`).numFmt = 'Rp#,##0.00';
+          currentRow++;
+        });
+      } else {
+        worksheet.getCell(`A${currentRow}`).value = 'Tidak ada data item pengeluaran';
+        currentRow++;
+      }
+    } else {
+      // No change for single transaction type
+      worksheet.columns = [
+        { header: 'Item', key: 'itemName', width: 25 },
+        { header: 'Jumlah', key: 'quantity', width: 15 },
+        { header: 'Total', key: 'totalAmount', width: 20 },
+      ];
+      
+      reportData.forEach((item: any) => {
+        worksheet.addRow({
+          itemName: item.itemName,
+          quantity: item.quantity,
+          totalAmount: item.totalAmount
+        });
       });
-    });
-    
-    // Format currency column
-    worksheet.getColumn('totalAmount').numFmt = 'Rp#,##0.00';
-    
+      
+      // Format currency column
+      worksheet.getColumn('totalAmount').numFmt = 'Rp#,##0.00';
+    }
   } else if (reportType === 'summary') {
     // Handle summary report
     let reportTitle = "";
@@ -347,96 +485,263 @@ async function generateExcel(
 
     let currentRow = 5;
 
-    // Summary
-    worksheet.getCell(`A${currentRow}`).value = "Total Transaksi";
-    worksheet.getCell(`B${currentRow}`).value = reportData.transactionCount || 0;
-    currentRow++;
-
-    worksheet.getCell(`A${currentRow}`).value = "Total Nilai";
-    worksheet.getCell(`B${currentRow}`).value = reportData.total || 0;
-    worksheet.getCell(`B${currentRow}`).numFmt = 'Rp#,##0.00';
-    currentRow += 2;
-
-    // Categories (if available)
-    if (reportData.categories && reportData.categories.length > 0) {
-      worksheet.getCell(`A${currentRow}`).value = "Kategori Teratas";
-      worksheet.getCell(`A${currentRow}`).font = { bold: true };
-      currentRow++;
-
-      worksheet.getCell(`A${currentRow}`).value = "Nama Kategori";
-      worksheet.getCell(`B${currentRow}`).value = "Total";
-      worksheet.getCell(`A${currentRow}`).font = { bold: true };
-      worksheet.getCell(`B${currentRow}`).font = { bold: true };
-      currentRow++;
-
-      reportData.categories.slice(0, 5).forEach((category: { name: string; total: number }) => {
-        worksheet.getCell(`A${currentRow}`).value = category.name || "Unknown";
-        worksheet.getCell(`B${currentRow}`).value = category.total || 0;
-        worksheet.getCell(`B${currentRow}`).numFmt = 'Rp#,##0.00';
-        currentRow++;
-      });
-      currentRow++;
-    } else {
-      worksheet.getCell(`A${currentRow}`).value = "Kategori Teratas";
-      worksheet.getCell(`A${currentRow}`).font = { bold: true };
-      currentRow++;
-      worksheet.getCell(`A${currentRow}`).value = "Tidak ada data kategori tersedia";
+    // For "all" transaction type, we need to display both income and expense data
+    if (transactionType === "all") {
+      // Income Summary Section
+      worksheet.mergeCells(`A${currentRow}:C${currentRow}`);
+      worksheet.getCell(`A${currentRow}`).value = "Ringkasan Pemasukan";
+      worksheet.getCell(`A${currentRow}`).font = { bold: true, size: 14 };
+      worksheet.getCell(`A${currentRow}`).alignment = { horizontal: 'center' };
       currentRow += 2;
-    }
 
-    // Related Parties (if available)
-    if (reportData.relatedParties && reportData.relatedParties.length > 0) {
-      worksheet.getCell(`A${currentRow}`).value = "Pihak Terkait Teratas";
-      worksheet.getCell(`A${currentRow}`).font = { bold: true };
+      worksheet.getCell(`A${currentRow}`).value = "Total Transaksi";
+      worksheet.getCell(`B${currentRow}`).value = reportData.income.transactionCount || 0;
       currentRow++;
 
-      worksheet.getCell(`A${currentRow}`).value = "Nama Pihak";
-      worksheet.getCell(`B${currentRow}`).value = "Total";
-      worksheet.getCell(`A${currentRow}`).font = { bold: true };
-      worksheet.getCell(`B${currentRow}`).font = { bold: true };
-      currentRow++;
-
-      reportData.relatedParties.slice(0, 5).forEach((party: { name: string; total: number }) => {
-        worksheet.getCell(`A${currentRow}`).value = party.name || "Unknown";
-        worksheet.getCell(`B${currentRow}`).value = party.total || 0;
-        worksheet.getCell(`B${currentRow}`).numFmt = 'Rp#,##0.00';
-        currentRow++;
-      });
-      currentRow++;
-    } else {
-      worksheet.getCell(`A${currentRow}`).value = "Pihak Terkait Teratas";
-      worksheet.getCell(`A${currentRow}`).font = { bold: true };
-      currentRow++;
-      worksheet.getCell(`A${currentRow}`).value = "Tidak ada data pihak terkait tersedia";
+      worksheet.getCell(`A${currentRow}`).value = "Total Nilai";
+      worksheet.getCell(`B${currentRow}`).value = reportData.income.total || 0;
+      worksheet.getCell(`B${currentRow}`).numFmt = 'Rp#,##0.00';
       currentRow += 2;
-    }
 
-    // Items (if available)
-    if (reportData.items && reportData.items.length > 0) {
-      worksheet.getCell(`A${currentRow}`).value = "Item Teratas";
-      worksheet.getCell(`A${currentRow}`).font = { bold: true };
-      currentRow++;
-
-      worksheet.getCell(`A${currentRow}`).value = "Nama Item";
-      worksheet.getCell(`B${currentRow}`).value = "Total";
-      worksheet.getCell(`C${currentRow}`).value = "Kuantitas";
-      worksheet.getCell(`A${currentRow}`).font = { bold: true };
-      worksheet.getCell(`B${currentRow}`).font = { bold: true };
-      worksheet.getCell(`C${currentRow}`).font = { bold: true };
-      currentRow++;
-
-      reportData.items.slice(0, 5).forEach((item: { name: string; total: number; quantity: number }) => {
-        worksheet.getCell(`A${currentRow}`).value = item.name || "Unknown";
-        worksheet.getCell(`B${currentRow}`).value = item.total || 0;
-        worksheet.getCell(`C${currentRow}`).value = item.quantity || 0;
-        worksheet.getCell(`B${currentRow}`).numFmt = 'Rp#,##0.00';
+      // Income Categories (if available)
+      if (reportData.income.categories && reportData.income.categories.length > 0) {
+        worksheet.getCell(`A${currentRow}`).value = "Kategori Teratas - Pemasukan";
+        worksheet.getCell(`A${currentRow}`).font = { bold: true };
         currentRow++;
-      });
-    } else {
-      worksheet.getCell(`A${currentRow}`).value = "Item Teratas";
-      worksheet.getCell(`A${currentRow}`).font = { bold: true };
+
+        worksheet.getCell(`A${currentRow}`).value = "Nama Kategori";
+        worksheet.getCell(`B${currentRow}`).value = "Total";
+        worksheet.getCell(`A${currentRow}`).font = { bold: true };
+        worksheet.getCell(`B${currentRow}`).font = { bold: true };
+        currentRow++;
+
+        reportData.income.categories.slice(0, 5).forEach((category: { name: string; total: number }) => {
+          worksheet.getCell(`A${currentRow}`).value = category.name || "Unknown";
+          worksheet.getCell(`B${currentRow}`).value = category.total || 0;
+          worksheet.getCell(`B${currentRow}`).numFmt = 'Rp#,##0.00';
+          currentRow++;
+        });
+        currentRow++;
+      }
+
+      // Income Related Parties (if available)
+      if (reportData.income.relatedParties && reportData.income.relatedParties.length > 0) {
+        worksheet.getCell(`A${currentRow}`).value = "Pihak Terkait Teratas - Pemasukan";
+        worksheet.getCell(`A${currentRow}`).font = { bold: true };
+        currentRow++;
+
+        worksheet.getCell(`A${currentRow}`).value = "Nama Pihak";
+        worksheet.getCell(`B${currentRow}`).value = "Total";
+        worksheet.getCell(`A${currentRow}`).font = { bold: true };
+        worksheet.getCell(`B${currentRow}`).font = { bold: true };
+        currentRow++;
+
+        reportData.income.relatedParties.slice(0, 5).forEach((party: { name: string; total: number }) => {
+          worksheet.getCell(`A${currentRow}`).value = party.name || "Unknown";
+          worksheet.getCell(`B${currentRow}`).value = party.total || 0;
+          worksheet.getCell(`B${currentRow}`).numFmt = 'Rp#,##0.00';
+          currentRow++;
+        });
+        currentRow++;
+      }
+
+      // Income Items (if available)
+      if (reportData.income.items && reportData.income.items.length > 0) {
+        worksheet.getCell(`A${currentRow}`).value = "Item Teratas - Pemasukan";
+        worksheet.getCell(`A${currentRow}`).font = { bold: true };
+        currentRow++;
+
+        worksheet.getCell(`A${currentRow}`).value = "Nama Item";
+        worksheet.getCell(`B${currentRow}`).value = "Total";
+        worksheet.getCell(`C${currentRow}`).value = "Kuantitas";
+        worksheet.getCell(`A${currentRow}`).font = { bold: true };
+        worksheet.getCell(`B${currentRow}`).font = { bold: true };
+        worksheet.getCell(`C${currentRow}`).font = { bold: true };
+        currentRow++;
+
+        reportData.income.items.slice(0, 5).forEach((item: { name: string; total: number; quantity: number }) => {
+          worksheet.getCell(`A${currentRow}`).value = item.name || "Unknown";
+          worksheet.getCell(`B${currentRow}`).value = item.total || 0;
+          worksheet.getCell(`C${currentRow}`).value = item.quantity || 0;
+          worksheet.getCell(`B${currentRow}`).numFmt = 'Rp#,##0.00';
+          currentRow++;
+        });
+        currentRow += 2;
+      }
+
+      // Expense Summary Section
+      worksheet.mergeCells(`A${currentRow}:C${currentRow}`);
+      worksheet.getCell(`A${currentRow}`).value = "Ringkasan Pengeluaran";
+      worksheet.getCell(`A${currentRow}`).font = { bold: true, size: 14 };
+      worksheet.getCell(`A${currentRow}`).alignment = { horizontal: 'center' };
+      currentRow += 2;
+
+      worksheet.getCell(`A${currentRow}`).value = "Total Transaksi";
+      worksheet.getCell(`B${currentRow}`).value = reportData.expense.transactionCount || 0;
       currentRow++;
-      worksheet.getCell(`A${currentRow}`).value = "Tidak ada data item tersedia";
+
+      worksheet.getCell(`A${currentRow}`).value = "Total Nilai";
+      worksheet.getCell(`B${currentRow}`).value = reportData.expense.total || 0;
+      worksheet.getCell(`B${currentRow}`).numFmt = 'Rp#,##0.00';
+      currentRow += 2;
+
+      // Expense Categories (if available)
+      if (reportData.expense.categories && reportData.expense.categories.length > 0) {
+        worksheet.getCell(`A${currentRow}`).value = "Kategori Teratas - Pengeluaran";
+        worksheet.getCell(`A${currentRow}`).font = { bold: true };
+        currentRow++;
+
+        worksheet.getCell(`A${currentRow}`).value = "Nama Kategori";
+        worksheet.getCell(`B${currentRow}`).value = "Total";
+        worksheet.getCell(`A${currentRow}`).font = { bold: true };
+        worksheet.getCell(`B${currentRow}`).font = { bold: true };
+        currentRow++;
+
+        reportData.expense.categories.slice(0, 5).forEach((category: { name: string; total: number }) => {
+          worksheet.getCell(`A${currentRow}`).value = category.name || "Unknown";
+          worksheet.getCell(`B${currentRow}`).value = category.total || 0;
+          worksheet.getCell(`B${currentRow}`).numFmt = 'Rp#,##0.00';
+          currentRow++;
+        });
+        currentRow++;
+      }
+
+      // Expense Related Parties (if available)
+      if (reportData.expense.relatedParties && reportData.expense.relatedParties.length > 0) {
+        worksheet.getCell(`A${currentRow}`).value = "Pihak Terkait Teratas - Pengeluaran";
+        worksheet.getCell(`A${currentRow}`).font = { bold: true };
+        currentRow++;
+
+        worksheet.getCell(`A${currentRow}`).value = "Nama Pihak";
+        worksheet.getCell(`B${currentRow}`).value = "Total";
+        worksheet.getCell(`A${currentRow}`).font = { bold: true };
+        worksheet.getCell(`B${currentRow}`).font = { bold: true };
+        currentRow++;
+
+        reportData.expense.relatedParties.slice(0, 5).forEach((party: { name: string; total: number }) => {
+          worksheet.getCell(`A${currentRow}`).value = party.name || "Unknown";
+          worksheet.getCell(`B${currentRow}`).value = party.total || 0;
+          worksheet.getCell(`B${currentRow}`).numFmt = 'Rp#,##0.00';
+          currentRow++;
+        });
+        currentRow++;
+      }
+
+      // Expense Items (if available)
+      if (reportData.expense.items && reportData.expense.items.length > 0) {
+        worksheet.getCell(`A${currentRow}`).value = "Item Teratas - Pengeluaran";
+        worksheet.getCell(`A${currentRow}`).font = { bold: true };
+        currentRow++;
+
+        worksheet.getCell(`A${currentRow}`).value = "Nama Item";
+        worksheet.getCell(`B${currentRow}`).value = "Total";
+        worksheet.getCell(`C${currentRow}`).value = "Kuantitas";
+        worksheet.getCell(`A${currentRow}`).font = { bold: true };
+        worksheet.getCell(`B${currentRow}`).font = { bold: true };
+        worksheet.getCell(`C${currentRow}`).font = { bold: true };
+        currentRow++;
+
+        reportData.expense.items.slice(0, 5).forEach((item: { name: string; total: number; quantity: number }) => {
+          worksheet.getCell(`A${currentRow}`).value = item.name || "Unknown";
+          worksheet.getCell(`B${currentRow}`).value = item.total || 0;
+          worksheet.getCell(`C${currentRow}`).value = item.quantity || 0;
+          worksheet.getCell(`B${currentRow}`).numFmt = 'Rp#,##0.00';
+          currentRow++;
+        });
+      }
+    } else {
+      // This is the existing code for income or expense only (no change)
+      // Summary
+      worksheet.getCell(`A${currentRow}`).value = "Total Transaksi";
+      worksheet.getCell(`B${currentRow}`).value = reportData.transactionCount || 0;
+      currentRow++;
+
+      worksheet.getCell(`A${currentRow}`).value = "Total Nilai";
+      worksheet.getCell(`B${currentRow}`).value = reportData.total || 0;
+      worksheet.getCell(`B${currentRow}`).numFmt = 'Rp#,##0.00';
+      currentRow += 2;
+
+      // Categories (if available)
+      if (reportData.categories && reportData.categories.length > 0) {
+        worksheet.getCell(`A${currentRow}`).value = "Kategori Teratas";
+        worksheet.getCell(`A${currentRow}`).font = { bold: true };
+        currentRow++;
+
+        worksheet.getCell(`A${currentRow}`).value = "Nama Kategori";
+        worksheet.getCell(`B${currentRow}`).value = "Total";
+        worksheet.getCell(`A${currentRow}`).font = { bold: true };
+        worksheet.getCell(`B${currentRow}`).font = { bold: true };
+        currentRow++;
+
+        reportData.categories.slice(0, 5).forEach((category: { name: string; total: number }) => {
+          worksheet.getCell(`A${currentRow}`).value = category.name || "Unknown";
+          worksheet.getCell(`B${currentRow}`).value = category.total || 0;
+          worksheet.getCell(`B${currentRow}`).numFmt = 'Rp#,##0.00';
+          currentRow++;
+        });
+        currentRow++;
+      } else {
+        worksheet.getCell(`A${currentRow}`).value = "Kategori Teratas";
+        worksheet.getCell(`A${currentRow}`).font = { bold: true };
+        currentRow++;
+        worksheet.getCell(`A${currentRow}`).value = "Tidak ada data kategori tersedia";
+        currentRow += 2;
+      }
+
+      // Related Parties (if available)
+      if (reportData.relatedParties && reportData.relatedParties.length > 0) {
+        worksheet.getCell(`A${currentRow}`).value = "Pihak Terkait Teratas";
+        worksheet.getCell(`A${currentRow}`).font = { bold: true };
+        currentRow++;
+
+        worksheet.getCell(`A${currentRow}`).value = "Nama Pihak";
+        worksheet.getCell(`B${currentRow}`).value = "Total";
+        worksheet.getCell(`A${currentRow}`).font = { bold: true };
+        worksheet.getCell(`B${currentRow}`).font = { bold: true };
+        currentRow++;
+
+        reportData.relatedParties.slice(0, 5).forEach((party: { name: string; total: number }) => {
+          worksheet.getCell(`A${currentRow}`).value = party.name || "Unknown";
+          worksheet.getCell(`B${currentRow}`).value = party.total || 0;
+          worksheet.getCell(`B${currentRow}`).numFmt = 'Rp#,##0.00';
+          currentRow++;
+        });
+        currentRow++;
+      } else {
+        worksheet.getCell(`A${currentRow}`).value = "Pihak Terkait Teratas";
+        worksheet.getCell(`A${currentRow}`).font = { bold: true };
+        currentRow++;
+        worksheet.getCell(`A${currentRow}`).value = "Tidak ada data pihak terkait tersedia";
+        currentRow += 2;
+      }
+
+      // Items (if available)
+      if (reportData.items && reportData.items.length > 0) {
+        worksheet.getCell(`A${currentRow}`).value = "Item Teratas";
+        worksheet.getCell(`A${currentRow}`).font = { bold: true };
+        currentRow++;
+
+        worksheet.getCell(`A${currentRow}`).value = "Nama Item";
+        worksheet.getCell(`B${currentRow}`).value = "Total";
+        worksheet.getCell(`C${currentRow}`).value = "Kuantitas";
+        worksheet.getCell(`A${currentRow}`).font = { bold: true };
+        worksheet.getCell(`B${currentRow}`).font = { bold: true };
+        worksheet.getCell(`C${currentRow}`).font = { bold: true };
+        currentRow++;
+
+        reportData.items.slice(0, 5).forEach((item: { name: string; total: number; quantity: number }) => {
+          worksheet.getCell(`A${currentRow}`).value = item.name || "Unknown";
+          worksheet.getCell(`B${currentRow}`).value = item.total || 0;
+          worksheet.getCell(`C${currentRow}`).value = item.quantity || 0;
+          worksheet.getCell(`B${currentRow}`).numFmt = 'Rp#,##0.00';
+          currentRow++;
+        });
+      } else {
+        worksheet.getCell(`A${currentRow}`).value = "Item Teratas";
+        worksheet.getCell(`A${currentRow}`).font = { bold: true };
+        currentRow++;
+        worksheet.getCell(`A${currentRow}`).value = "Tidak ada data item tersedia";
+      }
     }
   }
   
