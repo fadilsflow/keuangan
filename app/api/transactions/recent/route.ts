@@ -1,24 +1,31 @@
-import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
+import { prisma } from "@/lib/prisma";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { userId, orgId } = await auth();
+    if (!userId || !orgId) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    // Fetch 10 most recent transactions
     const transactions = await prisma.transaction.findMany({
-      take: 5, // Ambil 5 transaksi terbaru
-      orderBy: {
-        date: 'desc'
+      where: {
+        organizationId: orgId,
       },
       include: {
-        items: true
-      }
+        items: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: 10,
     });
 
     return NextResponse.json(transactions);
   } catch (error) {
     console.error("Failed to fetch recent transactions:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch recent transactions" },
-      { status: 500 }
-    );
+    return new NextResponse("Internal Server Error", { status: 500 });
   }
 } 

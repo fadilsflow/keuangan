@@ -3,118 +3,120 @@
 import { useQuery } from "@tanstack/react-query"
 import { RefreshCcw } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card"
-import { format } from "date-fns"
+import { format, parseISO } from "date-fns"
 import { id } from "date-fns/locale"
 import { formatRupiah } from "@/lib/utils"
 import { Button } from "./ui/button"
 import { ScrollArea } from "./ui/scroll-area"
+import { TrendingUp, TrendingDown } from "lucide-react"
 
 async function fetchRecentTransactions() {
-    const response = await fetch("/api/transactions?limit=10")
-    if (!response.ok) throw new Error("Failed to fetch transactions")
+    const response = await fetch("/api/transactions/recent")
+    if (!response.ok) throw new Error("Failed to fetch recent transactions")
     return response.json()
 }
 
 export default function RecentTransactions() {
-    const today = new Date()
-
-    const { data, isLoading, refetch } = useQuery({
+    const { data: transactions = [], isLoading, refetch } = useQuery({
         queryKey: ["recentTransactions"],
         queryFn: fetchRecentTransactions
     })
 
-    const transactions = data?.data || []
+    if (isLoading) {
+        return <div>Loading...</div>
+    }
+
+    // Show only 5 transactions initially
+    const displayedTransactions = transactions.slice(0, 5)
+    const hasMoreTransactions = transactions.length > 5
 
     return (
-        <Card className="w-full h-full flex flex-col">
-            <CardHeader className="flex-none">
-                <CardTitle className="mt-0 flex items-center justify-between">
-                    <p>Transaksi Terakhir</p>
+        <Card className="w-full">
+            <CardHeader>
+                <div className="flex items-center justify-between">
+                    <CardTitle>Transaksi Terbaru</CardTitle>
                     <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => refetch()}
                         className="rounded-full"
                     >
-                        <RefreshCcw className="w-4 h-4" />
+                        <RefreshCcw className="h-4 w-4" />
                     </Button>
-                </CardTitle>
+                </div>
                 <CardDescription>
-                    <span className="text-sm font-medium text-muted-foreground">
-                        {format(today, "EEEE, d MMMM yyyy", { locale: id })}
-                    </span>
+                    Transaksi yang baru saja dibuat atau diperbarui
                 </CardDescription>
             </CardHeader>
-            <CardContent className="flex-1 max-h-xl">
-                <ScrollArea className="h-[calc(100%-1rem)] pr-4">
-                    <div className="relative">
-                        {/* Timeline line */}
-                        <div className="absolute left-2 top-3 bottom-3 w-[2px] bg-border" />
-
-                        <div className="space-y-4">
-                            {isLoading ? (
-                                <div className="text-center py-4 text-muted-foreground">
-                                    Loading...
-                                </div>
-                            ) : transactions.length === 0 ? (
-                                <div className="text-center py-4 text-muted-foreground">
-                                    Belum ada transaksi
-                                </div>
-                            ) : (
-                                transactions.map((transaction: any) => (
-                                    <div
-                                        key={transaction.id}
-                                        className="flex gap-4 relative pl-7 group"
-                                    >
-                                        {/* Timeline dot */}
-                                        <div
-                                            className={`absolute left-0.5 top-2 w-[15px] h-[15px] border-4 border-background rounded-full transition-all
-                                                group-hover:scale-110
-                                                ${transaction.type === "pemasukan"
-                                                    ? "bg-green-500"
-                                                    : "bg-red-500"
-                                                }`}
-                                        />
-
-                                        <div className="flex-1 bg-muted/50 hover:bg-muted/70 transition-colors rounded-lg p-3 text-sm">
-                                            <div className="flex items-start justify-between gap-2">
-                                                <div>
-                                                    <p className="font-medium line-clamp-2">
-                                                        {transaction.type === "pemasukan"
-                                                            ? "Pemasukan dari"
-                                                            : "Pengeluaran untuk"} {transaction.description}
+            <CardContent>
+                <div className="divide-y divide-border rounded-md border">
+                    {displayedTransactions.length === 0 ? (
+                        <div className="p-4 text-center text-sm text-muted-foreground">
+                            Tidak ada transaksi terbaru
+                        </div>
+                    ) : (
+                        <>
+                            {displayedTransactions.map((transaction: any) => (
+                                <div key={transaction.id} className="p-4">
+                                    <div className="grid gap-1">
+                                        <div className="flex items-center justify-between gap-4">
+                                            <div>
+                                                <p className="text-sm font-medium leading-none">
+                                                    {transaction.description}
+                                                </p>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-sm text-muted-foreground">
+                                                        {transaction.category}
                                                     </p>
-                                                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mt-1">
-                                                        <span className="px-2 py-0.5 rounded-full bg-muted">
-                                                            {transaction.category}
-                                                        </span>
-                                                        <span>•</span>
-                                                        <span>
-                                                            {format(new Date(transaction.createdAt),
-                                                                "d MMM yyyy • HH:mm",
-                                                                { locale: id }
-                                                            )}
-                                                        </span>
-                                                    </div>
+                                                    <span>•</span>
+                                                    <p className="text-sm text-muted-foreground">
+                                                        {transaction.relatedParty}
+                                                    </p>
                                                 </div>
-                                                <span
-                                                    className={`font-medium whitespace-nowrap
-                                                        ${transaction.type === "pemasukan"
-                                                            ? "text-green-600"
-                                                            : "text-red-600"
+                                            </div>
+                                            <div className="flex flex-col items-end gap-1">
+                                                <div
+                                                    className={`flex items-center gap-1 text-sm font-medium ${transaction.type === "pemasukan"
+                                                        ? "text-green-600"
+                                                        : "text-red-600"
                                                         }`}
                                                 >
-                                                    {transaction.type === "pemasukan" ? "+" : "-"}
+                                                    {transaction.type === "pemasukan" ? (
+                                                        <TrendingUp className="h-4 w-4" />
+                                                    ) : (
+                                                        <TrendingDown className="h-4 w-4" />
+                                                    )}
                                                     {formatRupiah(transaction.amountTotal)}
-                                                </span>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                    <span>•</span>
+                                                    <span>
+                                                        {format(
+                                                            parseISO(transaction.createdAt),
+                                                            "d MMM yyyy • HH:mm",
+                                                            { locale: id }
+                                                        )}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                ))
+                                </div>
+                            ))}
+                            {hasMoreTransactions && (
+                                <Button
+                                    variant="ghost"
+                                    className="w-full h-10 hover:bg-muted/50"
+                                    asChild
+                                >
+                                    <a href="/transactions">
+                                        Lihat Semua Transaksi
+                                    </a>
+                                </Button>
                             )}
-                        </div>
-                    </div>
-                </ScrollArea>
+                        </>
+                    )}
+                </div>
             </CardContent>
         </Card>
     )

@@ -16,7 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { formatRupiah } from "@/lib/utils";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { MoreHorizontal, Trash2, TrendingUp, TrendingDown, Pencil, ChevronDown, ChevronUp, Package } from "lucide-react";
+import { MoreHorizontal, Trash2, TrendingUp, TrendingDown, Pencil, ChevronDown, ChevronUp, Package, FileText, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import {
@@ -148,6 +148,128 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
     }
   };
 
+  const handlePrintDetail = (transaction: any) => {
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    // Generate the HTML content
+    const content = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Transaction Detail</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            .header { text-align: center; margin-bottom: 30px; }
+            .detail-row { margin: 10px 0; }
+            .label { font-weight: bold; }
+            .items-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            .items-table th, .items-table td { 
+              border: 1px solid #ddd; 
+              padding: 8px; 
+              text-align: left; 
+            }
+            .items-table th { background-color: #f5f5f5; }
+            .total { text-align: right; margin-top: 20px; font-weight: bold; }
+            @media print {
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>${transaction.type === "pemasukan" ? "INVOICE" : "RECEIPT"}</h1>
+            <p>No: ${transaction.id}</p>
+          </div>
+          
+          <div class="detail-row">
+            <span class="label">Date:</span>
+            <span>${format(new Date(transaction.date), "d MMMM yyyy", { locale: id })}</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="label">Related Party:</span>
+            <span>${transaction.relatedParty}</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="label">Category:</span>
+            <span>${transaction.category}</span>
+          </div>
+          
+          <div class="detail-row">
+            <span class="label">Description:</span>
+            <span>${transaction.description}</span>
+          </div>
+          
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${transaction.items.map((item: Item) => `
+                <tr>
+                  <td>${item.name}</td>
+                  <td>${item.quantity}</td>
+                  <td>${formatRupiah(item.itemPrice)}</td>
+                  <td>${formatRupiah(item.totalPrice)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          
+          <div class="total">
+            Total: ${formatRupiah(transaction.amountTotal)}
+          </div>
+
+          ${transaction.paymentImg ? `
+            <div style="margin-top: 30px;">
+              <div class="label">Payment Proof:</div>
+              <img src="${transaction.paymentImg}" style="max-width: 300px; margin-top: 10px;" />
+            </div>
+          ` : ''}
+          
+          <button class="no-print" onclick="window.print()" style="margin-top: 20px; padding: 10px;">
+            Print
+          </button>
+        </body>
+      </html>
+    `;
+
+    // Write the content to the new window and print
+    printWindow.document.write(content);
+    printWindow.document.close();
+  };
+
+  const handleDownloadInvoice = async (id: string) => {
+    try {
+      const response = await fetch(`/api/transactions/${id}/invoice`);
+      if (!response.ok) throw new Error('Failed to generate invoice');
+      
+      // Create a blob from the PDF stream
+      const blob = await response.blob();
+      
+      // Create a link element and trigger download
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `transaction-${id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading invoice:', error);
+      toast.error('Failed to download invoice');
+    }
+  };
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -274,6 +396,14 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
                         <DropdownMenuItem onClick={() => handleEdit(transaction.id)}>
                           <Pencil className="w-4 h-4 mr-2" />
                           Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handlePrintDetail(transaction)}>
+                          <Printer className="w-4 h-4 mr-2" />
+                          Print Detail
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDownloadInvoice(transaction.id)}>
+                          <FileText className="w-4 h-4 mr-2" />
+                          Download Invoice
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => handleDelete(transaction.id)}
