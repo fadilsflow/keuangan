@@ -27,6 +27,11 @@ export async function GET(request: Request) {
     const from = searchParams.get("from");
     const to = searchParams.get("to");
     const search = searchParams.get("search");
+    const page = parseInt(searchParams.get("page") || "1");
+    const pageSize = parseInt(searchParams.get("pageSize") || "10");
+    
+    // Calculate pagination values
+    const skip = (page - 1) * pageSize;
 
     const where: any = {
       organizationId: orgId,
@@ -47,6 +52,12 @@ export async function GET(request: Request) {
       ];
     }
 
+    // Get total count for pagination
+    const totalItems = await prisma.transaction.count({ where });
+    
+    // Calculate total pages
+    const totalPages = Math.ceil(totalItems / pageSize);
+
     const transactions = await prisma.transaction.findMany({
       where,
       orderBy: {
@@ -54,7 +65,9 @@ export async function GET(request: Request) {
       },
       include: {
         items: true
-      }
+      },
+      skip,
+      take: pageSize
     });
 
     const formattedTransactions = transactions.map(transaction => ({
@@ -65,6 +78,7 @@ export async function GET(request: Request) {
       category: transaction.category,
       relatedParty: transaction.relatedParty,
       amountTotal: transaction.amountTotal,
+      paymentImg: transaction.paymentImg,
       items: transaction.items.map(item => ({
         id: item.id,
         name: item.name,
@@ -77,7 +91,10 @@ export async function GET(request: Request) {
     return NextResponse.json({
       data: formattedTransactions,
       meta: {
-        total: transactions.length
+        totalItems,
+        totalPages,
+        currentPage: page,
+        pageSize
       }
     });
   } catch (error) {

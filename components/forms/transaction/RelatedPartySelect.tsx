@@ -58,15 +58,20 @@ export function RelatedPartySelect({ form, transactionType }: RelatedPartySelect
   });
 
   // Fetch related parties
-  const { data: relatedParties, isLoading } = useQuery({
-    queryKey: ['relatedParties', transactionType],
+  const { data, isLoading } = useQuery({
+    queryKey: ['relatedParties', "", transactionType === "pemasukan" ? "income" : "expense"],
     queryFn: async () => {
       const apiType = transactionType === "pemasukan" ? "income" : "expense";
       const response = await fetch(`/api/related-parties?type=${apiType}`);
       if (!response.ok) throw new Error("Failed to fetch related parties");
-      return response.json();
+      const responseData = await response.json();
+      // Return an empty array as default if data is undefined
+      return responseData.data || responseData || [];
     }
   });
+
+  // Access relatedParties safely
+  const relatedParties = data?.data || data || [];
 
   // Create related party mutation
   const createRelatedParty = useMutation({
@@ -83,7 +88,7 @@ export function RelatedPartySelect({ form, transactionType }: RelatedPartySelect
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['relatedParties', transactionType] });
+      queryClient.invalidateQueries({ queryKey: ['relatedParties'] });
       toast.success("Pihak terkait berhasil ditambahkan");
       form.setValue("relatedParty", data.name);
       setDialogOpen(false);
@@ -213,7 +218,7 @@ export function RelatedPartySelect({ form, transactionType }: RelatedPartySelect
                         Menyimpan...
                       </>
                     ) : (
-                      "Simpan Pihak Terkait"
+                      "Simpan"
                     )}
                   </Button>
                 </div>

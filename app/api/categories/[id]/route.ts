@@ -5,9 +5,10 @@ import { CategoryUpdateSchema } from "@/lib/validations/category";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // Get organization ID and user ID from Clerk auth
     const { orgId, userId } = await auth();
     
@@ -29,7 +30,7 @@ export async function GET(
 
     const category = await prisma.category.findUnique({
       where: {
-        id: params.id
+        id: id
       }
     });
 
@@ -61,9 +62,10 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // Get organization ID and user ID from Clerk auth
     const { orgId, userId } = await auth();
     
@@ -86,7 +88,7 @@ export async function PUT(
     // Check if the category exists and belongs to the user's organization
     const existingCategory = await prisma.category.findUnique({
       where: {
-        id: params.id
+        id: id
       }
     });
 
@@ -112,7 +114,7 @@ export async function PUT(
     // Update the category
     const updatedCategory = await prisma.category.update({
       where: {
-        id: params.id
+        id: id
       },
       data: validatedData
     });
@@ -122,7 +124,7 @@ export async function PUT(
   } catch (error) {
     console.error("Error updating category:", error);
     
-    if (error.code === 'P2002') {
+    if (error instanceof Error && 'code' in error && error.code === 'P2002') {
       return NextResponse.json(
         { error: "Kategori dengan nama tersebut sudah ada" },
         { status: 400 }
@@ -138,9 +140,10 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // Get organization ID and user ID from Clerk auth
     const { orgId, userId } = await auth();
     
@@ -163,7 +166,7 @@ export async function DELETE(
     // Check if the category exists and belongs to the user's organization
     const existingCategory = await prisma.category.findUnique({
       where: {
-        id: params.id
+        id: id
       }
     });
 
@@ -184,7 +187,7 @@ export async function DELETE(
     // Delete the category
     await prisma.category.delete({
       where: {
-        id: params.id
+        id: id
       }
     });
     

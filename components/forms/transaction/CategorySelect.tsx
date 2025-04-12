@@ -57,15 +57,20 @@ export function CategorySelect({ form, transactionType }: CategorySelectProps) {
   });
 
   // Fetch categories
-  const { data: categories, isLoading } = useQuery({
-    queryKey: ['categories', transactionType],
+  const { data, isLoading } = useQuery({
+    queryKey: ['categories', "", transactionType === "pemasukan" ? "income" : "expense"],
     queryFn: async () => {
       const apiType = transactionType === "pemasukan" ? "income" : "expense";
       const response = await fetch(`/api/categories?type=${apiType}`);
       if (!response.ok) throw new Error("Failed to fetch categories");
-      return response.json();
+      const responseData = await response.json();
+      // Return an empty array as default if data is undefined
+      return responseData.data || responseData || [];
     }
   });
+
+  // Access categories safely
+  const categories = data?.data || data || [];
 
   // Create category mutation
   const createCategory = useMutation({
@@ -82,7 +87,7 @@ export function CategorySelect({ form, transactionType }: CategorySelectProps) {
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['categories', transactionType] });
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
       toast.success("Kategori berhasil ditambahkan");
       form.setValue("category", data.name);
       setDialogOpen(false);
@@ -200,7 +205,7 @@ export function CategorySelect({ form, transactionType }: CategorySelectProps) {
                         Menyimpan...
                       </>
                     ) : (
-                      "Simpan Kategori"
+                      "Simpan"
                     )}
                   </Button>
                 </div>

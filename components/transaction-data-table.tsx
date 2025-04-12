@@ -25,6 +25,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Pagination } from "@/components/ui/pagination";
 
 
 interface TransactionDataTableProps {
@@ -47,18 +48,24 @@ interface Item {
   totalPrice: number;
 }
 
-async function fetchTransactions(filters: TransactionDataTableProps["filters"]) {
+async function fetchTransactions(
+  filters: TransactionDataTableProps["filters"],
+  page: number = 1,
+  pageSize: number = 10
+) {
   const params = new URLSearchParams();
   if (filters.search) params.append("search", filters.search);
   if (filters.type) params.append("type", filters.type);
   if (filters.category) params.append("category", filters.category);
   if (filters.dateRange?.from) params.append("from", filters.dateRange.from.toISOString());
   if (filters.dateRange?.to) params.append("to", filters.dateRange.to.toISOString());
+  params.append("page", page.toString());
+  params.append("pageSize", pageSize.toString());
 
   const response = await fetch(`/api/transactions?${params.toString()}`);
   if (!response.ok) throw new Error("Failed to fetch transactions");
   const data = await response.json();
-  return data.data || [];
+  return data;
 }
 
 async function deleteTransaction(id: string) {
@@ -84,11 +91,16 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
   const queryClient = useQueryClient();
   const router = useRouter();
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
-
-  const { data: transactions = [], isLoading } = useQuery({
-    queryKey: ["transactions", filters],
-    queryFn: () => fetchTransactions(filters),
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10; // Items per page
+  
+  const { data, isLoading } = useQuery({
+    queryKey: ["transactions", filters, currentPage, pageSize],
+    queryFn: () => fetchTransactions(filters, currentPage, pageSize),
   });
+
+  const transactions = data?.data || [];
+  const totalPages = data?.meta?.totalPages || 1;
 
   const deleteMutation = useMutation({
     mutationFn: deleteTransaction,
@@ -146,6 +158,11 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
     if (window.confirm(`Apakah Anda yakin ingin menghapus ${selectedRows.length} transaksi terpilih?`)) {
       bulkDeleteMutation.mutate(selectedRows);
     }
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    setSelectedRows([]);
   };
 
   const handlePrintDetail = (transaction: any) => {
@@ -315,7 +332,7 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
           <TableBody className="**:data-[slot=table-cell]:first:w-8">
             {transactions.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                   Tidak ada transaksi
                 </TableCell>
               </TableRow>
@@ -423,6 +440,16 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
           </TableBody>
         </Table>
       </div>
+      
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-4">
+          <Pagination 
+            totalPages={totalPages} 
+            currentPage={currentPage} 
+            onPageChange={handlePageChange} 
+          />
+        </div>
+      )}
     </div>
   );
 } 

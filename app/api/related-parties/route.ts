@@ -27,24 +27,50 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';
     const type = searchParams.get('type') || 'expense'; // Default to 'expense' if not specified
+    const page = parseInt(searchParams.get('page') || '1');
+    const pageSize = parseInt(searchParams.get('pageSize') || '10');
+    
+    // Calculate pagination values
+    const skip = (page - 1) * pageSize;
 
-    // Use a temporary workaround until the Prisma client is regenerated
-    const prismaClient = prisma as any;
-
-    const relatedParties = await prismaClient.relatedParty.findMany({
+    // Get total count for pagination
+    const totalItems = await prisma.relatedParty.count({
       where: {
         organizationId: orgId,
-        type: type,
+        type,
+        name: {
+          contains: search
+        }
+      }
+    });
+
+    // Calculate total pages
+    const totalPages = Math.ceil(totalItems / pageSize);
+
+    const relatedParties = await prisma.relatedParty.findMany({
+      where: {
+        organizationId: orgId,
+        type,
         name: {
           contains: search
         }
       },
       orderBy: {
         name: 'asc'
-      }
+      },
+      skip,
+      take: pageSize
     });
 
-    return NextResponse.json(relatedParties);
+    return NextResponse.json({
+      data: relatedParties,
+      meta: {
+        totalItems,
+        totalPages,
+        currentPage: page,
+        pageSize
+      }
+    });
     
   } catch (error) {
     console.error("Error fetching related parties:", error);
@@ -85,11 +111,8 @@ export async function POST(request: Request) {
     // Validate the request body
     const validatedData = RelatedPartyCreateSchema.parse(body);
     
-    // Use a temporary workaround until the Prisma client is regenerated
-    const prismaClient = prisma as any;
-    
     // Create a new related party
-    const relatedParty = await prismaClient.relatedParty.create({
+    const relatedParty = await prisma.relatedParty.create({
       data: validatedData
     });
     

@@ -41,10 +41,10 @@ export class TransactionService {
 
         // 2. Update histories using the same transaction client
         await this.historyService.updateHistories(
-          tx,
+          tx as PrismaClient  ,
           new Date(data.date),
           data.amountTotal,
-          data.type,
+          data.type as "income" | "expense",
           newTransaction.id
         );
 

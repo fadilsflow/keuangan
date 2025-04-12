@@ -23,22 +23,13 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { formatRupiah } from "@/lib/utils";
+import { TransactionItem } from "@/lib/types";
 
 interface MasterItem {
   id: string;
   name: string;
   defaultPrice: number;
   type: "income" | "expense";
-}
-
-interface TransactionItem {
-  id?: string;
-  name: string;
-  itemPrice: number;
-  quantity: number;
-  totalPrice: number;
-  transactionId?: string;
-  masterItemId?: string;
 }
 
 interface TransactionItemsProps {
@@ -66,8 +57,8 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
   });
 
   // Fetch master items
-  const { data: masterItems, isLoading: isMasterItemsLoading } = useQuery({
-    queryKey: ['masterItems', itemSearch, transactionType],
+  const { data, isLoading: isMasterItemsLoading } = useQuery({
+    queryKey: ['masterItems', itemSearch, transactionType === "pemasukan" ? "income" : "expense"],
     queryFn: async () => {
       const apiType = transactionType === "pemasukan" ? "income" : "expense";
       const searchParams = new URLSearchParams();
@@ -77,10 +68,14 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
       }
       const response = await fetch(`/api/master-items?${searchParams.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch master items");
-      const data = await response.json();
-      return data.items;
+      const responseData = await response.json();
+      // Return an empty array as default if data is undefined
+      return responseData.data || responseData.items || responseData || [];
     }
   });
+
+  // Access masterItems safely
+  const masterItems = data?.data || data || [];
 
   // Create master item mutation
   const createMasterItem = useMutation({
@@ -97,7 +92,7 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['masterItems', transactionType] });
+      queryClient.invalidateQueries({ queryKey: ['masterItems'] });
       toast.success("Item master berhasil ditambahkan");
       
       if (currentItemIndex !== null) {
@@ -142,7 +137,7 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
     }
   };
 
-  const updateItem = (index: number, field: keyof TransactionItem, value: any) => {
+  const updateItem = (index: number, field: keyof TransactionItem, value: string | number) => {
     const newItems = [...items];
     let newTotalPrice = newItems[index].totalPrice;
 
@@ -153,7 +148,10 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
       newItems[index].quantity = Number(value);
       newTotalPrice = newItems[index].itemPrice * newItems[index].quantity;
     } else {
-      (newItems[index] as any)[field] = value;
+      newItems[index] = {
+        ...newItems[index],
+        [field]: value
+      };
     }
     
     newItems[index].totalPrice = newTotalPrice;
@@ -164,7 +162,7 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
 
   const selectMasterItem = (index: number, itemId: string) => {
     if (masterItems) {
-      const selectedItem = masterItems.find(item => item.id === itemId);
+      const selectedItem = masterItems.find((item: MasterItem) => item.id === itemId);
       if (selectedItem) {
         const newItems = [...items];
         newItems[index] = {
@@ -198,7 +196,7 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
       </div>
 
       <div className="space-y-6">
-        {items.map((item, index) => (
+        {items.map((item: TransactionItem, index: number) => (
           <div
             key={item.id || `item-${index}`}
             className="grid grid-cols-12 gap-4 items-end p-4 rounded-lg bg-muted/50 relative group"
@@ -230,7 +228,7 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
                           <Loader2 className="h-4 w-4 animate-spin mr-2"/> Loading...
                         </div>
                       ) : masterItems && masterItems.length > 0 ? (
-                        masterItems.map((masterItem) => (
+                        masterItems.map((masterItem: MasterItem) => (
                           <div 
                             key={masterItem.id}
                             className="flex justify-between items-center p-2 hover:bg-accent rounded-md cursor-pointer transition-colors"
@@ -248,7 +246,7 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
                         ))
                       ) : (
                         <div className="p-2 text-muted-foreground">
-                          Item "{itemSearch}" tidak ditemukan
+                          Item &quot;{itemSearch}&quot; tidak ditemukan
                         </div>
                       )}
                       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -270,7 +268,7 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
                             }}
                           >
                             <PlusCircle className="h-4 w-4 mr-2" />
-                            Tambah "{itemSearch}" sebagai Item Baru
+                            Tambah &quot;{itemSearch}&quot; sebagai Item Baru
                           </Button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[425px]">

@@ -27,10 +27,30 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';
     const type = searchParams.get('type') || 'expense'; // Default to 'expense' if not specified
+    const page = parseInt(searchParams.get('page') || '1');
+    const pageSize = parseInt(searchParams.get('pageSize') || '10');
+    
+    // Calculate pagination values
+    const skip = (page - 1) * pageSize;
 
     // Use a temporary workaround until the Prisma client is regenerated
     const prismaClient = prisma as any;
 
+    // Get total count for pagination
+    const totalItems = await prismaClient.category.count({
+      where: {
+        organizationId: orgId,
+        type: type,
+        name: {
+          contains: search
+        }
+      }
+    });
+
+    // Calculate total pages
+    const totalPages = Math.ceil(totalItems / pageSize);
+
+    // Get paginated categories
     const categories = await prismaClient.category.findMany({
       where: {
         organizationId: orgId,
@@ -41,10 +61,21 @@ export async function GET(request: Request) {
       },
       orderBy: {
         name: 'asc'
-      }
+      },
+      skip,
+      take: pageSize
     });
 
-    return NextResponse.json(categories);
+    // Return the data with pagination metadata
+    return NextResponse.json({
+      data: categories,
+      meta: {
+        totalItems,
+        totalPages,
+        currentPage: page,
+        pageSize
+      }
+    });
     
   } catch (error) {
     console.error("Error fetching categories:", error);

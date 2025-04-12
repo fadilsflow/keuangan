@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { formatDateForInput } from "@/lib/utils";
 import { UseFormReturn } from "react-hook-form";
 import { CreateTransactionDTO } from "@/lib/validations/transaction";
+import { DatePicker } from "@/components/ui/date-picker";
 
 interface TransactionBasicInfoProps {
   form: UseFormReturn<CreateTransactionDTO>;
@@ -13,6 +14,24 @@ interface TransactionBasicInfoProps {
 }
 
 export function TransactionBasicInfo({ form, onTypeChange }: TransactionBasicInfoProps) {
+  // Function to parse date safely with timezone handling
+  const parseDate = (dateValue: string | Date): Date => {
+    if (dateValue instanceof Date) return dateValue;
+    
+    // Create a date from the string and fix timezone issue
+    const dateParts = dateValue.split('T')[0].split('-');
+    if (dateParts.length !== 3) return new Date();
+    
+    // Create date with year, month, day and set time to noon to avoid timezone issues
+    // Month is 0-indexed in JavaScript Date
+    return new Date(
+      parseInt(dateParts[0]), 
+      parseInt(dateParts[1]) - 1, 
+      parseInt(dateParts[2]), 
+      12, 0, 0
+    );
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <FormField
@@ -22,11 +41,26 @@ export function TransactionBasicInfo({ form, onTypeChange }: TransactionBasicInf
           <FormItem>
             <FormLabel className="font-semibold">Tanggal</FormLabel>
             <FormControl>
-              <Input
-                type="date"
-                {...field}
-                className="w-full"
-                value={field.value ? formatDateForInput(new Date(field.value)).split('T')[0] : ''}
+              <DatePicker
+                value={field.value ? parseDate(field.value) : undefined}
+                onChange={(date?: Date) => {
+                  if (date) {
+                    // Create a new date with time set to noon
+                    const fixedDate = new Date(
+                      date.getFullYear(),
+                      date.getMonth(),
+                      date.getDate(),
+                      12, 0, 0
+                    );
+                    
+                    // Format to ISO string and keep only the date part
+                    const dateString = fixedDate.toISOString().split('T')[0];
+                    field.onChange(dateString);
+                  } else {
+                    field.onChange('');
+                  }
+                }}
+                placeholder="Pilih tanggal"
               />
             </FormControl>
             <FormMessage />

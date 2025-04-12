@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { addDays, format } from "date-fns"
+import { format } from "date-fns"
 import { CalendarIcon } from "lucide-react"
 import { DateRange } from "react-day-picker"
 import { id } from "date-fns/locale"
@@ -16,32 +16,48 @@ import {
 } from "@/components/ui/popover"
 
 interface DatePickerWithRangeProps {
-  date: DateRange;
-  setDate: (date: DateRange | undefined) => void;
+  date: DateRange | undefined;
+  setDate: React.Dispatch<React.SetStateAction<DateRange | undefined>>;
 }
 
 export function DatePickerWithRange({ date, setDate }: DatePickerWithRangeProps) {
+  const [isMobile, setIsMobile] = React.useState(false);
+  
+  React.useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    // Check on mount
+    checkIfMobile();
+    
+    // Check on resize
+    window.addEventListener('resize', checkIfMobile);
+    
+    // Clean up
+    return () => window.removeEventListener('resize', checkIfMobile);
+  }, []);
+  
   return (
-    <div className={cn("grid gap-2")}>
+    <div className={cn("grid w-full sm:w-auto")}>
       <Popover>
         <PopoverTrigger asChild>
           <Button
             id="date"
             variant={"outline"}
             className={cn(
-              "w-[300px] justify-start text-left font-normal",
+              "w-full sm:w-[280px] justify-start text-left font-normal",
               !date?.from && "text-muted-foreground"
             )}
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
+            <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0" />
             {date?.from ? (
               date?.to ? (
-                <>
-                  {format(date.from, "d MMMM yyyy", { locale: id })} -{" "}
-                  {format(date.to, "d MMMM yyyy", { locale: id })}
-                </>
+                <span>
+                  {format(date.from, "d/M/yy", { locale: id })} - {format(date.to, "d/M/yy", { locale: id })}
+                </span>
               ) : (
-                format(date.from, "d MMMM yyyy", { locale: id })
+                <span>{format(date.from, "d/M/yy", { locale: id })}</span>
               )
             ) : (
               <span>Pilih tanggal</span>
@@ -55,8 +71,9 @@ export function DatePickerWithRange({ date, setDate }: DatePickerWithRangeProps)
             defaultMonth={date?.from}
             selected={date}
             onSelect={setDate}
-            numberOfMonths={2}
+            numberOfMonths={isMobile ? 1 : 2}
             locale={id}
+            className="rounded-md border"
           />
         </PopoverContent>
       </Popover>

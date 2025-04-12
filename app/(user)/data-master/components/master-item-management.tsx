@@ -5,8 +5,23 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Search, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
@@ -21,15 +36,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { 
-  Pagination, 
-  PaginationContent, 
-  PaginationEllipsis, 
-  PaginationItem,
-  PaginationLink, 
-  PaginationNext, 
-  PaginationPrevious 
-} from "@/components/ui/pagination";
+import { formatRupiah } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { PaginatedDataTable } from "./paginated-data-table";
 
 // Define the type for master item
 interface MasterItem {
@@ -56,14 +71,17 @@ interface PaginatedResponse {
 }
 
 // Function to fetch master items
-async function fetchMasterItems(search = "", page = 1, limit = 10, type: "income" | "expense" = "expense"): Promise<PaginatedResponse> {
+async function fetchMasterItems(
+  search = "",
+  page = 1,
+  pageSize = 10
+): Promise<{ data: MasterItem[], meta: { totalItems: number, totalPages: number } }> {
   const searchParams = new URLSearchParams();
   if (search) {
     searchParams.append('search', search);
   }
   searchParams.append('page', page.toString());
-  searchParams.append('limit', limit.toString());
-  searchParams.append('type', type);
+  searchParams.append('pageSize', pageSize.toString());
   
   const response = await fetch(`/api/master-items?${searchParams.toString()}`);
   if (!response.ok) {
@@ -133,21 +151,24 @@ function formatCurrency(amount: number): string {
 
 export function MasterItemManagement() {
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [limit] = useState(10);
-  const [type, setType] = useState<"income" | "expense">("expense");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedMasterItem, setSelectedMasterItem] = useState<MasterItem | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
   
   const queryClient = useQueryClient();
   
   // Query to fetch master items
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['masterItems', search, page, limit, type],
-    queryFn: () => fetchMasterItems(search, page, limit, type)
+    queryKey: ['masterItems', search, currentPage, pageSize],
+    queryFn: () => fetchMasterItems(search, currentPage, pageSize)
   });
+  
+  const masterItems = data?.data || [];
+  const totalItems = data?.meta?.totalItems || 0;
+  const totalPages = data?.meta?.totalPages || 1;
   
   // Mutation to create a master item
   const createMutation = useMutation({
@@ -196,7 +217,7 @@ export function MasterItemManagement() {
       name: "",
       description: "",
       defaultPrice: 0,
-      type: type,
+      type: "expense",
     }
   });
 
@@ -207,14 +228,14 @@ export function MasterItemManagement() {
       name: "",
       description: "",
       defaultPrice: 0,
-      type: type,
+      type: "expense",
     }
   });
 
   // Update form default values when type changes
   useEffect(() => {
-    addForm.setValue("type", type);
-  }, [type, addForm]);
+    addForm.setValue("type", "expense");
+  }, [addForm]);
 
   // Handle submitting the add form
   function onAddSubmit(data: z.infer<typeof MasterItemSchema>) {
@@ -253,150 +274,32 @@ export function MasterItemManagement() {
     }
   }
 
-  // Generate pagination links
-  function generatePaginationLinks() {
-    if (!data?.meta) return null;
-    
-    const { page: currentPage, totalPages } = data.meta;
-    const links = [];
-    
-    // Previous button
-    links.push(
-      <PaginationItem key="prev">
-        <PaginationPrevious 
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            setPage(Math.max(1, currentPage - 1));
-          }}
-          aria-disabled={currentPage <= 1}
-          style={{ opacity: currentPage <= 1 ? 0.5 : 1, pointerEvents: currentPage <= 1 ? 'none' : 'auto' }}
-        />
-      </PaginationItem>
-    );
-    
-    // First page
-    links.push(
-      <PaginationItem key={1}>
-        <PaginationLink 
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            setPage(1);
-          }}
-          isActive={currentPage === 1}
-        >
-          1
-        </PaginationLink>
-      </PaginationItem>
-    );
-    
-    // Ellipsis if needed
-    if (currentPage > 3) {
-      links.push(
-        <PaginationItem key="ellipsis1">
-          <PaginationEllipsis />
-        </PaginationItem>
-      );
-    }
-    
-    // Pages around current page
-    for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
-      if (i <= totalPages && i > 1) {
-        links.push(
-          <PaginationItem key={i}>
-            <PaginationLink 
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                setPage(i);
-              }}
-              isActive={currentPage === i}
-            >
-              {i}
-            </PaginationLink>
-          </PaginationItem>
-        );
-      }
-    }
-    
-    // Ellipsis if needed
-    if (currentPage < totalPages - 2) {
-      links.push(
-        <PaginationItem key="ellipsis2">
-          <PaginationEllipsis />
-        </PaginationItem>
-      );
-    }
-    
-    // Last page if more than 1 page
-    if (totalPages > 1) {
-      links.push(
-        <PaginationItem key={totalPages}>
-          <PaginationLink 
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              setPage(totalPages);
-            }}
-            isActive={currentPage === totalPages}
-          >
-            {totalPages}
-          </PaginationLink>
-        </PaginationItem>
-      );
-    }
-    
-    // Next button
-    links.push(
-      <PaginationItem key="next">
-        <PaginationNext 
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            setPage(Math.min(totalPages, currentPage + 1));
-          }}
-          aria-disabled={currentPage >= totalPages}
-          style={{ opacity: currentPage >= totalPages ? 0.5 : 1, pointerEvents: currentPage >= totalPages ? 'none' : 'auto' }}
-        />
-      </PaginationItem>
-    );
-    
-    return links;
-  }
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between mb-4">
-        <div className="flex items-center space-x-4">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Cari item master..."
-              className="pl-8 w-[300px]"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <div className="text-sm font-medium">Tipe:</div>
-            <select 
-              className="p-2 rounded-md border border-input"
-              value={type}
-              onChange={(e) => setType(e.target.value as "income" | "expense")}
-            >
-              <option value="expense">Pengeluaran</option>
-              <option value="income">Pemasukan</option>
-            </select>
-          </div>
+      <div className="flex gap-2 items-center flex-wrap sm:flex-nowrap">
+        <div className="relative w-full sm:w-auto flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Cari item..."
+            className="pl-8 w-full"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
-        
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="mr-1 h-4 w-4" />
               Tambah Item Master
             </Button>
           </DialogTrigger>
@@ -496,71 +399,49 @@ export function MasterItemManagement() {
         </Dialog>
       </div>
 
-      {isLoading ? (
-        <div className="flex justify-center items-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      ) : isError ? (
-        <div className="text-center py-8 text-destructive">
-          Gagal memuat data item master. Silakan coba lagi.
-        </div>
-      ) : data?.items && data.items.length > 0 ? (
-        <>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nama Item</TableHead>
-                <TableHead>Harga Default</TableHead>
-                <TableHead>Deskripsi</TableHead>
-                <TableHead className="w-[150px]">Aksi</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.name}</TableCell>
-                  <TableCell>{formatCurrency(item.defaultPrice)}</TableCell>
-                  <TableCell>{item.description || "-"}</TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="icon"
-                        onClick={() => handleEditClick(item)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="icon" 
-                        className="text-destructive"
-                        onClick={() => handleDeleteClick(item)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          
-          {/* Pagination */}
-          {data.meta.totalPages > 1 && (
-            <div className="flex justify-center mt-4">
-              <Pagination>
-                <PaginationContent>
-                  {generatePaginationLinks()}
-                </PaginationContent>
-              </Pagination>
+      <PaginatedDataTable
+        data={masterItems}
+        totalItems={totalItems}
+        totalPages={totalPages}
+        currentPage={currentPage}
+        onPageChange={handlePageChange}
+        pageSize={pageSize}
+        isLoading={isLoading}
+        emptyMessage="Tidak ada item master"
+        columns={[
+          { header: "Nama", key: "name" },
+          { header: "Tipe", key: (item) => (
+            <span>
+              {item.type === "income" ? "Pemasukan" : "Pengeluaran"}
+            </span>
+          )},
+          { header: "Harga Default", key: (item) => (
+            <span>
+              {formatRupiah(item.defaultPrice)}
+            </span>
+          )},
+          { header: "Deskripsi", key: "description" },
+          { header: "Aksi", key: (item) => (
+            <div className="flex gap-2">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => handleEditClick(item)}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => handleDeleteClick(item)}
+                className="text-red-500"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
           )}
-        </>
-      ) : (
-        <div className="text-center py-8 text-muted-foreground border rounded-md">
-          Tidak ada item master ditemukan.
-        </div>
-      )}
+        ]}
+      />
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

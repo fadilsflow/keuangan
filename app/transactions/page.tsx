@@ -4,13 +4,19 @@ import { useState } from "react";
 import { TransactionDataTable } from "@/components/transaction-data-table";
 import { TransactionFilters } from "@/components/transaction-filters";
 
+interface Filters {
+  search: string;
+  type: string;
+  category: string;
+  dateRange?: { from: Date; to: Date } | undefined;
+}
+
 export default function TransactionsPage() {
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<Filters>({
     search: "",
     type: "",
     category: "",
-    startDate: undefined,
-    endDate: undefined,
+    dateRange: undefined,
   });
 
   return (

@@ -21,6 +21,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { PaginatedDataTable } from "./paginated-data-table";
 
 // Define the type for related party
 interface RelatedParty {
@@ -36,12 +44,19 @@ interface RelatedParty {
 }
 
 // Function to fetch related parties
-async function fetchRelatedParties(search = "", type: "income" | "expense" = "expense"): Promise<RelatedParty[]> {
+async function fetchRelatedParties(
+  search = "", 
+  type: "income" | "expense" = "expense",
+  page = 1,
+  pageSize = 10
+): Promise<{ data: RelatedParty[], meta: { totalItems: number, totalPages: number } }> {
   const searchParams = new URLSearchParams();
   if (search) {
     searchParams.append('search', search);
   }
   searchParams.append('type', type);
+  searchParams.append('page', page.toString());
+  searchParams.append('pageSize', pageSize.toString());
   
   const response = await fetch(`/api/related-parties?${searchParams.toString()}`);
   if (!response.ok) {
@@ -107,14 +122,20 @@ export function RelatedPartyManagement() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedRelatedParty, setSelectedRelatedParty] = useState<RelatedParty | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
   
   const queryClient = useQueryClient();
   
   // Query to fetch related parties
-  const { data: relatedParties, isLoading, isError } = useQuery({
-    queryKey: ['relatedParties', search, type],
-    queryFn: () => fetchRelatedParties(search, type)
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['relatedParties', search, type, currentPage, pageSize],
+    queryFn: () => fetchRelatedParties(search, type, currentPage, pageSize)
   });
+  
+  const relatedParties = data?.data || [];
+  const totalItems = data?.meta?.totalItems || 0;
+  const totalPages = data?.meta?.totalPages || 1;
   
   // Mutation to create a related party
   const createMutation = useMutation({
@@ -220,38 +241,44 @@ export function RelatedPartyManagement() {
     }
   }
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, type]);
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-between mb-4">
-        <div className="flex items-center space-x-4">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Cari pihak terkait..."
-              className="pl-8 w-[300px]"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <div className="text-sm font-medium">Tipe:</div>
-            <select 
-              className="p-2 rounded-md border border-input"
-              value={type}
-              onChange={(e) => setType(e.target.value as "income" | "expense")}
-            >
-              <option value="expense">Pengeluaran</option>
-              <option value="income">Pemasukan</option>
-            </select>
-          </div>
+      <div className="flex gap-2 items-center flex-wrap sm:flex-nowrap">
+        <div className="relative w-full sm:w-auto flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Cari pihak terkait..."
+            className="pl-8 w-full"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
-        
+        <Select
+          value={type}
+          onValueChange={(value) => setType(value as "income" | "expense")}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Pilih Jenis" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="income">Pemasukan</SelectItem>
+            <SelectItem value="expense">Pengeluaran</SelectItem>
+          </SelectContent>
+        </Select>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="mr-1 h-4 w-4" />
               Tambah Pihak Terkait
             </Button>
           </DialogTrigger>
@@ -346,58 +373,46 @@ export function RelatedPartyManagement() {
         </Dialog>
       </div>
 
-      {isLoading ? (
-        <div className="flex justify-center items-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      ) : isError ? (
-        <div className="text-center py-8 text-destructive">
-          Gagal memuat data pihak terkait. Silakan coba lagi.
-        </div>
-      ) : relatedParties && relatedParties.length > 0 ? (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nama Pihak Terkait</TableHead>
-              <TableHead>Info Kontak</TableHead>
-              <TableHead>Deskripsi</TableHead>
-              <TableHead className="w-[150px]">Aksi</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {relatedParties.map((party) => (
-              <TableRow key={party.id}>
-                <TableCell className="font-medium">{party.name}</TableCell>
-                <TableCell>{party.contactInfo || "-"}</TableCell>
-                <TableCell>{party.description || "-"}</TableCell>
-                <TableCell>
-                  <div className="flex space-x-2">
-                    <Button 
-                      variant="outline" 
-                      size="icon"
-                      onClick={() => handleEditClick(party)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="icon" 
-                      className="text-destructive"
-                      onClick={() => handleDeleteClick(party)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      ) : (
-        <div className="text-center py-8 text-muted-foreground border rounded-md">
-          Tidak ada pihak terkait ditemukan.
-        </div>
-      )}
+      <PaginatedDataTable
+        data={relatedParties}
+        totalItems={totalItems}
+        totalPages={totalPages}
+        currentPage={currentPage}
+        onPageChange={handlePageChange}
+        pageSize={pageSize}
+        isLoading={isLoading}
+        emptyMessage={`Tidak ada pihak terkait ${type === "income" ? "pemasukan" : "pengeluaran"}`}
+        columns={[
+          { header: "Nama", key: "name" },
+          { header: "Tipe", key: (party) => (
+            <span>
+              {party.type === "income" ? "Pemasukan" : "Pengeluaran"}
+            </span>
+          )},
+          { header: "Alamat", key: "address" },
+          { header: "Telepon", key: "phone" },
+          { header: "Email", key: "email" },
+          { header: "Aksi", key: (party) => (
+            <div className="flex gap-2">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => handleEditClick(party)}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => handleDeleteClick(party)}
+                className="text-red-500"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        ]}
+      />
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

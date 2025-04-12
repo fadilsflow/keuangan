@@ -27,17 +27,27 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '50');
-    const type = searchParams.get('type') || 'expense'; // Default to 'expense' if not specified
-    const skip = (page - 1) * limit;
+    const pageSize = parseInt(searchParams.get('pageSize') || '10');
+    
+    // Calculate pagination values
+    const skip = (page - 1) * pageSize;
 
-    // Use a temporary workaround until the Prisma client is regenerated
-    const prismaClient = prisma as any;
-
-    const masterItems = await prismaClient.masterItem.findMany({
+    // Get total count for pagination
+    const totalItems = await prisma.masterItem.count({
       where: {
         organizationId: orgId,
-        type: type,
+        name: {
+          contains: search
+        }
+      },
+    });
+
+    // Calculate total pages
+    const totalPages = Math.ceil(totalItems / pageSize);
+
+    const masterItems = await prisma.masterItem.findMany({
+      where: {
+        organizationId: orgId,
         name: {
           contains: search
         }
@@ -46,30 +56,20 @@ export async function GET(request: Request) {
         name: 'asc'
       },
       skip,
-      take: limit
-    });
-
-    const totalItems = await prismaClient.masterItem.count({
-      where: {
-        organizationId: orgId,
-        type: type,
-        name: {
-          contains: search
-        }
-      }
+      take: pageSize
     });
 
     return NextResponse.json({
-      items: masterItems,
+      data: masterItems,
       meta: {
-        total: totalItems,
-        page,
-        limit,
-        totalPages: Math.ceil(totalItems / limit)
+        totalItems,
+        totalPages,
+        currentPage: page,
+        pageSize
       }
     });
     
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error fetching master items:", error);
     return NextResponse.json(
       { error: "Failed to fetch master items" },
@@ -108,11 +108,8 @@ export async function POST(request: Request) {
     // Validate the request body
     const validatedData = MasterItemCreateSchema.parse(body);
     
-    // Use a temporary workaround until the Prisma client is regenerated
-    const prismaClient = prisma as any;
-    
     // Create a new master item
-    const masterItem = await prismaClient.masterItem.create({
+    const masterItem = await prisma.masterItem.create({
       data: validatedData
     });
     
@@ -123,7 +120,7 @@ export async function POST(request: Request) {
     
     if (error.code === 'P2002') {
       return NextResponse.json(
-        { error: "Item dengan nama tersebut sudah ada untuk tipe yang sama" },
+        { error: "Item dengan nama tersebut sudah ada" },
         { status: 400 }
       );
     }

@@ -5,9 +5,10 @@ import { RelatedPartyUpdateSchema } from "@/lib/validations/related-party";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // Get organization ID and user ID from Clerk auth
     const { orgId, userId } = await auth();
     
@@ -32,7 +33,7 @@ export async function GET(
 
     const relatedParty = await prismaClient.relatedParty.findUnique({
       where: {
-        id: params.id
+        id: id
       }
     });
 
@@ -64,9 +65,10 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // Get organization ID and user ID from Clerk auth
     const { orgId, userId } = await auth();
     
@@ -89,7 +91,7 @@ export async function PUT(
     // Check if the related party exists and belongs to the user's organization
     const existingRelatedParty = await prisma.relatedParty.findUnique({
       where: {
-        id: params.id
+        id: id
       }
     });
 
@@ -113,16 +115,16 @@ export async function PUT(
     const validatedData = RelatedPartyUpdateSchema.parse(body);
     
     // Update the related party
-        const updatedRelatedParty = await prisma.relatedParty.update({
+    const updatedRelatedParty = await prisma.relatedParty.update({
       where: {
-        id: params.id
+        id: id
       },
       data: validatedData
     });
     
     return NextResponse.json(updatedRelatedParty);
     
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error updating related party:", error);
     
     if (error.code === 'P2002') {
@@ -141,9 +143,10 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // Get organization ID and user ID from Clerk auth
     const { orgId, userId } = await auth();
     
@@ -163,10 +166,12 @@ export async function DELETE(
       );
     }
 
-    // Check if the related party exists and belongs to the user's organization
+    // Use a temporary workaround until the Prisma client is regenerated
+    const prismaClient = prisma as any;
+    
     const existingRelatedParty = await prismaClient.relatedParty.findUnique({
       where: {
-        id: params.id
+        id: id
       }
     });
 
@@ -187,7 +192,7 @@ export async function DELETE(
     // Delete the related party
     await prismaClient.relatedParty.delete({
       where: {
-        id: params.id
+        id: id
       }
     });
     

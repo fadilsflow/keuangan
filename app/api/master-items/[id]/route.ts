@@ -5,9 +5,10 @@ import { MasterItemUpdateSchema } from "@/lib/validations/master-item";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // Get organization ID and user ID from Clerk auth
     const { orgId, userId } = await auth();
     
@@ -32,7 +33,7 @@ export async function GET(
 
     const masterItem = await prismaClient.masterItem.findUnique({
       where: {
-        id: params.id
+        id: id
       }
     });
 
@@ -64,9 +65,10 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // Get organization ID and user ID from Clerk auth
     const { orgId, userId } = await auth();
     
@@ -92,7 +94,7 @@ export async function PUT(
     // Check if the master item exists and belongs to the user's organization
     const existingMasterItem = await prismaClient.masterItem.findUnique({
       where: {
-        id: params.id
+        id: id
       }
     });
 
@@ -118,7 +120,7 @@ export async function PUT(
     // Update the master item
     const updatedMasterItem = await prismaClient.masterItem.update({
       where: {
-        id: params.id
+        id: id
       },
       data: validatedData
     });
@@ -144,9 +146,10 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // Get organization ID and user ID from Clerk auth
     const { orgId, userId } = await auth();
     
@@ -172,7 +175,7 @@ export async function DELETE(
     // Check if the master item exists and belongs to the user's organization
     const existingMasterItem = await prismaClient.masterItem.findUnique({
       where: {
-        id: params.id
+        id: id
       }
     });
 
@@ -193,7 +196,7 @@ export async function DELETE(
     // Delete the master item
     await prismaClient.masterItem.delete({
       where: {
-        id: params.id
+        id: id
       }
     });
     

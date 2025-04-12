@@ -6,8 +6,12 @@ import { id } from "date-fns/locale";
 import jsPDF from "jspdf";
 import { formatRupiah } from "@/lib/utils";
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id: transactionId } = await params;
     const { userId, orgId } = await auth();
     if (!userId || !orgId) {
       return new NextResponse("Unauthorized", { status: 401 });
@@ -16,7 +20,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
     // Fetch transaction with items
     const transaction = await prisma.transaction.findUnique({
       where: {
-        id: params.id,
+        id: transactionId,
         organizationId: orgId,
       },
       include: {
@@ -26,7 +30,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
     if (!transaction) {
       return new NextResponse("Transaction not found", { status: 404 });
-    }
+      }
 
     // Generate PDF
     const doc = new jsPDF();
@@ -34,13 +38,13 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
     // Add header
     doc.setFontSize(20);
-    doc.text(transaction.type === "income" ? "INVOICE" : "RECEIPT", doc.internal.pageSize.width / 2, y, { align: "center" });
+    doc.text(transaction.type === "pemasukan" ? "INVOICE" : "RECEIPT", doc.internal.pageSize.width / 2, y, { align: "center" });
     y += 20;
 
     // Add transaction details
     doc.setFontSize(12);
     doc.text(`No: ${transaction.id}`, 20, y);
-    doc.text(`Date: ${format(transaction.date, "d MMMM yyyy", { locale: id })}`, doc.internal.pageSize.width - 20, y, { align: "right" });
+    doc.text(`Date: ${format(new Date(transaction.date), "d MMMM yyyy", { locale: id })}`, doc.internal.pageSize.width - 20, y, { align: "right" });
     y += 10;
 
     doc.text(`Related Party: ${transaction.relatedParty}`, 20, y);

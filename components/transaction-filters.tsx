@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { DateRange } from "react-day-picker";
 import { DatePickerWithRange } from "./ui/date-range-picker";
 
 const categories = [
@@ -40,10 +41,17 @@ export function TransactionFilters({ onFilterChange }: TransactionFiltersProps) 
     dateRange: undefined,
   });
 
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+
   const handleFilterChange = (key: keyof Filters, value: any) => {
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
     onFilterChange(newFilters);
+  };
+
+  const handleDateRangeChange = (range: DateRange | undefined) => {
+    setDateRange(range);
+    handleFilterChange("dateRange", range);
   };
 
   const handleReset = () => {
@@ -53,6 +61,7 @@ export function TransactionFilters({ onFilterChange }: TransactionFiltersProps) 
       category: "all",
       dateRange: undefined,
     };
+    setDateRange(undefined);
     setFilters(resetFilters);
     onFilterChange(resetFilters);
   };
@@ -111,8 +120,8 @@ export function TransactionFilters({ onFilterChange }: TransactionFiltersProps) 
         {/* Date Range Picker */}
         <div className="flex-1 ">
           <DatePickerWithRange
-            date={filters.dateRange}
-            onDateChange={(range) => handleFilterChange("dateRange", range)}
+            date={dateRange}
+            setDate={setDateRange}
           />
         </div>
 

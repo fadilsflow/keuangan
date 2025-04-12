@@ -21,6 +21,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { PaginatedDataTable } from "./paginated-data-table";
 
 // Define the type for category
 interface Category {
@@ -35,12 +43,19 @@ interface Category {
 }
 
 // Function to fetch categories
-async function fetchCategories(search = "", type: "income" | "expense" = "expense"): Promise<Category[]> {
+async function fetchCategories(
+  search = "", 
+  type: "income" | "expense" = "expense",
+  page = 1,
+  pageSize = 10
+): Promise<{ data: Category[], meta: { totalItems: number, totalPages: number } }> {
   const searchParams = new URLSearchParams();
   if (search) {
     searchParams.append('search', search);
   }
   searchParams.append('type', type);
+  searchParams.append('page', page.toString());
+  searchParams.append('pageSize', pageSize.toString());
   
   const response = await fetch(`/api/categories?${searchParams.toString()}`);
   if (!response.ok) {
@@ -106,14 +121,20 @@ export function CategoryManagement() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
   
   const queryClient = useQueryClient();
   
   // Query to fetch categories
-  const { data: categories, isLoading, isError } = useQuery({
-    queryKey: ['categories', search, type],
-    queryFn: () => fetchCategories(search, type)
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['categories', search, type, currentPage, pageSize],
+    queryFn: () => fetchCategories(search, type, currentPage, pageSize)
   });
+  
+  const categories = data?.data || [];
+  const totalItems = data?.meta?.totalItems || 0;
+  const totalPages = data?.meta?.totalPages || 1;
   
   // Mutation to create a category
   const createMutation = useMutation({
@@ -216,49 +237,54 @@ export function CategoryManagement() {
     }
   }
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, type]);
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-between mb-4">
-        <div className="flex items-center space-x-4">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Cari kategori..."
-              className="pl-8 w-[300px]"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <div className="text-sm font-medium">Tipe:</div>
-            <select 
-              className="p-2 rounded-md border border-input"
-              value={type}
-              onChange={(e) => setType(e.target.value as "income" | "expense")}
-            >
-              <option value="expense">Pengeluaran</option>
-              <option value="income">Pemasukan</option>
-            </select>
-          </div>
+      <div className="flex gap-2 items-center flex-wrap sm:flex-nowrap">
+        <div className="relative w-full sm:w-auto flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Cari kategori..."
+            className="pl-8 w-full"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
-        
+        <Select
+          value={type}
+          onValueChange={(value) => setType(value as "income" | "expense")}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Pilih Jenis" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="income">Pemasukan</SelectItem>
+            <SelectItem value="expense">Pengeluaran</SelectItem>
+          </SelectContent>
+        </Select>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="mr-1 h-4 w-4" />
               Tambah Kategori
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Tambah Kategori Baru</DialogTitle>
+              <DialogTitle>Tambah Kategori</DialogTitle>
               <DialogDescription>
-                Buat kategori baru untuk memudahkan pengelompokan transaksi.
+                Tambahkan kategori baru untuk transaksi {type === "income" ? "pemasukan" : "pengeluaran"}.
               </DialogDescription>
             </DialogHeader>
-            
             <Form {...addForm}>
               <form onSubmit={addForm.handleSubmit(onAddSubmit)} className="space-y-4">
                 <FormField
@@ -268,58 +294,55 @@ export function CategoryManagement() {
                     <FormItem>
                       <FormLabel>Nama Kategori</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="Masukkan nama kategori" />
+                        <Input placeholder="Nama kategori" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
                 <FormField
                   control={addForm.control}
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Deskripsi (Opsional)</FormLabel>
+                      <FormLabel>Deskripsi</FormLabel>
                       <FormControl>
-                        <Textarea {...field} placeholder="Masukkan deskripsi kategori" />
+                        <Textarea placeholder="Deskripsi kategori" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
                 <FormField
                   control={addForm.control}
                   name="type"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Tipe</FormLabel>
-                      <FormControl>
-                        <select 
-                          className="w-full p-2 rounded-md border border-input"
-                          {...field}
-                        >
-                          <option value="expense">Pengeluaran</option>
-                          <option value="income">Pemasukan</option>
-                        </select>
-                      </FormControl>
+                      <FormLabel>Jenis</FormLabel>
+                      <Select
+                        defaultValue={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Pilih jenis kategori" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="income">Pemasukan</SelectItem>
+                          <SelectItem value="expense">Pengeluaran</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
                 <DialogFooter>
-                  <Button 
-                    type="submit" 
-                    disabled={createMutation.isPending}
-                  >
-                    {createMutation.isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Menyimpan...
-                      </>
-                    ) : "Simpan"}
+                  <Button type="submit" disabled={createMutation.isPending}>
+                    {createMutation.isPending && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    Simpan
                   </Button>
                 </DialogFooter>
               </form>
@@ -328,67 +351,54 @@ export function CategoryManagement() {
         </Dialog>
       </div>
 
-      {isLoading ? (
-        <div className="flex justify-center items-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      ) : isError ? (
-        <div className="text-center py-8 text-destructive">
-          Gagal memuat data kategori. Silakan coba lagi.
-        </div>
-      ) : categories && categories.length > 0 ? (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nama Kategori</TableHead>
-              <TableHead>Deskripsi</TableHead>
-              <TableHead className="w-[150px]">Aksi</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {categories.map((category) => (
-              <TableRow key={category.id}>
-                <TableCell className="font-medium">{category.name}</TableCell>
-                <TableCell>{category.description || "-"}</TableCell>
-                <TableCell>
-                  <div className="flex space-x-2">
-                    <Button 
-                      variant="outline" 
-                      size="icon"
-                      onClick={() => handleEditClick(category)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="icon" 
-                      className="text-destructive"
-                      onClick={() => handleDeleteClick(category)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      ) : (
-        <div className="text-center py-8 text-muted-foreground border rounded-md">
-          Tidak ada kategori ditemukan.
-        </div>
-      )}
+      <PaginatedDataTable
+        data={categories}
+        totalItems={totalItems}
+        totalPages={totalPages}
+        currentPage={currentPage}
+        onPageChange={handlePageChange}
+        pageSize={pageSize}
+        isLoading={isLoading}
+        emptyMessage={`Tidak ada kategori ${type === "income" ? "pemasukan" : "pengeluaran"}`}
+        columns={[
+          { header: "Nama", key: "name" },
+          { header: "Deskripsi", key: "description" },
+          { header: "Jenis", key: (category) => (
+            <span>
+              {category.type === "income" ? "Pemasukan" : "Pengeluaran"}
+            </span>
+          )},
+          { header: "Aksi", key: (category) => (
+            <div className="flex gap-2">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => handleEditClick(category)}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => handleDeleteClick(category)}
+                className="text-red-500"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        ]}
+      />
 
-      {/* Edit Dialog */}
+      {/* Edit dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Kategori</DialogTitle>
             <DialogDescription>
-              Perbarui informasi kategori.
+              Edit kategori untuk transaksi {selectedCategory?.type === "income" ? "pemasukan" : "pengeluaran"}.
             </DialogDescription>
           </DialogHeader>
-          
           <Form {...editForm}>
             <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
               <FormField
@@ -398,58 +408,55 @@ export function CategoryManagement() {
                   <FormItem>
                     <FormLabel>Nama Kategori</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Masukkan nama kategori" />
+                      <Input placeholder="Nama kategori" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
               <FormField
                 control={editForm.control}
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Deskripsi (Opsional)</FormLabel>
+                    <FormLabel>Deskripsi</FormLabel>
                     <FormControl>
-                      <Textarea {...field} placeholder="Masukkan deskripsi kategori" />
+                      <Textarea placeholder="Deskripsi kategori" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
               <FormField
                 control={editForm.control}
                 name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tipe</FormLabel>
-                    <FormControl>
-                      <select 
-                        className="w-full p-2 rounded-md border border-input"
-                        {...field}
-                      >
-                        <option value="expense">Pengeluaran</option>
-                        <option value="income">Pemasukan</option>
-                      </select>
-                    </FormControl>
+                    <FormLabel>Jenis</FormLabel>
+                    <Select
+                      defaultValue={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Pilih jenis kategori" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="income">Pemasukan</SelectItem>
+                        <SelectItem value="expense">Pengeluaran</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
               <DialogFooter>
-                <Button 
-                  type="submit" 
-                  disabled={updateMutation.isPending}
-                >
-                  {updateMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Memperbarui...
-                    </>
-                  ) : "Perbarui"}
+                <Button type="submit" disabled={updateMutation.isPending}>
+                  {updateMutation.isPending && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  Simpan
                 </Button>
               </DialogFooter>
             </form>
@@ -457,16 +464,15 @@ export function CategoryManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete confirmation dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Konfirmasi Penghapusan</DialogTitle>
+            <DialogTitle>Hapus Kategori</DialogTitle>
             <DialogDescription>
-              Apakah Anda yakin ingin menghapus kategori ini? Tindakan ini tidak dapat dibatalkan.
+              Anda yakin ingin menghapus kategori "{selectedCategory?.name}"?
             </DialogDescription>
           </DialogHeader>
-          
           <DialogFooter>
             <Button 
               variant="outline" 
@@ -479,12 +485,10 @@ export function CategoryManagement() {
               onClick={handleConfirmDelete}
               disabled={deleteMutation.isPending}
             >
-              {deleteMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Menghapus...
-                </>
-              ) : "Hapus"}
+              {deleteMutation.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Hapus
             </Button>
           </DialogFooter>
         </DialogContent>
