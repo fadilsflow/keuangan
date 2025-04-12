@@ -24,6 +24,12 @@ async function getOrganizationName(orgId: string | null | undefined): Promise<st
     // Get active organization name from the session claims
     const { sessionClaims } = await auth();
     
+    // Helper function to clean organization name (remove IDs like "1744390011")
+    const cleanOrgName = (name: string): string => {
+      // Pattern to match a name followed by a space and numbers
+      return name.replace(/\s+\d+$/, '').trim();
+    };
+    
     // Check if we have org_id and org_metadata
     if (sessionClaims && sessionClaims.org_id) {
       // Check if we have org_metadata with name
@@ -31,21 +37,23 @@ async function getOrganizationName(orgId: string | null | undefined): Promise<st
           typeof sessionClaims.org_metadata === 'object' && 
           'name' in sessionClaims.org_metadata &&
           sessionClaims.org_metadata.name) {
-        return String(sessionClaims.org_metadata.name);
+        return cleanOrgName(String(sessionClaims.org_metadata.name));
       }
       
       // Fallback to org_name if available
       if (sessionClaims.org_name) {
-        return String(sessionClaims.org_name);
+        return cleanOrgName(String(sessionClaims.org_name));
       }
       
       // Fallback to capitalizing org_slug if available
       if (sessionClaims.org_slug) {
         // Convert slug to display name (replace hyphens with spaces and capitalize each word)
-        return String(sessionClaims.org_slug)
+        const slugName = String(sessionClaims.org_slug)
           .split('-')
           .map(word => word.charAt(0).toUpperCase() + word.slice(1))
           .join(' ');
+        
+        return cleanOrgName(slugName);
       }
     }
     
