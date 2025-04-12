@@ -5,12 +5,14 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const from = searchParams.get('from');
   const to = searchParams.get('to');
+  const organizationId = searchParams.get('organizationId');
 
   const dateFilter = {
     date: {
       ...(from && { gte: new Date(from) }),
       ...(to && { lte: new Date(to) }),
     },
+    ...(organizationId && { organizationId }),
   };
 
   const [pemasukan, pengeluaran] = await Promise.all([

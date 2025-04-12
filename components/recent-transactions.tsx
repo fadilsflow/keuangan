@@ -9,6 +9,7 @@ import { formatRupiah } from "@/lib/utils"
 import { Button } from "./ui/button"
 import { ScrollArea } from "./ui/scroll-area"
 import { TrendingUp, TrendingDown } from "lucide-react"
+import { Skeleton } from "./ui/skeleton"
 
 async function fetchRecentTransactions() {
     const response = await fetch("/api/transactions/recent")
@@ -21,10 +22,6 @@ export default function RecentTransactions() {
         queryKey: ["recentTransactions"],
         queryFn: fetchRecentTransactions
     })
-
-    if (isLoading) {
-        return <div>Loading...</div>
-    }
 
     // Show only 5 transactions initially
     const displayedTransactions = transactions.slice(0, 5)
@@ -50,7 +47,30 @@ export default function RecentTransactions() {
             </CardHeader>
             <CardContent>
                 <div className="divide-y divide-border rounded-md border">
-                    {displayedTransactions.length === 0 ? (
+                    {isLoading ? (
+                        <>
+                            {Array(3).fill(0).map((_, i) => (
+                                <div key={i} className="p-4">
+                                    <div className="grid gap-1">
+                                        <div className="flex items-center justify-between gap-4">
+                                            <div>
+                                                <Skeleton className="h-4 w-32 mb-2" />
+                                                <div className="flex items-center gap-2">
+                                                    <Skeleton className="h-3 w-16" />
+                                                    <span>•</span>
+                                                    <Skeleton className="h-3 w-20" />
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col items-end gap-1">
+                                                <Skeleton className="h-4 w-20" />
+                                                <Skeleton className="h-3 w-24 mt-1" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </>
+                    ) : displayedTransactions.length === 0 ? (
                         <div className="p-4 text-center text-sm text-muted-foreground">
                             Tidak ada transaksi terbaru
                         </div>

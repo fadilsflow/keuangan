@@ -4,13 +4,14 @@ import { useQuery } from "@tanstack/react-query";
 import { formatRupiah } from "@/lib/utils";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { DateRange } from "react-day-picker";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface CategoryItem {
     category: string;
     total: number;
 }
 
-async function fetchCategoryStats(dateRange: DateRange) {
+async function fetchCategoryStats(dateRange: DateRange | undefined) {
     const params = new URLSearchParams();
     if (dateRange?.from) {
         params.append('from', dateRange.from.toISOString());
@@ -25,7 +26,7 @@ async function fetchCategoryStats(dateRange: DateRange) {
 }
 
 interface TransactionChartsProps {
-    dateRange: DateRange;
+    dateRange: DateRange | undefined;
 }
 
 export function TransactionCharts({ dateRange }: TransactionChartsProps) {
@@ -34,7 +35,14 @@ export function TransactionCharts({ dateRange }: TransactionChartsProps) {
         queryFn: () => fetchCategoryStats(dateRange),
     });
 
-    if (isLoading) return <div>Loading...</div>;
+    if (isLoading) {
+        return (
+            <div className="grid gap-6 md:grid-cols-2">
+                <ChartSkeleton title="Pemasukan per Kategori" />
+                <ChartSkeleton title="Pengeluaran per Kategori" />
+            </div>
+        );
+    }
 
     const CategoryChart = ({ title, data, isIncome }: {
         title: string,
@@ -111,6 +119,27 @@ export function TransactionCharts({ dateRange }: TransactionChartsProps) {
                 isIncome={false}
             />
         </div>
+    );
+}
+
+function ChartSkeleton({ title }: { title: string }) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>{title}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                    <div key={i} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                            <Skeleton className="h-4 w-32" />
+                            <Skeleton className="h-4 w-20" />
+                        </div>
+                        <Skeleton className="h-2 w-full" />
+                    </div>
+                ))}
+            </CardContent>
+        </Card>
     );
 }
 

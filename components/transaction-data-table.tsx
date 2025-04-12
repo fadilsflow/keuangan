@@ -26,6 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Pagination } from "@/components/ui/pagination";
+import { Skeleton } from "@/components/ui/skeleton";
 
 
 interface TransactionDataTableProps {
@@ -288,7 +289,75 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="space-y-4">
+        <div className="overflow-hidden rounded-lg border">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50">
+                <TableHead className="w-12">
+                  <Skeleton className="h-4 w-4" />
+                </TableHead>
+                <TableHead><Skeleton className="h-4 w-20" /></TableHead>
+                <TableHead><Skeleton className="h-4 w-32" /></TableHead>
+                <TableHead><Skeleton className="h-4 w-24" /></TableHead>
+                <TableHead><Skeleton className="h-4 w-28" /></TableHead>
+                <TableHead><Skeleton className="h-4 w-20" /></TableHead>
+                <TableHead><Skeleton className="h-4 w-40" /></TableHead>
+                <TableHead><Skeleton className="h-4 w-24" /></TableHead>
+                <TableHead><Skeleton className="h-4 w-16" /></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Array.from({ length: pageSize }).map((_, index) => (
+                <TableRow key={index}>
+                  <TableCell>
+                    <Skeleton className="h-4 w-4" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-28" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-48" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-32" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-36" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-24 rounded-full" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-2 rounded-md border px-2 py-1">
+                      {Array.from({ length: 2 }).map((_, itemIndex) => (
+                        <div key={itemIndex} className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <Skeleton className="h-4 w-32" />
+                            <Skeleton className="h-3 w-8" />
+                          </div>
+                          <Skeleton className="h-4 w-20" />
+                        </div>
+                      ))}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-28" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-8 w-8" />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+        <div className="flex justify-center mt-4">
+          <Skeleton className="h-8 w-64" />
+        </div>
+      </div>
+    );
   }
 
   return (

@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query"
 import { formatRupiah } from "@/lib/utils"
 import { Wallet, ListOrdered, TrendingDown, TrendingUpIcon } from "lucide-react"
 import { DateRange } from "react-day-picker"
+import { useOrganization } from "@clerk/nextjs"
 
 import {
   Card,
@@ -11,14 +12,18 @@ import {
   CardDescription,
   CardTitle,
 } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 
-async function fetchDashboardStats(dateRange: DateRange) {
+async function fetchDashboardStats(dateRange: DateRange | undefined, organizationId: string | undefined) {
   const params = new URLSearchParams();
   if (dateRange?.from) {
     params.append('from', dateRange.from.toISOString());
   }
   if (dateRange?.to) {
     params.append('to', dateRange.to.toISOString());
+  }
+  if (organizationId) {
+    params.append('organizationId', organizationId);
   }
 
   const response = await fetch(`/api/dashboard/stats?${params.toString()}`);
@@ -29,13 +34,15 @@ async function fetchDashboardStats(dateRange: DateRange) {
 }
 
 interface SectionCardsProps {
-  dateRange: DateRange;
+  dateRange: DateRange | undefined;
 }
 
 export function SectionCards({ dateRange }: SectionCardsProps) {
-  const { data: stats } = useQuery({
-    queryKey: ["dashboardStats", dateRange?.from, dateRange?.to],
-    queryFn: () => fetchDashboardStats(dateRange),
+  const { organization } = useOrganization();
+  
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ["dashboardStats", dateRange?.from, dateRange?.to, organization?.id],
+    queryFn: () => fetchDashboardStats(dateRange, organization?.id),
     initialData: {
       totalPemasukan: 0,
       totalPengeluaran: 0,
@@ -44,63 +51,75 @@ export function SectionCards({ dateRange }: SectionCardsProps) {
     },
   })
 
+  const cards = [
+    {
+      title: "Pemasukan",
+      icon: <TrendingUpIcon className="h-3 w-3 mr-1 text-green-600" />,
+      value: isLoading ? null : stats.totalPemasukan,
+      formatter: formatRupiah,
+      skeletonWidth: "w-28",
+      color: "text-green-600",
+      showCurrency: true
+    },
+    {
+      title: "Pengeluaran",
+      icon: <TrendingDown className="h-3 w-3 mr-1 text-red-600" />,
+      value: isLoading ? null : stats.totalPengeluaran,
+      formatter: formatRupiah,
+      skeletonWidth: "w-28",
+      color: "text-red-600",
+      showCurrency: true
+    },
+    {
+      title: "Saldo",
+      icon: <Wallet className="h-3 w-3 mr-1 text-blue-600" />,
+      value: isLoading ? null : stats.saldo,
+      formatter: formatRupiah,
+      skeletonWidth: "w-28",
+      color: "text-blue-600",
+      showCurrency: true
+    },
+    {
+      title: "Transaksi",
+      icon: <ListOrdered className="h-3 w-3 mr-1 text-purple-600" />,
+      value: isLoading ? null : stats.totalTransaksi,
+      formatter: (val: number) => val.toString(),
+      skeletonWidth: "w-12",
+      color: "text-purple-600",
+      showCurrency: false
+    },
+  ];
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 px-4 lg:px-6 @xl/main:grid-cols-4 @5xl/main:grid-cols-4">
-      <Card className="relative overflow-hidden">
-        <CardHeader className="space-y-2 p-4 sm:p-6">
-          <div className="flex items-center justify-between">
-            <CardDescription className="flex items-center gap-2 text-xs sm:text-sm">
-              <TrendingUpIcon className="h-4 w-4 text-green-600 flex-shrink-0" />
-              <span className="truncate">Total Pemasukan</span>
+    <div className="grid grid-cols-2 gap-3 px-4 lg:px-6 @xl/main:grid-cols-4">
+      {cards.map((card, index) => (
+        <Card key={index} className="overflow-hidden shadow-sm">
+          <CardHeader className="p-3">
+            <CardDescription className="flex items-center text-xs">
+              {card.icon}
+              <span>{card.title}</span>
             </CardDescription>
-          </div>
-          <CardTitle className="text-lg sm:text-xl lg:text-2xl font-semibold truncate tabular-nums">
-            {formatRupiah(stats.totalPemasukan)}
-          </CardTitle>
-        </CardHeader>
-      </Card>
-      
-      <Card className="relative overflow-hidden">
-        <CardHeader className="space-y-2 p-4 sm:p-6">
-          <div className="flex items-center justify-between">
-            <CardDescription className="flex items-center gap-2 text-xs sm:text-sm">
-              <TrendingDown className="h-4 w-4 text-red-600 flex-shrink-0" />
-              <span className="truncate">Total Pengeluaran</span>
-            </CardDescription>
-          </div>
-          <CardTitle className="text-lg sm:text-xl lg:text-xl font-semibold truncate tabular-nums">
-            {formatRupiah(stats.totalPengeluaran)}
-          </CardTitle>
-        </CardHeader>
-      </Card>
-      
-      <Card className="relative overflow-hidden">
-        <CardHeader className="space-y-2 p-4 sm:p-6">
-          <div className="flex items-center justify-between">
-            <CardDescription className="flex items-center gap-2 text-xs sm:text-sm">
-              <Wallet className="h-4 w-4 text-blue-600 flex-shrink-0" />
-              <span className="truncate">Saldo</span>
-            </CardDescription>
-          </div>
-          <CardTitle className="text-lg sm:text-xl lg:text-md font-semibold truncate tabular-nums">
-            {formatRupiah(stats.saldo)}
-          </CardTitle>
-        </CardHeader>
-      </Card>
-      
-      <Card className="relative overflow-hidden">
-        <CardHeader className="space-y-2 p-4 sm:p-6">
-          <div className="flex items-center justify-between">
-            <CardDescription className="flex items-center gap-2 text-xs sm:text-sm">
-              <ListOrdered className="h-4 w-4 text-purple-600 flex-shrink-0" />
-              <span className="truncate">Total Transaksi</span>
-            </CardDescription>
-          </div>
-          <CardTitle className="text-lg sm:text-xl lg:text-2xl font-semibold truncate tabular-nums">
-            {stats.totalTransaksi}
-          </CardTitle>
-        </CardHeader>
-      </Card>
+            {isLoading ? (
+              <div className="mt-1">
+                {card.showCurrency ? (
+                  <div className={`flex items-center ${card.color}`}>
+                    <span className="text-base font-medium">Rp</span>
+                    <div className="ml-1 flex-1">
+                      <Skeleton className={`h-5 ${card.skeletonWidth}`} />
+                    </div>
+                  </div>
+                ) : (
+                  <Skeleton className={`h-5 ${card.skeletonWidth}`} />
+                )}
+              </div>
+            ) : (
+              <CardTitle className="text-base font-medium tabular-nums truncate">
+                {card.formatter(card.value)}
+              </CardTitle>
+            )}
+          </CardHeader>
+        </Card>
+      ))}
     </div>
   )
 }

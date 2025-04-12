@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface PaginatedDataTableProps<T> {
   data: T[]
@@ -22,6 +23,7 @@ interface PaginatedDataTableProps<T> {
     header: string
     key: string | ((item: T) => ReactNode)
     cell?: (item: T) => ReactNode
+    isCurrency?: boolean
   }[]
   emptyMessage?: string
   isLoading?: boolean
@@ -53,11 +55,22 @@ export function PaginatedDataTable<T extends { id: string }>({
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-6">
-                  Loading...
-                </TableCell>
-              </TableRow>
+              Array.from({ length: pageSize }).map((_, index) => (
+                <TableRow key={`skeleton-${index}`}>
+                  {columns.map((column, colIndex) => (
+                    <TableCell key={`skeleton-cell-${index}-${colIndex}`}>
+                      {column.isCurrency ? (
+                        <div className="flex items-center">
+                          <span className="text-muted-foreground text-sm mr-1">Rp</span>
+                          <Skeleton className="h-4 w-20" />
+                        </div>
+                      ) : (
+                        <Skeleton className="h-4 w-full max-w-24" />
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
             ) : data.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={columns.length} className="text-center py-6 text-muted-foreground">
@@ -88,11 +101,15 @@ export function PaginatedDataTable<T extends { id: string }>({
 
       {totalPages > 1 && (
         <div className="flex justify-center mt-4">
-          <Pagination
-            totalPages={totalPages}
-            currentPage={currentPage}
-            onPageChange={onPageChange}
-          />
+          {isLoading ? (
+            <Skeleton className="h-8 w-64" />
+          ) : (
+            <Pagination
+              totalPages={totalPages}
+              currentPage={currentPage}
+              onPageChange={onPageChange}
+            />
+          )}
         </div>
       )}
     </div>

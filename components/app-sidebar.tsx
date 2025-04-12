@@ -63,7 +63,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ variant = "inset" }: AppSidebarProps) {
   return (
-    <Sidebar variant={variant}>
+    <Sidebar variant={variant} >
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>

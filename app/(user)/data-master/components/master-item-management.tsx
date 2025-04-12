@@ -415,11 +415,15 @@ export function MasterItemManagement() {
               {item.type === "income" ? "Pemasukan" : "Pengeluaran"}
             </span>
           )},
-          { header: "Harga Default", key: (item) => (
-            <span>
-              {formatRupiah(item.defaultPrice)}
-            </span>
-          )},
+          { 
+            header: "Harga Default", 
+            key: (item) => (
+              <span>
+                {formatRupiah(item.defaultPrice)}
+              </span>
+            ),
+            isCurrency: true
+          },
           { header: "Deskripsi", key: "description" },
           { header: "Aksi", key: (item) => (
             <div className="flex gap-2">

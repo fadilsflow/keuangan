@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/toggle-group"
 import { formatRupiah } from "@/lib/utils"
 import { TooltipProps } from "recharts"
+import { Skeleton } from "@/components/ui/skeleton"
 
 async function fetchTransactionHistory() {
     const response = await fetch("/api/transactions/history")
@@ -75,8 +76,6 @@ export function TransactionHistoryCharts() {
         startDate.setDate(startDate.getDate() - daysToSubtract)
         return date >= startDate
     })
-
-    if (isLoading) return <div>Loading...</div>
 
     return (
         <Card className="@container/card">
@@ -130,111 +129,117 @@ export function TransactionHistoryCharts() {
                 </div>
             </CardHeader>
             <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-                <ChartContainer
-                    config={chartConfig}
-                    className="aspect-auto h-[250px] w-full"
-                >
-                    <AreaChart data={filteredData}>
-                        <defs>
-                            <linearGradient id="fillIncome" x1="0" y1="0" x2="0" y2="1">
-                                <stop
-                                    offset="5%"
-                                    stopColor="hsl(142.1 76.2% 36.3%)"
-                                    stopOpacity={0.8}
-                                />
-                                <stop
-                                    offset="95%"
-                                    stopColor="hsl(142.1 76.2% 36.3%)"
-                                    stopOpacity={0.1}
-                                />
-                            </linearGradient>
-                            <linearGradient id="fillExpense" x1="0" y1="0" x2="0" y2="1">
-                                <stop
-                                    offset="5%"
-                                    stopColor="hsl(346.8 77.2% 49.8%)"
-                                    stopOpacity={0.8}
-                                />
-                                <stop
-                                    offset="95%"
-                                    stopColor="hsl(346.8 77.2% 49.8%)"
-                                    stopOpacity={0.1}
-                                />
-                            </linearGradient>
-                        </defs>
-                        <CartesianGrid vertical={false} />
-                        <XAxis
-                            dataKey="date"
-                            tickLine={false}
-                            axisLine={false}
-                            tickMargin={8}
-                            minTickGap={32}
-                            tickFormatter={(value) => {
-                                const date = new Date(value)
-                                return date.toLocaleDateString("id-ID", {
-                                    month: "short",
-                                    day: "numeric",
-                                })
-                            }}
-                        />
-                        <YAxis
-                            tickLine={false}
-                            axisLine={false}
-                            tickMargin={8}
-                            tickFormatter={(value) => formatRupiah(value)}
-                        />
-                        <ChartTooltip
-                            cursor={false}
-                            content={({ active, payload, label }: TooltipProps<number, string>) => {
-                                if (!active || !payload) return null
+                {isLoading ? (
+                    <div className="aspect-auto h-[250px] w-full flex items-center justify-center">
+                        <Skeleton className="h-[200px] w-full" />
+                    </div>
+                ) : (
+                    <ChartContainer
+                        config={chartConfig}
+                        className="aspect-auto h-[250px] w-full"
+                    >
+                        <AreaChart data={filteredData}>
+                            <defs>
+                                <linearGradient id="fillIncome" x1="0" y1="0" x2="0" y2="1">
+                                    <stop
+                                        offset="5%"
+                                        stopColor="hsl(142.1 76.2% 36.3%)"
+                                        stopOpacity={0.8}
+                                    />
+                                    <stop
+                                        offset="95%"
+                                        stopColor="hsl(142.1 76.2% 36.3%)"
+                                        stopOpacity={0.1}
+                                    />
+                                </linearGradient>
+                                <linearGradient id="fillExpense" x1="0" y1="0" x2="0" y2="1">
+                                    <stop
+                                        offset="5%"
+                                        stopColor="hsl(346.8 77.2% 49.8%)"
+                                        stopOpacity={0.8}
+                                    />
+                                    <stop
+                                        offset="95%"
+                                        stopColor="hsl(346.8 77.2% 49.8%)"
+                                        stopOpacity={0.1}
+                                    />
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid vertical={false} />
+                            <XAxis
+                                dataKey="date"
+                                tickLine={false}
+                                axisLine={false}
+                                tickMargin={8}
+                                minTickGap={32}
+                                tickFormatter={(value) => {
+                                    const date = new Date(value)
+                                    return date.toLocaleDateString("id-ID", {
+                                        month: "short",
+                                        day: "numeric",
+                                    })
+                                }}
+                            />
+                            <YAxis
+                                tickLine={false}
+                                axisLine={false}
+                                tickMargin={8}
+                                tickFormatter={(value) => formatRupiah(value)}
+                            />
+                            <ChartTooltip
+                                cursor={false}
+                                content={({ active, payload, label }: TooltipProps<number, string>) => {
+                                    if (!active || !payload) return null
 
-                                return (
-                                    <div className="rounded-lg border bg-background p-2 shadow-sm">
-                                        <div className="font-medium">
-                                            {new Date(label).toLocaleDateString("id-ID", {
-                                                day: "numeric",
-                                                month: "long",
-                                                year: "numeric"
-                                            })}
-                                        </div>
-                                        {payload.map((entry, index) => (
-                                            <div
-                                                key={index}
-                                                className="flex items-center justify-between gap-2"
-                                            >
-                                                <span className="flex items-center gap-1 text-sm">
-                                                    <span
-                                                        className="h-2 w-2 rounded-full"
-                                                        style={{
-                                                            backgroundColor: entry.color
-                                                        }}
-                                                    />
-                                                    {entry.name === "income" ? "Pemasukan" : "Pengeluaran"}
-                                                </span>
-                                                <span className="text-sm font-medium">
-                                                    {formatRupiah(entry.value as number)}
-                                                </span>
+                                    return (
+                                        <div className="rounded-lg border bg-background p-2 shadow-sm">
+                                            <div className="font-medium">
+                                                {new Date(label).toLocaleDateString("id-ID", {
+                                                    day: "numeric",
+                                                    month: "long",
+                                                    year: "numeric"
+                                                })}
                                             </div>
-                                        ))}
-                                    </div>
-                                )
-                            }}
-                        />
-                        <Area
-                            dataKey="income"
-                            type="monotone"
-                            fill="url(#fillIncome)"
-                            stroke="hsl(142.1 76.2% 36.3%)"
-                            strokeWidth={2}
-                        />
-                        <Area
-                            dataKey="expense"
-                            type="monotone"
-                            fill="url(#fillExpense)"
-                            stroke="hsl(346.8 77.2% 49.8%)"
-                            strokeWidth={2}
-                        />
-                    </AreaChart>
-                </ChartContainer>
+                                            {payload.map((entry, index) => (
+                                                <div
+                                                    key={index}
+                                                    className="flex items-center justify-between gap-2"
+                                                >
+                                                    <span className="flex items-center gap-1 text-sm">
+                                                        <span
+                                                            className="h-2 w-2 rounded-full"
+                                                            style={{
+                                                                backgroundColor: entry.color
+                                                            }}
+                                                        />
+                                                        {entry.name === "income" ? "Pemasukan" : "Pengeluaran"}
+                                                    </span>
+                                                    <span className="text-sm font-medium">
+                                                        {formatRupiah(entry.value as number)}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )
+                                }}
+                            />
+                            <Area
+                                dataKey="income"
+                                type="monotone"
+                                fill="url(#fillIncome)"
+                                stroke="hsl(142.1 76.2% 36.3%)"
+                                strokeWidth={2}
+                            />
+                            <Area
+                                dataKey="expense"
+                                type="monotone"
+                                fill="url(#fillExpense)"
+                                stroke="hsl(346.8 77.2% 49.8%)"
+                                strokeWidth={2}
+                            />
+                        </AreaChart>
+                    </ChartContainer>
+                )}
             </CardContent>
         </Card>
     )
