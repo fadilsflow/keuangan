@@ -1,11 +1,13 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ModeToggle } from "./mode-toggle";
 
-import {  OrganizationSwitcher, SignInButton, SignUpButton, SignedIn, SignedOut, UserButton, useOrganization } from "@clerk/nextjs";
+import {  useOrganization } from "@clerk/nextjs";
+import ResponsiveOrganizationSwitcher from "./responsive-organization-switcher";
+import { ResponsiveUserButton } from "./responsive-user-button";
 
 
 export function SiteHeader() {
@@ -23,15 +25,9 @@ export function SiteHeader() {
         <div className="ml-auto flex items-center gap-2">
 
           <ModeToggle />
-          <SignedOut>
-              <Button variant={"outline"} asChild><SignInButton /></Button>
-              <Button variant={"outline"} asChild ><SignUpButton /></Button>
-          </SignedOut>
-          <SignedIn>
-            <UserButton />
-          </SignedIn>
-
-            <OrganizationSwitcher />
+       
+            <ResponsiveUserButton />
+            <ResponsiveOrganizationSwitcher />
 
         </div>
       </div>

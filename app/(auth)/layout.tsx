@@ -1,7 +1,9 @@
 import { ModeToggle } from "@/components/mode-toggle";
 import { ResponsiveUserButton } from "@/components/responsive-user-button";
 import Link from "next/link";
+import React from "react";
 import { Toaster } from "sonner";
+
 
 export default function AuthLayout({
   children,

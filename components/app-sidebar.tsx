@@ -13,17 +13,20 @@ import {
 
 
 import { NavMain } from "@/components/nav-main";
-import { NavUser } from "@/components/nav-user";
+
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
+
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Building } from "lucide-react";
+
+import ResponsiveOrganizationSwitcher from "./responsive-organization-switcher";
+
+
 
 
 const data = {
@@ -63,24 +66,25 @@ interface AppSidebarProps {
 
 export function AppSidebar({ variant = "inset" }: AppSidebarProps) {
   return (
-    <Sidebar variant={variant} >
+    <Sidebar variant={variant} collapsible="icon" >
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              asChild
-
+            className="hover:bg-transparent active:bg-transparent"
             >
-              <a href="#">
                 <IconInnerShadowTop className="!size-5" />
                 <span className="text-base font-semibold">Cashlog.</span>
-                
-              </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          <SidebarMenuItem className="flex items-center gap-1">
-         <Building className="ml-2.5 w-3 h-3"/> <p className=" text-xs font-semibold">Rumah Tempe Indonesia.</p>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+            className="  hover:bg-transparent active:bg-transparent"
+            >
+              <ResponsiveOrganizationSwitcher/>
+            </SidebarMenuButton>
           </SidebarMenuItem>
+          
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
@@ -88,9 +92,9 @@ export function AppSidebar({ variant = "inset" }: AppSidebarProps) {
         <NavMain items={data.navMain} />
 
       </SidebarContent>
-      <SidebarFooter>
-        <NavUser user={data.user} />
-      </SidebarFooter>
+      {/* <SidebarFooter >
+      </SidebarFooter> */}
+      
     </Sidebar>
   );
 }

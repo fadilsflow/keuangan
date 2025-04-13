@@ -145,7 +145,7 @@ export function TransactionForm({
 
   const mutation = useMutation({
     mutationFn: mode === "edit" ? updateTransaction : createTransaction,
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       toast.success(
         mode === "edit"

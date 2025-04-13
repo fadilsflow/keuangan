@@ -2,12 +2,12 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 
-import type { ReactNode } from "react";
+import React from "react";
 
 export default async function UserLayout({
   children,
 }: {
-  children: ReactNode;
+  children: React.ReactNode;
 }) {
 
   return (

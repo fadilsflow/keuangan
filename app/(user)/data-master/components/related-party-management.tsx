@@ -13,14 +13,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RelatedPartySchema } from "@/lib/validations/related-party";
 import { z } from "zod";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+
+
 import {
   Select,
   SelectContent,
@@ -128,7 +122,7 @@ export function RelatedPartyManagement() {
   const queryClient = useQueryClient();
   
   // Query to fetch related parties
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['relatedParties', search, type, currentPage, pageSize],
     queryFn: () => fetchRelatedParties(search, type, currentPage, pageSize)
   });

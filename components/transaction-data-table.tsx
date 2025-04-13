@@ -16,7 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { formatRupiah } from "@/lib/utils";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { MoreHorizontal, Trash2, TrendingUp, TrendingDown, Pencil, ChevronDown, ChevronUp, Package, FileText, Printer } from "lucide-react";
+import { MoreHorizontal, Trash2, TrendingUp, TrendingDown, Pencil, FileText, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import {
@@ -91,7 +91,6 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const queryClient = useQueryClient();
   const router = useRouter();
-  const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10; // Items per page
   
@@ -445,7 +444,7 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
                   </TableCell>
                   <TableCell className="max-w-[300px]">
                     <div className="space-y-1 rounded-md border px-2 py-1 ">
-                      {transaction.items.map((item: Item, index: number) => (
+                      {transaction.items.map((item: Item) => (
                         <div
                           key={item.id}
                           className="flex items-center justify-between gap-2 text-sm"

@@ -13,14 +13,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CategorySchema } from "@/lib/validations/category";
 import { z } from "zod";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+
 import {
   Select,
   SelectContent,
@@ -127,7 +120,7 @@ export function CategoryManagement() {
   const queryClient = useQueryClient();
   
   // Query to fetch categories
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['categories', search, type, currentPage, pageSize],
     queryFn: () => fetchCategories(search, type, currentPage, pageSize)
   });

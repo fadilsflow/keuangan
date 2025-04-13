@@ -1,11 +1,10 @@
 "use client"
 
-import { ModeToggle } from "@/components/mode-toggle";
-import { ResponsiveUserButton } from "@/components/responsive-user-button";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { SignedIn, SignedOut, SignInButton, SignUpButton } from "@clerk/nextjs";
-import { ArrowRight } from "lucide-react";
+import { SignedIn, SignedOut } from "@clerk/nextjs";
+
 import Link from "next/link";
 
 export default function LandingPage() {

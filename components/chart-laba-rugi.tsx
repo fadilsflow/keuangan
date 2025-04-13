@@ -23,15 +23,16 @@ import {
     ChartTooltip,
 } from "@/components/ui/chart"
 
-async function fetchLabaRugi(startDate: Date, endDate: Date, organizationId: string | undefined) {
+async function fetchLabaRugi(startDate: Date, endDate: Date, organizationId: string) {
+    if (!organizationId) {
+        throw new Error("Organization ID is required");
+    }
+
     const params = new URLSearchParams({
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
+        organizationId: organizationId,
     });
-
-    if (organizationId) {
-        params.append('organizationId', organizationId);
-    }
 
     const response = await fetch(`/api/transactions/laba-rugi?${params}`);
     if (!response.ok) throw new Error("Failed to fetch laba rugi");
@@ -39,7 +40,7 @@ async function fetchLabaRugi(startDate: Date, endDate: Date, organizationId: str
 }
 
 export function ChartLabaRugi() {
-    const { organization } = useOrganization();
+    const { organization, isLoaded } = useOrganization();
     const [date, setDate] = React.useState<DateRange | undefined>({
         from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
         to: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0),
@@ -48,10 +49,11 @@ export function ChartLabaRugi() {
     const { data: labaRugi, isLoading } = useQuery({
         queryKey: ["labaRugi", date, organization?.id],
         queryFn: () => {
-            if (!date?.from || !date?.to) return Promise.reject("Date range is required");
-            return fetchLabaRugi(date.from, date.to, organization?.id);
+            if (!date?.from || !date?.to) throw new Error("Date range is required");
+            if (!organization?.id) throw new Error("Organization ID is required");
+            return fetchLabaRugi(date.from, date.to, organization.id);
         },
-        enabled: !!date?.from && !!date?.to,
+        enabled: !!date?.from && !!date?.to && !!organization?.id && isLoaded,
     });
 
     const calculations = React.useMemo(() => {

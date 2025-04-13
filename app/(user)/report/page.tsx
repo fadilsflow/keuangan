@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatRupiah } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton"
@@ -128,7 +128,7 @@ export default function ReportPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {reportData.map((item, index) => (
+                  {reportData.map((item: any, index: number) => (
                     <TableRow key={index}>
                       <TableCell>{format(new Date(2021, item.month - 1), "MMMM", { locale: id })}</TableCell>
                       <TableCell>{item.year}</TableCell>
@@ -162,7 +162,7 @@ export default function ReportPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {reportData.map((item, index) => (
+                  {reportData.map((item: any, index: number) => (
                     <TableRow key={index}>
                       <TableCell>{item.year}</TableCell>
                       <TableCell className="text-right">{formatRupiah(item.income)}</TableCell>
@@ -197,7 +197,7 @@ export default function ReportPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {reportData.map((item, index) => (
+                    {reportData.map((item: any, index: number) => (
                       <TableRow key={index}>
                         <TableCell>{item.category}</TableCell>
                         <TableCell className="text-right">
@@ -298,7 +298,7 @@ export default function ReportPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {reportData.map((item, index) => (
+                    {reportData.map((item: any, index: number) => (
                       <TableRow key={index}>
                         <TableCell>{item.relatedParty}</TableCell>
                         <TableCell className="text-right">
@@ -398,7 +398,7 @@ export default function ReportPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {reportData.map((item, index) => (
+                    {reportData.map((item: any, index: number) => (
                       <TableRow key={index}>
                         <TableCell>{item.itemName}</TableCell>
                         <TableCell className="text-right">{item.quantity}</TableCell>

@@ -1,8 +1,27 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 
 export async function GET(request: Request) {
     try {
+        const { orgId, userId } = await auth();
+        
+        // If no organization is selected, return error
+        if (!orgId) {
+            return NextResponse.json(
+                { error: "No organization selected" },
+                { status: 403 }
+            );
+        }
+
+        // If no user is authenticated, return error
+        if (!userId) {
+            return NextResponse.json(
+                { error: "Unauthorized" },
+                { status: 401 }
+            );
+        }
+
         const { searchParams } = new URL(request.url);
         const startDate = searchParams.get("startDate");
         const endDate = searchParams.get("endDate");
@@ -21,6 +40,8 @@ export async function GET(request: Request) {
                     gte: new Date(startDate),
                     lte: new Date(endDate),
                 },
+                organizationId: orgId,
+                userId: userId,
             },
             include: {
                 items: true,

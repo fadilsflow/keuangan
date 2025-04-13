@@ -15,7 +15,7 @@ import {
     ChartConfig,
     ChartContainer,
     ChartTooltip,
-    ChartTooltipContent,
+
 } from "@/components/ui/chart"
 import {
     Select,
@@ -65,7 +65,6 @@ export function TransactionHistoryCharts() {
 
     const filteredData = transactions.filter((item: any) => {
         const date = new Date(item.date)
-        const now = new Date()
         let daysToSubtract = 90
         if (timeRange === "30d") {
             daysToSubtract = 30

@@ -14,7 +14,7 @@ import jsPDF from "jspdf";
 import { formatRupiah } from "@/lib/utils";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { cookies } from "next/headers";
+
 
 // Server-side function to get organization name
 async function getOrganizationName(orgId: string | null | undefined): Promise<string> {
@@ -1059,7 +1059,7 @@ async function generatePDF(
         x = margin;
         
         // Prepare values based on transaction type
-        let values = [item[nameKey]];
+        const values = [item[nameKey]];
         values.push(formatRupiah(transactionType === 'income' ? item.income || 0 : item.expense || 0));
         
         for (let i = 0; i < values.length; i++) {

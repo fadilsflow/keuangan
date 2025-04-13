@@ -7,7 +7,6 @@ import { format, parseISO } from "date-fns"
 import { id } from "date-fns/locale"
 import { formatRupiah } from "@/lib/utils"
 import { Button } from "./ui/button"
-import { ScrollArea } from "./ui/scroll-area"
 import { TrendingUp, TrendingDown } from "lucide-react"
 import { Skeleton } from "./ui/skeleton"
 

@@ -49,11 +49,6 @@ export function TransactionFilters({ onFilterChange }: TransactionFiltersProps) 
     onFilterChange(newFilters);
   };
 
-  const handleDateRangeChange = (range: DateRange | undefined) => {
-    setDateRange(range);
-    handleFilterChange("dateRange", range);
-  };
-
   const handleReset = () => {
     const resetFilters = {
       search: "",

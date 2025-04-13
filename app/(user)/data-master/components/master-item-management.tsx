@@ -28,22 +28,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MasterItemSchema } from "@/lib/validations/master-item";
 import { z } from "zod";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+
 import { formatRupiah } from "@/lib/utils";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import { PaginatedDataTable } from "./paginated-data-table";
 
 // Define the type for master item
@@ -59,16 +46,6 @@ interface MasterItem {
   type: "income" | "expense";
 }
 
-// Define the pagination response type
-interface PaginatedResponse {
-  items: MasterItem[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-}
 
 // Function to fetch master items
 async function fetchMasterItems(
@@ -140,14 +117,7 @@ async function deleteMasterItem(id: string): Promise<{message: string}> {
   return response.json();
 }
 
-// Format currency
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
-  }).format(amount);
-}
+
 
 export function MasterItemManagement() {
   const [search, setSearch] = useState("");
@@ -161,7 +131,7 @@ export function MasterItemManagement() {
   const queryClient = useQueryClient();
   
   // Query to fetch master items
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['masterItems', search, currentPage, pageSize],
     queryFn: () => fetchMasterItems(search, currentPage, pageSize)
   });

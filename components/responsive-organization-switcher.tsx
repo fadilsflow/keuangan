@@ -20,7 +20,7 @@ export default function ResponsiveOrganizationSwitcher() {
           } : undefined,
           elements: {
             rootBox: "w-full",
-            organizationSwitcherTrigger: "w-full py-2 px-4 bg-card border border-input hover:bg-accent/50 transition-colors rounded-md",
+            organizationSwitcherTrigger: "w-full items-left p-0 bg-card border border-input hover:bg-accent/50 transition-colors rounded-md",
             organizationPreview: "py-2",
             organizationSwitcherPopoverCard: "shadow-lg bg-card border border-border rounded-lg",
             organizationSwitcherPopoverActions: "bg-card",

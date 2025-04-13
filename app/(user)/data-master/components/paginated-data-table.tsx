@@ -1,6 +1,6 @@
 "use client"
 
-import { ReactNode, useState } from "react"
+import { ReactNode } from "react"
 import { Pagination } from "@/components/ui/pagination"
 import {
   Table,
@@ -32,7 +32,6 @@ interface PaginatedDataTableProps<T> {
 export function PaginatedDataTable<T extends { id: string }>({
   data,
   pageSize = 10,
-  totalItems,
   totalPages,
   currentPage,
   onPageChange,

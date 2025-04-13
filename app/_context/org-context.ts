@@ -15,7 +15,7 @@ export function useOrganization() {
   return { orgName };
 }
 
-export async function getOrgNameFromId(orgId: string): Promise<string> {
+export async function getOrgNameFromId( ): Promise<string> {
   try {
     // In a real implementation, this would fetch the org name from the database or Clerk API
     // For simplicity, we'll just return a placeholder
