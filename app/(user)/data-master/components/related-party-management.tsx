@@ -37,6 +37,11 @@ interface RelatedParty {
   userId: string;
 }
 
+// Add props interface
+interface RelatedPartyManagementProps {
+  transactionType: "income" | "expense";
+}
+
 // Function to fetch related parties
 async function fetchRelatedParties(
   search = "", 
@@ -109,9 +114,8 @@ async function deleteRelatedParty(id: string): Promise<{message: string}> {
   return response.json();
 }
 
-export function RelatedPartyManagement() {
+export function RelatedPartyManagement({ transactionType }: RelatedPartyManagementProps) {
   const [search, setSearch] = useState("");
-  const [type, setType] = useState<"income" | "expense">("expense"); // Default to expense
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -123,8 +127,8 @@ export function RelatedPartyManagement() {
   
   // Query to fetch related parties
   const { data, isLoading } = useQuery({
-    queryKey: ['relatedParties', search, type, currentPage, pageSize],
-    queryFn: () => fetchRelatedParties(search, type, currentPage, pageSize)
+    queryKey: ['relatedParties', search, transactionType, currentPage, pageSize],
+    queryFn: () => fetchRelatedParties(search, transactionType, currentPage, pageSize)
   });
   
   const relatedParties = data?.data || [];
@@ -178,7 +182,7 @@ export function RelatedPartyManagement() {
       name: "",
       description: "",
       contactInfo: "",
-      type: type,
+      type: transactionType,
     }
   });
 
@@ -189,14 +193,14 @@ export function RelatedPartyManagement() {
       name: "",
       description: "",
       contactInfo: "",
-      type: type,
+      type: transactionType,
     }
   });
 
   // Update form default values when type changes
   useEffect(() => {
-    addForm.setValue("type", type);
-  }, [type, addForm]);
+    addForm.setValue("type", transactionType);
+  }, [transactionType, addForm]);
 
   // Handle submitting the add form
   function onAddSubmit(data: z.infer<typeof RelatedPartySchema>) {
@@ -242,7 +246,7 @@ export function RelatedPartyManagement() {
   // Reset pagination when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, type]);
+  }, [search, transactionType]);
 
   return (
     <div className="space-y-4">
@@ -257,18 +261,6 @@ export function RelatedPartyManagement() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <Select
-          value={type}
-          onValueChange={(value) => setType(value as "income" | "expense")}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Pilih Jenis" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="income">Pemasukan</SelectItem>
-            <SelectItem value="expense">Pengeluaran</SelectItem>
-          </SelectContent>
-        </Select>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -375,7 +367,7 @@ export function RelatedPartyManagement() {
         onPageChange={handlePageChange}
         pageSize={pageSize}
         isLoading={isLoading}
-        emptyMessage={`Tidak ada pihak terkait ${type === "income" ? "pemasukan" : "pengeluaran"}`}
+        emptyMessage={`Tidak ada pihak terkait ${transactionType === "income" ? "pemasukan" : "pengeluaran"}`}
         columns={[
           { header: "Nama", key: "name" },
           { header: "Tipe", key: (party) => (

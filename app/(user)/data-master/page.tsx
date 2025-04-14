@@ -1,150 +1,58 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CategoryManagement } from "./components/category-management";
-import { RelatedPartyManagement } from "./components/related-party-management";
 import { MasterItemManagement } from "./components/master-item-management";
-import { Suspense } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
+import { RelatedPartyManagement } from "./components/related-party-management";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function DataMasterPage() {
-  return (
-    <div className="container py-6 space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Data Master</h1>
-        <p className="text-muted-foreground">Kelola data master untuk sistem keuangan.</p>
-      </div>
-
-      <div className="space-y-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Kategori</CardTitle>
-            <CardDescription>Kelola kategori untuk transaksi pemasukan dan pengeluaran.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Suspense fallback={<EnhancedDataTableSkeleton type="category" />}>
-              <CategoryManagement />
-            </Suspense>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Pihak Terkait</CardTitle>
-            <CardDescription>Kelola pihak terkait untuk transaksi pemasukan dan pengeluaran.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Suspense fallback={<EnhancedDataTableSkeleton type="party" />}>
-              <RelatedPartyManagement />
-            </Suspense>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Item Master</CardTitle>
-            <CardDescription>Kelola item master untuk memudahkan pembuatan transaksi.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Suspense fallback={<EnhancedDataTableSkeleton type="item" />}>
-              <MasterItemManagement />
-            </Suspense>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-}
-
-function EnhancedDataTableSkeleton({ type }: { type: "category" | "party" | "item" }) {
-  const getColumns = () => {
-    switch (type) {
-      case "category":
-        return [
-          { header: "Nama", width: "w-40" },
-          { header: "Deskripsi", width: "w-64" },
-          { header: "Jenis", width: "w-24" },
-          { header: "Aksi", width: "w-24" },
-        ];
-      case "party":
-        return [
-          { header: "Nama", width: "w-40" },
-          { header: "Deskripsi", width: "w-64" },
-          { header: "Jenis", width: "w-24" },
-          { header: "Aksi", width: "w-24" },
-        ];
-      case "item":
-        return [
-          { header: "Nama", width: "w-40" },
-          { header: "Harga", width: "w-36" },
-          { header: "Kategori", width: "w-32" },
-          { header: "Deskripsi", width: "w-48" },
-          { header: "Aksi", width: "w-24" },
-        ];
-    }
-  };
-
-  const columns = getColumns();
+  const [transactionType, setTransactionType] = useState<"income" | "expense">("expense");
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6 p-6">
       <div className="flex justify-between items-center">
-        <div className="flex gap-2">
-          <Skeleton className="h-9 w-64" />
-          <Skeleton className="h-9 w-32" />
-        </div>
-        <Skeleton className="h-9 w-32" />
-      </div>
-      
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/50">
-              {columns.map((column, index) => (
-                <TableHead key={index}>
-                  {column.header}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {Array(5).fill(0).map((_, i) => (
-              <TableRow key={i}>
-                {columns.map((column, j) => (
-                  <TableCell key={`${i}-${j}`}>
-                    {j === 1 && type === "item" ? (
-                      <div className="flex items-center">
-                        <span className="text-muted-foreground mr-1">Rp</span>
-                        <Skeleton className={`h-4 w-24`} />
-                      </div>
-                    ) : (
-                      <Skeleton className={`h-4 ${column.width}`} />
-                    )}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <h1 className="text-3xl font-bold tracking-tight">Data Master</h1>
+        <Select
+          value={transactionType}
+          onValueChange={(value) => setTransactionType(value as "income" | "expense")}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Pilih Jenis Transaksi" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="income">Pemasukan</SelectItem>
+            <SelectItem value="expense">Pengeluaran</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      <div className="flex items-center justify-between">
-        <Skeleton className="h-8 w-40" />
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-8 w-8 rounded" />
-          <Skeleton className="h-8 w-8 rounded" />
-          <Skeleton className="h-8 w-8 rounded" />
-          <Skeleton className="h-8 w-8 rounded" />
-        </div>
-      </div>
+      <Tabs defaultValue="categories" className="space-y-4">
+        <TabsList className="space-x-4">
+          <TabsTrigger value="categories">Kategori</TabsTrigger>
+          <TabsTrigger value="master-items" >Item</TabsTrigger>
+          <TabsTrigger value="related-parties">Pihak Terkait</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="categories">
+          <CategoryManagement transactionType={transactionType} />
+        </TabsContent>
+
+        <TabsContent value="master-items">
+          <MasterItemManagement transactionType={transactionType} />
+        </TabsContent>
+
+        <TabsContent value="related-parties">
+          <RelatedPartyManagement transactionType={transactionType} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 } 

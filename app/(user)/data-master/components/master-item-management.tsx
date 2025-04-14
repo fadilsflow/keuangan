@@ -46,10 +46,15 @@ interface MasterItem {
   type: "income" | "expense";
 }
 
+// Add props interface
+interface MasterItemManagementProps {
+  transactionType: "income" | "expense";
+}
 
 // Function to fetch master items
 async function fetchMasterItems(
   search = "",
+  type: "income" | "expense",
   page = 1,
   pageSize = 10
 ): Promise<{ data: MasterItem[], meta: { totalItems: number, totalPages: number } }> {
@@ -57,12 +62,14 @@ async function fetchMasterItems(
   if (search) {
     searchParams.append('search', search);
   }
+  searchParams.append('type', type);
   searchParams.append('page', page.toString());
   searchParams.append('pageSize', pageSize.toString());
   
   const response = await fetch(`/api/master-items?${searchParams.toString()}`);
   if (!response.ok) {
-    throw new Error("Failed to fetch master items");
+    const error = await response.json();
+    throw new Error(error.error || "Failed to fetch master items");
   }
   return response.json();
 }
@@ -117,9 +124,7 @@ async function deleteMasterItem(id: string): Promise<{message: string}> {
   return response.json();
 }
 
-
-
-export function MasterItemManagement() {
+export function MasterItemManagement({ transactionType }: MasterItemManagementProps) {
   const [search, setSearch] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -130,10 +135,10 @@ export function MasterItemManagement() {
   
   const queryClient = useQueryClient();
   
-  // Query to fetch master items
+  // Query to fetch master items with filtered data
   const { data, isLoading } = useQuery({
-    queryKey: ['masterItems', search, currentPage, pageSize],
-    queryFn: () => fetchMasterItems(search, currentPage, pageSize)
+    queryKey: ['masterItems', search, transactionType, currentPage, pageSize],
+    queryFn: () => fetchMasterItems(search, transactionType, currentPage, pageSize),
   });
   
   const masterItems = data?.data || [];
@@ -187,7 +192,7 @@ export function MasterItemManagement() {
       name: "",
       description: "",
       defaultPrice: 0,
-      type: "expense",
+      type: transactionType,
     }
   });
 
@@ -198,14 +203,14 @@ export function MasterItemManagement() {
       name: "",
       description: "",
       defaultPrice: 0,
-      type: "expense",
+      type: transactionType,
     }
   });
 
   // Update form default values when type changes
   useEffect(() => {
-    addForm.setValue("type", "expense");
-  }, [addForm]);
+    addForm.setValue("type", transactionType);
+  }, [transactionType, addForm]);
 
   // Handle submitting the add form
   function onAddSubmit(data: z.infer<typeof MasterItemSchema>) {
@@ -251,7 +256,7 @@ export function MasterItemManagement() {
   // Reset pagination when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [search]);
+  }, [search, transactionType]);
 
   return (
     <div className="space-y-4">
@@ -260,7 +265,7 @@ export function MasterItemManagement() {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Cari item..."
+            placeholder={`Cari item ${transactionType === "income" ? "pemasukan" : "pengeluaran"}...`}
             className="pl-8 w-full"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -270,14 +275,14 @@ export function MasterItemManagement() {
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-1 h-4 w-4" />
-              Tambah Item Master
+              Tambah Item {transactionType === "income" ? "Pemasukan" : "Pengeluaran"}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Tambah Item Master Baru</DialogTitle>
               <DialogDescription>
-                Buat item master baru untuk memudahkan pembuatan transaksi.
+                Buat item master baru untuk {transactionType === "income" ? "pemasukan" : "pengeluaran"}.
               </DialogDescription>
             </DialogHeader>
             
@@ -334,18 +339,10 @@ export function MasterItemManagement() {
                   control={addForm.control}
                   name="type"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tipe</FormLabel>
+                    <FormItem className="hidden">
                       <FormControl>
-                        <select 
-                          className="w-full p-2 rounded-md border border-input"
-                          {...field}
-                        >
-                          <option value="expense">Pengeluaran</option>
-                          <option value="income">Pemasukan</option>
-                        </select>
+                        <input type="hidden" {...field} value={transactionType} />
                       </FormControl>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -377,7 +374,7 @@ export function MasterItemManagement() {
         onPageChange={handlePageChange}
         pageSize={pageSize}
         isLoading={isLoading}
-        emptyMessage="Tidak ada item master"
+        emptyMessage={`Tidak ada item ${transactionType === "income" ? "pemasukan" : "pengeluaran"}`}
         columns={[
           { header: "Nama", key: "name" },
           { header: "Tipe", key: (item) => (

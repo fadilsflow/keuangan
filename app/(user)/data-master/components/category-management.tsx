@@ -35,6 +35,11 @@ interface Category {
   userId: string;
 }
 
+// Add props interface
+interface CategoryManagementProps {
+  transactionType: "income" | "expense";
+}
+
 // Function to fetch categories
 async function fetchCategories(
   search = "", 
@@ -107,9 +112,8 @@ async function deleteCategory(id: string): Promise<{message: string}> {
   return response.json();
 }
 
-export function CategoryManagement() {
+export function CategoryManagement({ transactionType }: CategoryManagementProps) {
   const [search, setSearch] = useState("");
-  const [type, setType] = useState<"income" | "expense">("expense"); // Default to expense
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -121,8 +125,8 @@ export function CategoryManagement() {
   
   // Query to fetch categories
   const { data, isLoading } = useQuery({
-    queryKey: ['categories', search, type, currentPage, pageSize],
-    queryFn: () => fetchCategories(search, type, currentPage, pageSize)
+    queryKey: ['categories', search, transactionType, currentPage, pageSize],
+    queryFn: () => fetchCategories(search, transactionType, currentPage, pageSize)
   });
   
   const categories = data?.data || [];
@@ -175,7 +179,7 @@ export function CategoryManagement() {
     defaultValues: {
       name: "",
       description: "",
-      type: type,
+      type: transactionType,
     }
   });
 
@@ -185,14 +189,14 @@ export function CategoryManagement() {
     defaultValues: {
       name: "",
       description: "",
-      type: type,
+      type: transactionType,
     }
   });
 
   // Update form default values when type changes
   useEffect(() => {
-    addForm.setValue("type", type);
-  }, [type, addForm]);
+    addForm.setValue("type", transactionType);
+  }, [transactionType, addForm]);
 
   // Handle submitting the add form
   function onAddSubmit(data: z.infer<typeof CategorySchema>) {
@@ -234,11 +238,6 @@ export function CategoryManagement() {
     setCurrentPage(page);
   };
 
-  // Reset pagination when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search, type]);
-
   return (
     <div className="space-y-4">
       <div className="flex gap-2 items-center flex-wrap sm:flex-nowrap">
@@ -252,18 +251,6 @@ export function CategoryManagement() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <Select
-          value={type}
-          onValueChange={(value) => setType(value as "income" | "expense")}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Pilih Jenis" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="income">Pemasukan</SelectItem>
-            <SelectItem value="expense">Pengeluaran</SelectItem>
-          </SelectContent>
-        </Select>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -275,7 +262,7 @@ export function CategoryManagement() {
             <DialogHeader>
               <DialogTitle>Tambah Kategori</DialogTitle>
               <DialogDescription>
-                Tambahkan kategori baru untuk transaksi {type === "income" ? "pemasukan" : "pengeluaran"}.
+                Tambahkan kategori baru untuk transaksi {transactionType === "income" ? "pemasukan" : "pengeluaran"}.
               </DialogDescription>
             </DialogHeader>
             <Form {...addForm}>
@@ -352,7 +339,7 @@ export function CategoryManagement() {
         onPageChange={handlePageChange}
         pageSize={pageSize}
         isLoading={isLoading}
-        emptyMessage={`Tidak ada kategori ${type === "income" ? "pemasukan" : "pengeluaran"}`}
+        emptyMessage={`Tidak ada kategori ${transactionType === "income" ? "pemasukan" : "pengeluaran"}`}
         columns={[
           { header: "Nama", key: "name" },
           { header: "Deskripsi", key: "description" },

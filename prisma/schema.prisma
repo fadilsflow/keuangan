@@ -74,20 +74,20 @@ model YearHistory {
 }
 
 // Master Data Models
-model Category {
-  id            String   @id @default(cuid())
-  name          String
-  description   String?
-  type          String   @default("expense")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  organizationId String
-  userId        String
+  model Category {
+    id            String   @id @default(cuid())
+    name          String
+    description   String?
+    type          String   @default("expense")
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
+    organizationId String
+    userId        String
 
-  @@index([organizationId])
-  @@index([userId])
-  @@unique([name, organizationId, type])
-}
+    @@index([organizationId])
+    @@index([userId])
+    @@unique([name, organizationId, type])
+  }
 
 model RelatedParty {
   id            String   @id @default(cuid())

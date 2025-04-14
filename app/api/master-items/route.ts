@@ -26,6 +26,7 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';
+    const type = searchParams.get('type') as "income" | "expense" || "expense";
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('pageSize') || '10');
     
@@ -36,8 +37,9 @@ export async function GET(request: Request) {
     const totalItems = await prisma.masterItem.count({
       where: {
         organizationId: orgId,
+        type: type,
         name: {
-          contains: search
+          contains: search,
         }
       },
     });
@@ -48,8 +50,9 @@ export async function GET(request: Request) {
     const masterItems = await prisma.masterItem.findMany({
       where: {
         organizationId: orgId,
+        type: type,
         name: {
-          contains: search
+          contains: search,
         }
       },
       orderBy: {
