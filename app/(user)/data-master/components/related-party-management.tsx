@@ -15,13 +15,7 @@ import { RelatedPartySchema } from "@/lib/validations/related-party";
 import { z } from "zod";
 
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import { PaginatedDataTable } from "./paginated-data-table";
 
 // Define the type for related party
