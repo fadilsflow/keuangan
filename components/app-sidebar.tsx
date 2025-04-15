@@ -77,13 +77,7 @@ export function AppSidebar({ variant = "inset" }: AppSidebarProps) {
                 <span className="text-base font-semibold">Cashlog.</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-            className="  hover:bg-transparent active:bg-transparent"
-            >
-              <ResponsiveOrganizationSwitcher/>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+         
           
         </SidebarMenu>
       </SidebarHeader>

@@ -298,7 +298,7 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
                                 <Input
                                   id="defaultPrice"
                                   type="number"
-                                  value={masterItemForm.watch('defaultPrice')}
+                                  value={masterItemForm.watch('defaultPrice') || ""}
                                   onChange={(e) => masterItemForm.setValue('defaultPrice', Number(e.target.value))}
                                   placeholder="Harga default"
                                   className="w-full"
@@ -308,7 +308,7 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
                                 <Label htmlFor="description">Deskripsi (Opsional)</Label>
                                 <Textarea
                                   id="description"
-                                  value={masterItemForm.watch('description')}
+                                  value={masterItemForm.watch('description') || ""}
                                   onChange={(e) => masterItemForm.setValue('description', e.target.value)}
                                   placeholder="Deskripsi item"
                                   className="w-full min-h-[100px]"
@@ -345,7 +345,7 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
               <Label className="font-medium">Harga</Label>
               <Input
                 type="number"
-                value={item.itemPrice}
+                value={item.itemPrice || ""}
                 onChange={(e) => updateItem(index, "itemPrice", e.target.value)}
                 required
                 min="0"
@@ -358,7 +358,7 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
               <Label className="font-medium">Jumlah</Label>
               <Input
                 type="number"
-                value={item.quantity}
+                value={item.quantity || ""}
                 onChange={(e) => updateItem(index, "quantity", e.target.value)}
                 required
                 min="1"

@@ -94,10 +94,10 @@ export function SectionCards({ dateRange }: SectionCardsProps) {
     <div className="grid grid-cols-2 gap-3 px-4 lg:px-6 @xl/main:grid-cols-4">
       {cards.map((card, index) => (
         <Card key={index} className="overflow-hidden shadow-sm">
-          <CardHeader className="p-3">
+          <CardHeader >
             <CardDescription className="flex items-center text-xs">
               {card.icon}
-              <span>{card.title}</span>
+              <span className="text-sm font-medium">{card.title}</span>
             </CardDescription>
             {isLoading ? (
               <div className="mt-1">
