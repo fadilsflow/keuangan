@@ -8,9 +8,11 @@ import { ModeToggle } from "./mode-toggle";
 import {  useOrganization } from "@clerk/nextjs";
 import ResponsiveOrganizationSwitcher from "./responsive-organization-switcher";
 import { ResponsiveUserButton } from "./responsive-user-button";
+import { usePathname } from "next/navigation";
 
 
 export function SiteHeader() {
+  const pathname = usePathname();
   const { organization } = useOrganization() 
   console.log(organization)
   return (
@@ -21,7 +23,7 @@ export function SiteHeader() {
           orientation="vertical"
           className="mx-2 data-[orientation=vertical]:h-4"
         />
-        <h1 className="text-base font-medium">Dashboard</h1>
+        <h1 className="text-base font-medium capitalize">{pathname.split("/").pop()}</h1>
         <div className="ml-auto flex items-center gap-2">
 
           <ModeToggle />

@@ -24,7 +24,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
-import ResponsiveOrganizationSwitcher from "./responsive-organization-switcher";
+
 
 
 
@@ -77,8 +77,6 @@ export function AppSidebar({ variant = "inset" }: AppSidebarProps) {
                 <span className="text-base font-semibold">Cashlog.</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
-         
-          
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
