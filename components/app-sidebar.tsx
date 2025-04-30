@@ -2,32 +2,25 @@
 
 import * as React from "react";
 import {
-
   IconChartBar,
-
   IconFolder,
   IconInnerShadowTop,
   IconHome,
   IconReceipt2,
 } from "@tabler/icons-react";
 
-
 import { NavMain } from "@/components/nav-main";
 
 import {
   Sidebar,
   SidebarContent,
-
+  SidebarFooter,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-
-
-
-
-
+import ResponsiveOrganizationSwitcher from "./responsive-organization-switcher";
 
 const data = {
   user: {
@@ -66,27 +59,25 @@ interface AppSidebarProps {
 
 export function AppSidebar({ variant = "inset" }: AppSidebarProps) {
   return (
-    <Sidebar variant={variant} collapsible="icon" >
+    <Sidebar variant={variant} collapsible="icon">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-            className="hover:bg-transparent active:bg-transparent"
-            >
-                <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Cashlog.</span>
+            <SidebarMenuButton className="hover:bg-transparent active:bg-transparent">
+              <IconInnerShadowTop className="!size-5" />
+              <span className="text-base font-semibold">Cashlog.</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-     
         <NavMain items={data.navMain} />
-
       </SidebarContent>
-      {/* <SidebarFooter >
-      </SidebarFooter> */}
-      
+      <SidebarFooter>
+        <div className="block sm:hidden">
+          <ResponsiveOrganizationSwitcher />
+        </div>
+      </SidebarFooter>
     </Sidebar>
   );
 }
