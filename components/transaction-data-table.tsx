@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Table,
@@ -16,7 +16,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { formatRupiah } from "@/lib/utils";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { MoreHorizontal, Trash2, TrendingUp, TrendingDown, Pencil, FileText, Printer } from "lucide-react";
+import {
+  MoreHorizontal,
+  Trash2,
+  TrendingUp,
+  TrendingDown,
+  Pencil,
+  FileText,
+  Printer,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import {
@@ -27,7 +35,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Pagination } from "@/components/ui/pagination";
 import { Skeleton } from "@/components/ui/skeleton";
-
 
 interface TransactionDataTableProps {
   filters: {
@@ -49,27 +56,66 @@ interface Item {
   totalPrice: number;
 }
 
+// Definisikan tipe untuk response API
+interface TransactionResponse {
+  data: Array<{
+    id: string;
+    date: string;
+    description: string;
+    category: string;
+    relatedParty: string;
+    amountTotal: number;
+    type: string;
+    paymentImg?: string;
+    items: Item[];
+  }>;
+  meta: {
+    totalItems: number;
+    totalPages: number;
+    currentPage: number;
+    pageSize: number;
+  };
+}
+
+// Tambahkan tipe untuk transaction item untuk menggantikan any
+type TransactionItem = TransactionResponse["data"][0];
+
+// Definisi return type untuk fungsi API
+interface DeleteResponse {
+  success: boolean;
+}
+
 async function fetchTransactions(
   filters: TransactionDataTableProps["filters"],
   page: number = 1,
   pageSize: number = 10
-) {
+): Promise<TransactionResponse> {
   const params = new URLSearchParams();
+
+  console.log("Filters received by fetchTransactions:", filters);
+
   if (filters.search) params.append("search", filters.search);
-  if (filters.type) params.append("type", filters.type);
-  if (filters.category) params.append("category", filters.category);
-  if (filters.dateRange?.from) params.append("from", filters.dateRange.from.toISOString());
-  if (filters.dateRange?.to) params.append("to", filters.dateRange.to.toISOString());
+  if (filters.type && filters.type !== "all")
+    params.append("type", filters.type);
+  if (filters.category && filters.category !== "all")
+    params.append("category", filters.category);
+  if (filters.dateRange?.from)
+    params.append("from", filters.dateRange.from.toISOString());
+  if (filters.dateRange?.to)
+    params.append("to", filters.dateRange.to.toISOString());
   params.append("page", page.toString());
   params.append("pageSize", pageSize.toString());
 
-  const response = await fetch(`/api/transactions?${params.toString()}`);
+  const url = `/api/transactions?${params.toString()}`;
+  console.log("API URL:", url);
+
+  const response = await fetch(url);
   if (!response.ok) throw new Error("Failed to fetch transactions");
   const data = await response.json();
   return data;
 }
 
-async function deleteTransaction(id: string) {
+async function deleteTransaction(id: string): Promise<DeleteResponse> {
   const response = await fetch(`/api/transactions/${id}`, {
     method: "DELETE",
   });
@@ -77,7 +123,9 @@ async function deleteTransaction(id: string) {
   return response.json();
 }
 
-async function deleteMultipleTransactions(ids: string[]) {
+async function deleteMultipleTransactions(
+  ids: string[]
+): Promise<DeleteResponse> {
   const response = await fetch("/api/transactions/bulk-delete", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -93,16 +141,25 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10; // Items per page
-  
-  const { data, isLoading } = useQuery({
+
+  const { data, isLoading } = useQuery<TransactionResponse, Error>({
     queryKey: ["transactions", filters, currentPage, pageSize],
     queryFn: () => fetchTransactions(filters, currentPage, pageSize),
+    staleTime: 30000, // 30 detik
+    placeholderData: (prevData) => prevData, // Pengganti keepPreviousData
   });
 
-  const transactions = data?.data || [];
+  const transactions = useMemo(() => data?.data || [], [data?.data]);
   const totalPages = data?.meta?.totalPages || 1;
 
-  const deleteMutation = useMutation({
+  useEffect(() => {
+    const tableElement = document.querySelector(".transaction-table-container");
+    if (tableElement) {
+      tableElement.scrollTop = 0;
+    }
+  }, [currentPage]);
+
+  const deleteMutation = useMutation<DeleteResponse, Error, string>({
     mutationFn: deleteTransaction,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
@@ -113,7 +170,7 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
     },
   });
 
-  const bulkDeleteMutation = useMutation({
+  const bulkDeleteMutation = useMutation<DeleteResponse, Error, string[]>({
     mutationFn: deleteMultipleTransactions,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
@@ -122,13 +179,12 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
     },
     onError: () => {
       toast.error("Gagal menghapus transaksi terpilih");
-
     },
   });
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedRows(transactions.map((t: any) => t.id));
+      setSelectedRows(transactions.map((t) => t.id));
     } else {
       setSelectedRows([]);
     }
@@ -155,7 +211,11 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
   const handleBulkDelete = () => {
     if (selectedRows.length === 0) return;
 
-    if (window.confirm(`Apakah Anda yakin ingin menghapus ${selectedRows.length} transaksi terpilih?`)) {
+    if (
+      window.confirm(
+        `Apakah Anda yakin ingin menghapus ${selectedRows.length} transaksi terpilih?`
+      )
+    ) {
       bulkDeleteMutation.mutate(selectedRows);
     }
   };
@@ -165,9 +225,9 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
     setSelectedRows([]);
   };
 
-  const handlePrintDetail = (transaction: any) => {
+  const handlePrintDetail = (transaction: TransactionItem) => {
     // Create a new window for printing
-    const printWindow = window.open('', '_blank');
+    const printWindow = window.open("", "_blank");
     if (!printWindow) return;
 
     // Generate the HTML content
@@ -202,7 +262,9 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
           
           <div class="detail-row">
             <span class="label">Date:</span>
-            <span>${format(new Date(transaction.date), "d MMMM yyyy", { locale: id })}</span>
+            <span>${format(new Date(transaction.date), "d MMMM yyyy", {
+              locale: id,
+            })}</span>
           </div>
           
           <div class="detail-row">
@@ -230,14 +292,18 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
               </tr>
             </thead>
             <tbody>
-              ${transaction.items.map((item: Item) => `
+              ${transaction.items
+                .map(
+                  (item: Item) => `
                 <tr>
                   <td>${item.name}</td>
                   <td>${item.quantity}</td>
                   <td>${formatRupiah(item.itemPrice)}</td>
                   <td>${formatRupiah(item.totalPrice)}</td>
                 </tr>
-              `).join('')}
+              `
+                )
+                .join("")}
             </tbody>
           </table>
           
@@ -245,12 +311,16 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
             Total: ${formatRupiah(transaction.amountTotal)}
           </div>
 
-          ${transaction.paymentImg ? `
+          ${
+            transaction.paymentImg
+              ? `
             <div style="margin-top: 30px;">
               <div class="label">Payment Proof:</div>
               <img src="${transaction.paymentImg}" style="max-width: 300px; margin-top: 10px;" />
             </div>
-          ` : ''}
+          `
+              : ""
+          }
           
           <button class="no-print" onclick="window.print()" style="margin-top: 20px; padding: 10px;">
             Print
@@ -264,17 +334,17 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
     printWindow.document.close();
   };
 
-  const handleDownloadInvoice = async (id: string) => {
+  const handleDownloadInvoice = async (id: string): Promise<void> => {
     try {
       const response = await fetch(`/api/transactions/${id}/invoice`);
-      if (!response.ok) throw new Error('Failed to generate invoice');
-      
+      if (!response.ok) throw new Error("Failed to generate invoice");
+
       // Create a blob from the PDF stream
       const blob = await response.blob();
-      
+
       // Create a link element and trigger download
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
       a.download = `transaction-${id}.pdf`;
       document.body.appendChild(a);
@@ -282,8 +352,8 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      console.error('Error downloading invoice:', error);
-      toast.error('Failed to download invoice');
+      console.error("Error downloading invoice:", error);
+      toast.error("Failed to download invoice");
     }
   };
 
@@ -297,14 +367,30 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
                 <TableHead className="w-12">
                   <Skeleton className="h-4 w-4" />
                 </TableHead>
-                <TableHead><Skeleton className="h-4 w-20" /></TableHead>
-                <TableHead><Skeleton className="h-4 w-32" /></TableHead>
-                <TableHead><Skeleton className="h-4 w-24" /></TableHead>
-                <TableHead><Skeleton className="h-4 w-28" /></TableHead>
-                <TableHead><Skeleton className="h-4 w-20" /></TableHead>
-                <TableHead><Skeleton className="h-4 w-40" /></TableHead>
-                <TableHead><Skeleton className="h-4 w-24" /></TableHead>
-                <TableHead><Skeleton className="h-4 w-16" /></TableHead>
+                <TableHead>
+                  <Skeleton className="h-4 w-20" />
+                </TableHead>
+                <TableHead>
+                  <Skeleton className="h-4 w-32" />
+                </TableHead>
+                <TableHead>
+                  <Skeleton className="h-4 w-24" />
+                </TableHead>
+                <TableHead>
+                  <Skeleton className="h-4 w-28" />
+                </TableHead>
+                <TableHead>
+                  <Skeleton className="h-4 w-20" />
+                </TableHead>
+                <TableHead>
+                  <Skeleton className="h-4 w-40" />
+                </TableHead>
+                <TableHead>
+                  <Skeleton className="h-4 w-24" />
+                </TableHead>
+                <TableHead>
+                  <Skeleton className="h-4 w-16" />
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -331,7 +417,10 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
                   <TableCell>
                     <div className="space-y-2 rounded-md border px-2 py-1">
                       {Array.from({ length: 2 }).map((_, itemIndex) => (
-                        <div key={itemIndex} className="flex items-center justify-between gap-2">
+                        <div
+                          key={itemIndex}
+                          className="flex items-center justify-between gap-2"
+                        >
                           <div className="flex items-center gap-1.5 min-w-0">
                             <Skeleton className="h-4 w-32" />
                             <Skeleton className="h-3 w-8" />
@@ -362,7 +451,6 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-
         {selectedRows.length > 0 && (
           <Button
             variant="destructive"
@@ -376,14 +464,16 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
         )}
       </div>
 
-      <div className="overflow-hidden rounded-lg border">
+      <div className="overflow-hidden rounded-lg border transaction-table-container">
         <Table className="rounded-lg">
           <TableHeader>
             <TableRow className="bg-muted/50 ">
               <TableHead className="w-12">
                 <Checkbox
                   checked={selectedRows.length === transactions.length}
-                  onCheckedChange={(checked: boolean) => handleSelectAll(checked)}
+                  onCheckedChange={(checked: boolean) =>
+                    handleSelectAll(checked)
+                  }
                 />
               </TableHead>
               <TableHead>Tanggal</TableHead>
@@ -391,21 +481,23 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
               <TableHead>Kategori</TableHead>
               <TableHead>Pihak Terkait</TableHead>
               <TableHead>Jenis</TableHead>
-              <TableHead >Item</TableHead>
-              <TableHead >Total</TableHead>
-              <TableHead >Aksi</TableHead>
-
+              <TableHead>Item</TableHead>
+              <TableHead>Total</TableHead>
+              <TableHead>Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody className="**:data-[slot=table-cell]:first:w-8">
             {transactions.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                <TableCell
+                  colSpan={9}
+                  className="text-center py-8 text-muted-foreground"
+                >
                   Tidak ada transaksi
                 </TableCell>
               </TableRow>
             ) : (
-              transactions.map((transaction: any) => (
+              transactions.map((transaction: TransactionItem) => (
                 <TableRow
                   key={transaction.id}
                   className="transition-colors hover:bg-muted/50"
@@ -419,7 +511,9 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
                     />
                   </TableCell>
                   <TableCell>
-                    {format(new Date(transaction.date), "d MMMM yyyy", { locale: id })}
+                    {format(new Date(transaction.date), "d MMMM yyyy", {
+                      locale: id,
+                    })}
                   </TableCell>
                   <TableCell>{transaction.description}</TableCell>
                   <TableCell>{transaction.category}</TableCell>
@@ -427,7 +521,9 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
 
                   <TableCell>
                     <span
-                      className={`px-2.5 py-1.5 rounded text-muted-foreground text-xs border  font-medium inline-flex items-center gap-1 ${transaction.type === "pemasukan"}`}
+                      className={`px-2.5 py-1.5 rounded text-muted-foreground text-xs border  font-medium inline-flex items-center gap-1 ${
+                        transaction.type === "pemasukan"
+                      }`}
                     >
                       {transaction.type === "pemasukan" ? (
                         <>
@@ -450,10 +546,7 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
                           className="flex items-center justify-between gap-2 text-sm"
                         >
                           <div className="flex items-center gap-1.5 min-w-0">
-                          
-                            <span className="truncate">
-                              {item.name}
-                            </span>
+                            <span className="truncate">{item.name}</span>
                             <span className="shrink-0 text-xs text-muted-foreground">
                               {item.quantity}x
                             </span>
@@ -465,10 +558,8 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
                       ))}
                     </div>
                   </TableCell>
-                  <TableCell >
-                    <span >
-                      {formatRupiah(transaction.amountTotal)}
-                    </span>
+                  <TableCell>
+                    <span>{formatRupiah(transaction.amountTotal)}</span>
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -478,15 +569,21 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEdit(transaction.id)}>
+                        <DropdownMenuItem
+                          onClick={() => handleEdit(transaction.id)}
+                        >
                           <Pencil className="w-4 h-4 mr-2" />
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handlePrintDetail(transaction)}>
+                        <DropdownMenuItem
+                          onClick={() => handlePrintDetail(transaction)}
+                        >
                           <Printer className="w-4 h-4 mr-2" />
                           Print Detail
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDownloadInvoice(transaction.id)}>
+                        <DropdownMenuItem
+                          onClick={() => handleDownloadInvoice(transaction.id)}
+                        >
                           <FileText className="w-4 h-4 mr-2" />
                           Download Invoice
                         </DropdownMenuItem>
@@ -501,23 +598,21 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
-
-
               ))
             )}
           </TableBody>
         </Table>
       </div>
-      
+
       {totalPages > 1 && (
         <div className="flex justify-center mt-4">
-          <Pagination 
-            totalPages={totalPages} 
-            currentPage={currentPage} 
-            onPageChange={handlePageChange} 
+          <Pagination
+            totalPages={totalPages}
+            currentPage={currentPage}
+            onPageChange={handlePageChange}
           />
         </div>
       )}
     </div>
   );
-} 
+}
