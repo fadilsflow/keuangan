@@ -1,8 +1,20 @@
-"use client"
+"use client";
 
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import {
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
 import { CreateTransactionDTO } from "@/lib/validations/transaction";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -12,22 +24,27 @@ interface TransactionBasicInfoProps {
   onTypeChange: (value: "pemasukan" | "pengeluaran") => void;
 }
 
-export function TransactionBasicInfo({ form, onTypeChange }: TransactionBasicInfoProps) {
+export function TransactionBasicInfo({
+  form,
+  onTypeChange,
+}: TransactionBasicInfoProps) {
   // Function to parse date safely with timezone handling
   const parseDate = (dateValue: string | Date): Date => {
     if (dateValue instanceof Date) return dateValue;
-    
+
     // Create a date from the string and fix timezone issue
-    const dateParts = dateValue.split('T')[0].split('-');
+    const dateParts = dateValue.split("T")[0].split("-");
     if (dateParts.length !== 3) return new Date();
-    
+
     // Create date with year, month, day and set time to noon to avoid timezone issues
     // Month is 0-indexed in JavaScript Date
     return new Date(
-      parseInt(dateParts[0]), 
-      parseInt(dateParts[1]) - 1, 
-      parseInt(dateParts[2]), 
-      12, 0, 0
+      parseInt(dateParts[0]),
+      parseInt(dateParts[1]) - 1,
+      parseInt(dateParts[2]),
+      12,
+      0,
+      0
     );
   };
 
@@ -49,14 +66,16 @@ export function TransactionBasicInfo({ form, onTypeChange }: TransactionBasicInf
                       date.getFullYear(),
                       date.getMonth(),
                       date.getDate(),
-                      12, 0, 0
+                      12,
+                      0,
+                      0
                     );
-                    
+
                     // Format to ISO string and keep only the date part
-                    const dateString = fixedDate.toISOString().split('T')[0];
+                    const dateString = fixedDate.toISOString().split("T")[0];
                     field.onChange(dateString);
                   } else {
-                    field.onChange('');
+                    field.onChange("");
                   }
                 }}
                 placeholder="Pilih tanggal"
@@ -73,11 +92,11 @@ export function TransactionBasicInfo({ form, onTypeChange }: TransactionBasicInf
         render={({ field }) => (
           <FormItem>
             <FormLabel className="font-semibold">Jenis Transaksi</FormLabel>
-            <Select 
+            <Select
               onValueChange={(value: "pemasukan" | "pengeluaran") => {
                 field.onChange(value);
                 onTypeChange(value);
-              }} 
+              }}
               value={field.value}
             >
               <FormControl>
@@ -102,7 +121,11 @@ export function TransactionBasicInfo({ form, onTypeChange }: TransactionBasicInf
           <FormItem className="md:col-span-2">
             <FormLabel className="font-semibold">Deskripsi</FormLabel>
             <FormControl>
-              <Input {...field} placeholder="Contoh: Pembelian ATK Kantor" className="w-full" />
+              <Input
+                {...field}
+                placeholder="Contoh: Pembelian ATK Kantor"
+                className="w-full"
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -114,9 +137,15 @@ export function TransactionBasicInfo({ form, onTypeChange }: TransactionBasicInf
         name="paymentImg"
         render={({ field }) => (
           <FormItem className="md:col-span-2">
-            <FormLabel className="font-semibold">URL Gambar Pembayaran (Opsional)</FormLabel>
+            <FormLabel className="font-semibold">
+              URL Gambar Pembayaran (Opsional)
+            </FormLabel>
             <FormControl>
-              <Input {...field} placeholder="https://link.ke/bukti/pembayaran.jpg" className="w-full" />
+              <Input
+                {...field}
+                placeholder="https://link.ke/bukti/pembayaran.jpg"
+                className="w-full"
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -124,4 +153,4 @@ export function TransactionBasicInfo({ form, onTypeChange }: TransactionBasicInf
       />
     </div>
   );
-} 
+}
