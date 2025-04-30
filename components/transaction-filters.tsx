@@ -123,7 +123,7 @@ export function TransactionFilters({
   }, [filters, onFilterChange]);
 
   const handleFilterChange = (key: keyof Filters, value: any) => {
-    let newFilters = { ...filters, [key]: value };
+    const newFilters = { ...filters, [key]: value };
     if (key === "dateRange") {
       newFilters.dateRange = normalizeDateRange(value);
     }
