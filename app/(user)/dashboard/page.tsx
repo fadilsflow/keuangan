@@ -8,12 +8,12 @@ import { TransactionHistoryCharts } from "@/components/transaction-history-chart
 import RecentTransactions from "@/components/recent-transactions"
 import { Button } from "@/components/ui/button"
 import { DatePickerWithRange } from "@/components/ui/date-range-picker"
-import { IconCirclePlusFilled } from "@tabler/icons-react"
 import { startOfMonth, endOfMonth } from "date-fns"
 import { DateRange } from "react-day-picker"
 import Link from "next/link"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent, CardHeader, CardDescription, CardTitle } from "@/components/ui/card"
+import { PlusCircleIcon } from "lucide-react"
 
 export default function Page() {
   const [date, setDate] = useState<DateRange | undefined>({
@@ -35,7 +35,7 @@ export default function Page() {
                 <Button
                   className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/90 gap-1.5"
                 >
-                  <IconCirclePlusFilled className="h-4 w-4" />
+                  <PlusCircleIcon className="h-4 w-4" />
                   <span>Buat Transaksi</span>
                 </Button>
               </Link>

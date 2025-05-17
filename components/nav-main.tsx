@@ -1,6 +1,6 @@
 "use client";
 
-import { IconCirclePlusFilled, type Icon } from "@tabler/icons-react";
+
 import Link from "next/link";
 
 import {
@@ -10,14 +10,16 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { LucideIcon, PlusCircleIcon } from "lucide-react";
 
 export function NavMain({
   items,
+
 }: {
   items: {
     title: string;
     url: string;
-    icon?: Icon;
+    icon?: LucideIcon;
   }[];
 }) {
   return (
@@ -31,7 +33,7 @@ export function NavMain({
                 tooltip="Buat Transaksi"
                 className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
               >
-                <IconCirclePlusFilled />
+                <PlusCircleIcon />
                 <span>Buat Transaksi</span>
               </SidebarMenuButton>
             </Link>
@@ -42,7 +44,7 @@ export function NavMain({
             <SidebarMenuItem key={item.title}>
               <Link href={item.url} passHref>
                 <SidebarMenuButton tooltip={item.title}>
-                  {item.icon && <item.icon />}
+                  {item.icon && <item.icon className="!size-5" />}
                   <span>{item.title}</span>
                 </SidebarMenuButton>
               </Link>

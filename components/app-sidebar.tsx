@@ -1,13 +1,6 @@
 "use client";
 
 import * as React from "react";
-import {
-  IconChartBar,
-  IconFolder,
-  IconInnerShadowTop,
-  IconHome,
-  IconReceipt2,
-} from "@tabler/icons-react";
 
 import { NavMain } from "@/components/nav-main";
 
@@ -21,34 +14,30 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import ResponsiveOrganizationSwitcher from "./responsive-organization-switcher";
+import { BarChart3, Folder, Home, Receipt } from "lucide-react";
 
 const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/next.svg",
-  },
   navMain: [
     {
       title: "Dashboard",
       url: "/dashboard",
-      icon: IconHome,
+      icon: Home,
     },
     {
       title: "Transactions",
       url: "/transactions",
-      icon: IconReceipt2,
+      icon: Receipt,
     },
 
     {
       title: "Laporan",
       url: "/report",
-      icon: IconChartBar,
+      icon: BarChart3,
     },
     {
       title: "Data Master",
       url: "/data-master",
-      icon: IconFolder,
+      icon: Folder,
     },
   ],
 };
@@ -64,14 +53,14 @@ export function AppSidebar({ variant = "inset" }: AppSidebarProps) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton className="hover:bg-transparent active:bg-transparent">
-              <IconInnerShadowTop className="!size-5" />
+              <Home className="!size-5" />
               <span className="text-base font-semibold">Cashlog.</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={data.navMain}/>
       </SidebarContent>
       <SidebarFooter>
         <div className="block sm:hidden">
