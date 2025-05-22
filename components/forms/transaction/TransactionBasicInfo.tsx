@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   FormField,
   FormItem,
@@ -18,10 +19,20 @@ import {
 import { UseFormReturn } from "react-hook-form";
 import { CreateTransactionDTO } from "@/lib/validations/transaction";
 import { DatePicker } from "@/components/ui/date-picker";
+import { CldUploadWidget, CldImage } from "next-cloudinary";
+import { Button } from "@/components/ui/button";
+import { ImageIcon, X } from "lucide-react";
 
 interface TransactionBasicInfoProps {
   form: UseFormReturn<CreateTransactionDTO>;
   onTypeChange: (value: "pemasukan" | "pengeluaran") => void;
+}
+
+interface CloudinaryInfo {
+  public_id: string;
+  secure_url: string;
+  width: number;
+  height: number;
 }
 
 export function TransactionBasicInfo({
@@ -138,14 +149,102 @@ export function TransactionBasicInfo({
         render={({ field }) => (
           <FormItem className="md:col-span-2">
             <FormLabel className="font-semibold">
-              URL Gambar Pembayaran (Opsional)
+              Bukti Pembayaran (Opsional)
             </FormLabel>
             <FormControl>
-              <Input
-                {...field}
-                placeholder="https://link.ke/bukti/pembayaran.jpg"
-                className="w-full"
-              />
+              <div className="flex flex-col gap-4">
+                {!field.value ? (
+                  <CldUploadWidget
+                    uploadPreset="cashlog"
+                    signatureEndpoint="/api/sign-cloudinary-params"
+                    onSuccess={(result: any, { widget }) => {
+                      const info = result?.info as CloudinaryInfo;
+                      if (info?.secure_url) {
+                        field.onChange(info.secure_url);
+                      }
+                      widget.close();
+                    }}
+                    onQueuesEnd={(result, { widget }) => {
+                      widget.close();
+                    }}
+                    onError={(error) => {
+                      console.error("Upload error:", error);
+                    }}
+                    options={{
+                      maxFiles: 1,
+                      maxFileSize: 1024 * 1024 * 2, // 2MB,
+                      resourceType: "image",
+                      sources: ["local", "camera"],
+                      multiple: false,
+                      styles: {
+                        palette: {
+                          window: "#FFFFFF",
+                          windowBorder: "#90A0B3",
+                          tabIcon: "#0078FF",
+                          menuIcons: "#5A616A",
+                          textDark: "#000000",
+                          textLight: "#FFFFFF",
+                          link: "#0078FF",
+                          action: "#FF620C",
+                          inactiveTabIcon: "#0E2F5A",
+                          error: "#F44235",
+                          inProgress: "#0078FF",
+                          complete: "#20B832",
+                          sourceBg: "#E4EBF1"
+                        }
+                      }
+                    }}
+                  >
+                    {({ open }) => {
+                      function handleOnClick() {
+                        open();
+                      }
+                      return (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full h-24 flex flex-col items-center justify-center cursor-pointer"
+                          onClick={handleOnClick}
+                        >
+                          <ImageIcon className="h-6 w-6" />
+                          <span>Unggah Bukti Pembayaran</span>
+                          <span className="text-xs text-muted-foreground">Maksimal size gambar 2MB</span>
+                        </Button>
+                      );
+                    }}
+                  </CldUploadWidget>
+                ) : (
+                  <div className="relative w-full">
+                    <div className="relative h-full w-full overflow-hidden rounded-lg border p-3 flex items-center gap-2">
+                      <div className="flex items-center gap-2">
+                        <CldImage
+                          src={field.value}
+                          alt="Bukti pembayaran"
+                          width={50}
+                          height={50}
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <span className="text-sm font-medium ">Bukti Pembayaran</span>
+                        <span className="text-xs text-muted-foreground">Berhasil diunggah</span>
+                      </div>
+
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute right-2 top-2"
+                        onClick={() => {
+                          field.onChange("");
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </FormControl>
             <FormMessage />
           </FormItem>

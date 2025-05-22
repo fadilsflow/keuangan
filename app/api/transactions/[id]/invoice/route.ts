@@ -38,23 +38,23 @@ export async function GET(
 
     // Add header
     doc.setFontSize(20);
-    doc.text(transaction.type === "pemasukan" ? "INVOICE" : "RECEIPT", doc.internal.pageSize.width / 2, y, { align: "center" });
+    doc.text(transaction.type === "pemasukan" ? "INVOICE" : "KUITANSI", doc.internal.pageSize.width / 2, y, { align: "center" });
     y += 20;
 
     // Add transaction details
     doc.setFontSize(12);
     doc.text(`No: ${transaction.id}`, 20, y);
-    doc.text(`Date: ${format(new Date(transaction.date), "d MMMM yyyy", { locale: id })}`, doc.internal.pageSize.width - 20, y, { align: "right" });
+    doc.text(`Tanggal: ${format(new Date(transaction.date), "d MMMM yyyy", { locale: id })}`, doc.internal.pageSize.width - 20, y, { align: "right" });
     y += 10;
-
-    doc.text(`Related Party: ${transaction.relatedParty}`, 20, y);
+    doc.text(`Deskripsi: ${transaction.description}`, 20, y);
     y += 10;
-
-    doc.text(`Category: ${transaction.category}`, 20, y);
+    doc.text(`Pihak Terkait: ${transaction.relatedParty}`, 20, y);
+    y += 10;
+    doc.text(`Kategori: ${transaction.category}`, 20, y);
     y += 20;
 
     // Add items table
-    const headers = ["Item", "Quantity", "Price", "Total"];
+    const headers = ["Item", "Quantity", "Harga", "Total"];
     const margin = 20;
     const pageWidth = doc.internal.pageSize.width - 2 * margin;
     const colWidths = [pageWidth * 0.4, pageWidth * 0.2, pageWidth * 0.2, pageWidth * 0.2];
@@ -100,27 +100,8 @@ export async function GET(
     doc.text("Total:", doc.internal.pageSize.width - margin - colWidths[3], y);
     doc.text(formatRupiah(transaction.amountTotal), doc.internal.pageSize.width - margin, y, { align: "right" });
 
-    // Add description
-    if (transaction.description) {
-      y += 20;
-      doc.setFont("helvetica", "normal");
-      doc.text("Description:", margin, y);
-      y += 10;
-      doc.text(transaction.description, margin, y);
-    }
-
-    // Add payment proof image if exists
-    if (transaction.paymentImg) {
-      try {
-        y += 30;
-        doc.text("Payment Proof:", margin, y);
-        y += 10;
-        await doc.addImage(transaction.paymentImg, "JPEG", margin, y, 100, 100);
-      } catch (error) {
-        console.error("Failed to add payment proof image:", error);
-      }
-    }
-
+    
+  
     // Return the PDF
     const pdfBuffer = doc.output("arraybuffer");
     return new Response(pdfBuffer, {

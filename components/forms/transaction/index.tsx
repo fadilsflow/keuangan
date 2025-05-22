@@ -235,7 +235,7 @@ export function TransactionForm({
               disabled={mutation.isPending}
               size="lg"
               className="w-full md:w-auto"
-            >
+            > 
               {mutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -7,9 +7,8 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { RelatedPartySchema } from "@/lib/validations/related-party";
 import { CreateTransactionDTO } from "@/lib/validations/transaction";
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { PlusCircle, Loader2 } from "lucide-react";
@@ -104,6 +103,10 @@ export function RelatedPartySelect({ form, transactionType }: RelatedPartySelect
     }
   });
 
+  const onSubmit = async (values: z.infer<typeof RelatedPartySchema>) => {
+    await createRelatedParty.mutateAsync(values);
+  };
+
   return (
     <FormField
       control={form.control}
@@ -169,60 +172,72 @@ export function RelatedPartySelect({ form, transactionType }: RelatedPartySelect
                   Tambahkan pihak terkait baru untuk transaksi {transactionType}
                 </DialogDescription>
               </DialogHeader>
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                createRelatedParty.mutate(relatedPartyForm.getValues());
-              }} className="space-y-6">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nama Pihak Terkait</Label>
-                    <Input
-                      id="name"
-                      value={relatedPartyForm.watch('name')}
-                      onChange={(e) => relatedPartyForm.setValue('name', e.target.value)}
-                      placeholder="Nama pihak terkait"
-                      className="w-full"
+              <Form {...relatedPartyForm}>
+                <form onSubmit={relatedPartyForm.handleSubmit(onSubmit)} className="space-y-6">
+                  <div className="space-y-4">
+                    <FormField
+                      control={relatedPartyForm.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nama Pihak Terkait</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Nama pihak terkait" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Deskripsi (Opsional)</Label>
-                    <Textarea
-                      id="description"
-                      value={relatedPartyForm.watch('description')}
-                      onChange={(e) => relatedPartyForm.setValue('description', e.target.value)}
-                      placeholder="Deskripsi pihak terkait"
-                      className="w-full min-h-[100px]"
+                    <FormField
+                      control={relatedPartyForm.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Deskripsi (Opsional)</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Deskripsi pihak terkait" 
+                              className="min-h-[100px]" 
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="contactInfo">Kontak (Opsional)</Label>
-                    <Input
-                      id="contactInfo"
-                      value={relatedPartyForm.watch('contactInfo')}
-                      onChange={(e) => relatedPartyForm.setValue('contactInfo', e.target.value)}
-                      placeholder="Kontak pihak terkait"
-                      className="w-full"
+                    <FormField
+                      control={relatedPartyForm.control}
+                      name="contactInfo"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Kontak (Opsional)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Kontak pihak terkait" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
+                    <input type="hidden" {...relatedPartyForm.register("type")} />
                   </div>
-                  <input type="hidden" {...relatedPartyForm.register("type")} />
-                </div>
-                <div className="flex justify-end">
-                  <Button
-                    type="submit"
-                    disabled={createRelatedParty.isPending}
-                    className="w-full sm:w-auto"
-                  >
-                    {createRelatedParty.isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Menyimpan...
-                      </>
-                    ) : (
-                      "Simpan"
-                    )}
-                  </Button>
-                </div>
-              </form>
+                  <div className="flex justify-end">
+                    <Button
+                      type="submit"
+                      disabled={createRelatedParty.isPending}
+                      className="w-full sm:w-auto"
+                    >
+                      {createRelatedParty.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Menyimpan...
+                        </>
+                      ) : (
+                        "Simpan"
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
             </DialogContent>
           </Dialog>
           <FormMessage />

@@ -20,10 +20,25 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { formatRupiah } from "@/lib/utils";
 import { TransactionItem } from "@/lib/types";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
 interface MasterItem {
   id: string;
@@ -40,7 +55,6 @@ interface TransactionItemsProps {
 }
 
 export function TransactionItems({ form, transactionType, items, setItems }: TransactionItemsProps) {
-  const [itemSearch, setItemSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [currentItemIndex, setCurrentItemIndex] = useState<number | null>(null);
   const queryClient = useQueryClient();
@@ -58,19 +72,13 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
 
   // Fetch master items
   const { data, isLoading: isMasterItemsLoading } = useQuery({
-    queryKey: ['masterItems', itemSearch, transactionType === "pemasukan" ? "income" : "expense"],
+    queryKey: ['masterItems', transactionType === "pemasukan" ? "income" : "expense"],
     queryFn: async () => {
       const apiType = transactionType === "pemasukan" ? "income" : "expense";
-      const searchParams = new URLSearchParams();
-      searchParams.append('type', apiType);
-      if (itemSearch) {
-        searchParams.append('search', itemSearch);
-      }
-      const response = await fetch(`/api/master-items?${searchParams.toString()}`);
+      const response = await fetch(`/api/master-items?type=${apiType}`);
       if (!response.ok) throw new Error("Failed to fetch master items");
       const responseData = await response.json();
-      // Return an empty array as default if data is undefined
-      return responseData.data || responseData.items || responseData || [];
+      return responseData.data || responseData || [];
     }
   });
 
@@ -107,7 +115,6 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
         setItems(newItems);
         form.setValue("items", newItems);
         form.setValue("amountTotal", calculateTotal(newItems));
-        setCurrentItemIndex(null);
       }
       
       setDialogOpen(false);
@@ -117,7 +124,6 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
         defaultPrice: 0,
         type: transactionType === "pemasukan" ? "income" : "expense",
       });
-      setItemSearch("");
     },
     onError: (error: Error) => {
       toast.error(`Gagal menambahkan item master: ${error.message}`);
@@ -185,6 +191,19 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
     );
   };
 
+  const handleCreateMasterItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    try {
+      await createMasterItem.mutateAsync(masterItemForm.getValues());
+    } catch (error) {
+      // Error is handled by the mutation's onError
+      toast.error("Gagal menambahkan item master");
+      console.log(error);
+    }
+  };
+
   return (
     <div className="space-y-4 border p-4 rounded-md bg-card">
       <div className="flex justify-between items-center">
@@ -203,142 +222,151 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
           >
             <div className="col-span-12 md:col-span-5">
               <Label className="font-medium">Nama Item</Label>
-              <div className="relative mt-1.5">
-                <Input
-                  value={item.name}
-                  onChange={(e) => {
-                    updateItem(index, "name", e.target.value);
-                    setItemSearch(e.target.value);
-                    setCurrentItemIndex(index);
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <Select
+                  value={item.masterItemId || ""}
+                  onValueChange={(value) => {
+                    selectMasterItem(index, value);
                   }}
-                  placeholder="Ketik untuk mencari atau tambah item baru"
-                  onFocus={() => {
-                    setItemSearch(item.name);
-                    setCurrentItemIndex(index);
-                  }}
-                  required
-                  className="w-full"
-                />
-                
-                {itemSearch && currentItemIndex === index && (
-                  <div className="absolute z-10 w-full mt-1 bg-popover rounded-md border shadow-lg max-h-60 overflow-auto">
-                    <div className="p-2 space-y-1">
-                      {isMasterItemsLoading ? (
-                        <div className="p-2 text-muted-foreground flex items-center justify-center">
-                          <Loader2 className="h-4 w-4 animate-spin mr-2"/> Loading...
+                >
+                  <SelectTrigger className="w-full mt-1.5">
+                    <SelectValue placeholder="Pilih item" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {isMasterItemsLoading ? (
+                      <SelectItem value="loading" disabled>
+                        <div className="flex items-center">
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Loading...
                         </div>
-                      ) : masterItems && masterItems.length > 0 ? (
-                        masterItems.map((masterItem: MasterItem) => (
-                          <div 
-                            key={masterItem.id}
-                            className="flex justify-between items-center p-2 hover:bg-accent rounded-md cursor-pointer transition-colors"
-                            onClick={() => {
-                              selectMasterItem(index, masterItem.id);
-                              setItemSearch("");
-                              setCurrentItemIndex(null);
-                            }}
-                          >
+                      </SelectItem>
+                    ) : masterItems && masterItems.length > 0 ? (
+                      masterItems.map((masterItem: MasterItem) => (
+                        <SelectItem key={masterItem.id} value={masterItem.id}>
+                          <div className="flex justify-between items-center w-full">
                             <span>{masterItem.name}</span>
-                            <span className="text-sm text-muted-foreground">
+                            <span className="text-sm text-muted-foreground ml-2">
                               {formatRupiah(masterItem.defaultPrice)}
                             </span>
                           </div>
-                        ))
-                      ) : (
-                        <div className="p-2 text-muted-foreground">
-                          Item &quot;{itemSearch}&quot; tidak ditemukan
-                        </div>
-                      )}
-                      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                        <DialogTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            className="w-full justify-start mt-2"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              masterItemForm.reset({
-                                name: itemSearch,
-                                description: "",
-                                defaultPrice: 0,
-                                type: transactionType === "pemasukan" ? "income" : "expense",
-                              });
-                              setDialogOpen(true);
-                            }}
-                          >
-                            <PlusCircle className="h-4 w-4 mr-2" />
-                            Tambah &quot;{itemSearch}&quot; sebagai Item Baru
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px]">
-                          <DialogHeader>
-                            <DialogTitle>Tambah Item Master Baru</DialogTitle>
-                            <DialogDescription>
-                              Tambahkan item master baru untuk transaksi {transactionType}
-                            </DialogDescription>
-                          </DialogHeader>
-                          <form onSubmit={(e) => {
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-items" disabled>
+                        Tidak ada item
+                      </SelectItem>
+                    )}
+                    <div className="border-t border-border mt-2 pt-2">
+                      <DialogTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="w-full justify-start"
+                          onClick={(e) => {
                             e.preventDefault();
-                            createMasterItem.mutate(masterItemForm.getValues());
-                          }} className="space-y-6">
-                            <div className="space-y-4">
-                              <div className="space-y-2">
-                                <Label htmlFor="name">Nama Item</Label>
-                                <Input
-                                  id="name"
-                                  value={masterItemForm.watch('name')}
-                                  onChange={(e) => masterItemForm.setValue('name', e.target.value)}
-                                  placeholder="Nama item"
-                                  className="w-full"
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="defaultPrice">Harga Default</Label>
-                                <Input
-                                  id="defaultPrice"
-                                  type="number"
-                                  value={masterItemForm.watch('defaultPrice') || ""}
-                                  onChange={(e) => masterItemForm.setValue('defaultPrice', Number(e.target.value))}
-                                  placeholder="Harga default"
-                                  className="w-full"
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="description">Deskripsi (Opsional)</Label>
-                                <Textarea
-                                  id="description"
-                                  value={masterItemForm.watch('description') || ""}
-                                  onChange={(e) => masterItemForm.setValue('description', e.target.value)}
-                                  placeholder="Deskripsi item"
-                                  className="w-full min-h-[100px]"
-                                />
-                              </div>
-                              <input type="hidden" {...masterItemForm.register("type")} />
-                            </div>
-                            <div className="flex justify-end">
-                              <Button
-                                type="submit"
-                                disabled={createMasterItem.isPending}
-                                className="w-full sm:w-auto"
-                              >
-                                {createMasterItem.isPending ? (
-                                  <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Menyimpan...
-                                  </>
-                                ) : (
-                                  "Simpan Item"
-                                )}
-                              </Button>
-                            </div>
-                          </form>
-                        </DialogContent>
-                      </Dialog>
+                            e.stopPropagation();
+                            setCurrentItemIndex(index);
+                            masterItemForm.reset({
+                              name: "",
+                              description: "",
+                              defaultPrice: 0,
+                              type: transactionType === "pemasukan" ? "income" : "expense",
+                            });
+                            setDialogOpen(true);
+                          }}
+                        >
+                          <PlusCircle className="h-4 w-4 mr-2" />
+                          Tambah Item Baru
+                        </Button>
+                      </DialogTrigger>
                     </div>
-                  </div>
-                )}
-              </div>
+                  </SelectContent>
+                </Select>
+                <DialogContent className="sm:max-w-[425px]" onPointerDownOutside={(e) => e.preventDefault()}>
+                  <DialogHeader>
+                    <DialogTitle>Tambah Item Master Baru</DialogTitle>
+                    <DialogDescription>
+                      Tambahkan item master baru untuk transaksi {transactionType}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <Form {...masterItemForm}>
+                    <form 
+                      onSubmit={handleCreateMasterItem}
+                      onClick={(e) => e.stopPropagation()} 
+                      className="space-y-6"
+                    >
+                      <div className="space-y-4">
+                        <FormField
+                          control={masterItemForm.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nama Item</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Nama item" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={masterItemForm.control}
+                          name="defaultPrice"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Harga Default</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="number" 
+                                  placeholder="Harga default" 
+                                  {...field}
+                                  onChange={(e) => field.onChange(Number(e.target.value))}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={masterItemForm.control}
+                          name="description"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Deskripsi (Opsional)</FormLabel>
+                              <FormControl>
+                                <Textarea 
+                                  placeholder="Deskripsi item" 
+                                  className="min-h-[100px]" 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <input type="hidden" {...masterItemForm.register("type")} />
+                      </div>
+                      <div className="flex justify-end">
+                        <Button
+                          type="submit"
+                          disabled={createMasterItem.isPending}
+                          className="w-full sm:w-auto"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {createMasterItem.isPending ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Menyimpan...
+                            </>
+                          ) : (
+                            "Simpan Item"
+                          )}
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
             </div>
             
             <div className="col-span-6 md:col-span-3">

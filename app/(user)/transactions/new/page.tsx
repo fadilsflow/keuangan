@@ -10,7 +10,7 @@ export default function NewTransactionPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Buat Transaksi Baru</h1>
       </div>
-      <div className="rounded-lg border bg-card p-6">
+      <div >
         <ErrorBoundary>
           <TransactionForm mode="create" />
         </ErrorBoundary>

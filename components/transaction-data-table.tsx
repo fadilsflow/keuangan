@@ -24,7 +24,12 @@ import {
   Pencil,
   FileText,
   Printer,
+  Eye,
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Download } from "lucide-react";
+import { Link } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import {
@@ -35,6 +40,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Pagination } from "@/components/ui/pagination";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CldImage } from "next-cloudinary";
 
 interface TransactionDataTableProps {
   filters: {
@@ -235,7 +241,7 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Transaction Detail</title>
+          <title>Detail Transaksi</title>
           <style>
             body { font-family: Arial, sans-serif; margin: 20px; }
             .header { text-align: center; margin-bottom: 30px; }
@@ -256,29 +262,29 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
         </head>
         <body>
           <div class="header">
-            <h1>${transaction.type === "pemasukan" ? "INVOICE" : "RECEIPT"}</h1>
+            <h1>${transaction.type === "pemasukan" ? "INVOICE" : "KUITANSI"}</h1>
             <p>No: ${transaction.id}</p>
           </div>
           
           <div class="detail-row">
-            <span class="label">Date:</span>
+            <span class="label">Tanggal:</span>
             <span>${format(new Date(transaction.date), "d MMMM yyyy", {
               locale: id,
             })}</span>
           </div>
           
           <div class="detail-row">
-            <span class="label">Related Party:</span>
+            <span class="label">Pihak Terkait:</span>
             <span>${transaction.relatedParty}</span>
           </div>
-          
+
           <div class="detail-row">
-            <span class="label">Category:</span>
+            <span class="label">Kategori:</span>
             <span>${transaction.category}</span>
           </div>
           
           <div class="detail-row">
-            <span class="label">Description:</span>
+            <span class="label">Deskripsi:</span>
             <span>${transaction.description}</span>
           </div>
           
@@ -286,8 +292,8 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
             <thead>
               <tr>
                 <th>Item</th>
-                <th>Quantity</th>
-                <th>Price</th>
+                <th>Jumlah</th>
+                <th>Harga</th>
                 <th>Total</th>
               </tr>
             </thead>
@@ -315,8 +321,8 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
             transaction.paymentImg
               ? `
             <div style="margin-top: 30px;">
-              <div class="label">Payment Proof:</div>
-              <img src="${transaction.paymentImg}" style="max-width: 300px; margin-top: 10px;" />
+              <div class="label">Bukti Pembayaran:</div>
+              <img src="${transaction.paymentImg}" style="max-width: 200px; margin-top: 10px;" />
             </div>
           `
               : ""
@@ -483,6 +489,7 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
               <TableHead>Jenis</TableHead>
               <TableHead>Item</TableHead>
               <TableHead>Total</TableHead>
+              <TableHead>Bukti</TableHead>
               <TableHead>Aksi</TableHead>
             </TableRow>
           </TableHeader>
@@ -558,9 +565,87 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
                       ))}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell >
                     <span>{formatRupiah(transaction.amountTotal)}</span>
                   </TableCell>
+                  <TableCell className="text-center">
+                    {transaction.paymentImg ? (
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="flex justify-center items-center">
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Bukti Pembayaran</DialogTitle>
+                          </DialogHeader>
+                          <div className="flex flex-col gap-4">
+                            <div className="flex relative  justify-center items-center">
+                              {isLoading ? (
+                                <Skeleton className="w-full h-full" />
+                              ) : (
+                                <CldImage 
+                                  src={transaction.paymentImg} 
+                                  alt="Bukti Pembayaran"
+                                  width={200}
+                                  height={200}
+                                  className="rounded-lg object-cover"
+                                />
+                              )}
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                onClick={async () => {
+                                  if (transaction.paymentImg) {
+                                    try {
+                                      const response = await fetch(transaction.paymentImg);
+                                      const blob = await response.blob();
+                                      const url = window.URL.createObjectURL(blob);
+                                      const link = document.createElement('a');
+                                      link.href = url;
+                                      link.download = `payment-${transaction.id}.jpg`;
+                                      document.body.appendChild(link);
+                                      link.click();
+                                      document.body.removeChild(link);
+                                      window.URL.revokeObjectURL(url);
+                                    } catch (error) {
+                                      console.error('Error downloading image:', error);
+                                      toast.error('Failed to download image');
+                                    }
+                                  }
+                                }}
+                              >
+                                <Download className="w-4 h-4 mr-2" />
+                                Download
+                              </Button>
+                              <Button
+                                variant="outline" 
+                                onClick={() => window.open(transaction.paymentImg, '_blank')}
+                              >
+                                <ExternalLink className="w-4 h-4 mr-2" />
+                                Buka di Tab Baru
+                              </Button>
+                              <Button
+                                variant="outline"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(transaction.paymentImg || '');
+                                  toast.success('Link berhasil disalin ke papan klip');
+                                }}
+                              >
+                                <Link className="w-4 h-4 mr-2" />
+                                Salin Link
+                              </Button>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    ) : (
+                      <span className="text-muted-foreground text-xs text-center">N/A</span>
+                    )}
+                  </TableCell>
+
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

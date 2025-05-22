@@ -7,9 +7,8 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { CategorySchema } from "@/lib/validations/category";
 import { CreateTransactionDTO } from "@/lib/validations/transaction";
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { PlusCircle, Loader2 } from "lucide-react";
@@ -102,6 +101,10 @@ export function CategorySelect({ form, transactionType }: CategorySelectProps) {
     }
   });
 
+  const onSubmit = async (values: z.infer<typeof CategorySchema>) => {
+    await createCategory.mutateAsync(values);
+  };
+
   return (
     <FormField
       control={form.control}
@@ -166,50 +169,59 @@ export function CategorySelect({ form, transactionType }: CategorySelectProps) {
                   Tambahkan kategori baru untuk transaksi {transactionType}
                 </DialogDescription>
               </DialogHeader>
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                createCategory.mutate(categoryForm.getValues());
-              }} className="space-y-6">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nama Kategori</Label>
-                    <Input
-                      id="name"
-                      value={categoryForm.watch('name')}
-                      onChange={(e) => categoryForm.setValue('name', e.target.value)}
-                      placeholder="Nama kategori"
-                      className="w-full"
+              <Form {...categoryForm}>
+                <form onSubmit={categoryForm.handleSubmit(onSubmit)} className="space-y-6">
+                  <div className="space-y-4">
+                    <FormField
+                      control={categoryForm.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nama Kategori</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Nama kategori" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Deskripsi (Opsional)</Label>
-                    <Textarea
-                      id="description"
-                      value={categoryForm.watch('description')}
-                      onChange={(e) => categoryForm.setValue('description', e.target.value)}
-                      placeholder="Deskripsi kategori"
-                      className="w-full min-h-[100px]"
+                    <FormField
+                      control={categoryForm.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Deskripsi (Opsional)</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Deskripsi kategori" 
+                              className="min-h-[100px]" 
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
+                    <input type="hidden" {...categoryForm.register("type")} />
                   </div>
-                  <input type="hidden" {...categoryForm.register("type")} />
-                </div>
-                <div className="flex justify-end">
-                  <Button
-                    type="submit"
-                    disabled={createCategory.isPending}
-                    className="w-full sm:w-auto"
-                  >
-                    {createCategory.isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Menyimpan...
-                      </>
-                    ) : (
-                      "Simpan"
-                    )}
-                  </Button>
-                </div>
-              </form>
+                  <div className="flex justify-end">
+                    <Button
+                      type="submit"
+                      disabled={createCategory.isPending}
+                      className="w-full sm:w-auto"
+                    >
+                      {createCategory.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Menyimpan...
+                        </>
+                      ) : (
+                        "Simpan"
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
             </DialogContent>
           </Dialog>
           <FormMessage />
