@@ -24,9 +24,9 @@ export default function OrganizationPage() {
       <div className="w-full max-w-sm space-y-4 p-4">
         <Card className="border-2 min-w-80 bg-background border-none">
           <CardHeader className="text-center text-left items-center">
-            <CardTitle className="text-2xl font-bold">Select an organization</CardTitle>
+            <CardTitle className="text-2xl font-bold">Pilih Organisasi</CardTitle>
             <CardDescription className="text-sm text-muted-foreground">
-              Switch between your organizations
+              Pilih organisasi untuk melanjutkan
             </CardDescription>
             <ResponsiveOrganizationSwitcher />
           </CardHeader>
@@ -37,7 +37,7 @@ export default function OrganizationPage() {
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    Please select an organization first to access the dashboard.
+                    Pilih organisasi terlebih dahulu untuk melanjutkan
                   </AlertDescription>
                 </Alert>
               ) : (
@@ -46,7 +46,7 @@ export default function OrganizationPage() {
                   className="w-full font-medium group"
                 >
                   <Link href="/dashboard" className="flex items-center justify-center">
-                    Go to Dashboard
+                    Masuk ke Dashboard
                     <ChevronRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </Button>
