@@ -62,6 +62,7 @@ export default function LandingPage() {
                 intuitif, dan aman. Buat keputusan keuangan yang lebih baik dengan mudah.
               </p>
 
+                <SignedOut>
               <div className="flex flex-wrap gap-4 mt-2">
                 <Button asChild className="rounded-full">
                   <Link href="/sign-up">
@@ -75,6 +76,7 @@ export default function LandingPage() {
                   </Link>
                 </Button>
               </div>
+              </SignedOut>
 
               <div className="border rounded-lg overflow-hidden mt-4 max-w-sm">
                 <div className="flex justify-between items-center p-3 bg-card">
