@@ -91,12 +91,12 @@ export default function LandingPage() {
             {/* Hero Image */}
             <div className="relative aspect-16/9 rounded-lg overflow-hidden shadow-md bg-card">
                 <Image
-                  src="/dashboard.png"
+                  src="https://res.cloudinary.com/dxurnpbrc/image/upload/v1748188613/dashboard-ss_v35hqa.png"
                   alt="Tampilan Dashboard CashLog"
                   width={1000}
                   height={1000}
-                  className="object-cover p-4"
-                  priority
+                  className=" p-4"
+                  
                 />
             </div>
           </div>
