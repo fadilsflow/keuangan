@@ -17,7 +17,7 @@ export const TransactionCreateSchema = z.object({
   relatedParty: z.string().min(1, "Pihak terkait wajib diisi"),
   type: z.enum(["pemasukan", "pengeluaran"]),
   amountTotal: z.number(),
-  paymentImg: z.string().optional(),
+  paymentImg: z.string().min(1, "Bukti pembayaran wajib diisi"),
   items: z.array(z.object({
     name: z.string().min(1, "Nama item wajib diisi"),
     itemPrice: z.number().min(0, "Harga tidak boleh negatif"),

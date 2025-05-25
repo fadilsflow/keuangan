@@ -148,7 +148,7 @@ export function TransactionBasicInfo({
         render={({ field }) => (
           <FormItem className="md:col-span-2">
             <FormLabel className="font-semibold">
-              Bukti Pembayaran (Opsional)
+              Bukti Pembayaran
             </FormLabel>
             <FormControl>
               <div className="flex flex-col gap-4">
