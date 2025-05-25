@@ -24,7 +24,7 @@ const data = {
       icon: Home,
     },
     {
-      title: "Transactions",
+      title: "Transaksi",
       url: "/transactions",
       icon: Receipt,
     },
@@ -35,7 +35,7 @@ const data = {
       icon: BarChart3,
     },
     {
-      title: "Data Master",
+      title: "Master Data",
       url: "/data-master",
       icon: Folder,
     },
