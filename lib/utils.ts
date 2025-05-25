@@ -4,7 +4,7 @@
   export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
   }
-  import { ItemSchema } from "@/app/api/schemas/transaction.schema"; 
+  import { ItemSchema } from "@/app/api/transactions/transaction.schema"; 
   import { z } from "zod";
 
   // Type untuk item

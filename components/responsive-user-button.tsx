@@ -16,7 +16,7 @@ export function ResponsiveUserButton() {
               ? {
                   colorBackground: "#020817",
                   colorInputBackground: "#020817",
-                  colorText: "#ffffff",
+                colorText: "#ffffff",
                   colorTextSecondary: "#71717a",
                   colorInputText: "#ffffff",
                   colorPrimary: "#0ea5e9",
@@ -37,9 +37,9 @@ export function ResponsiveUserButton() {
             userButtonPopoverActionButtonIcon: "text-muted-foreground",
           },
         }}
-        afterSignOutUrl="/"
-        userProfileMode="navigation"
-        userProfileUrl="/user-profile"
+        
+        
+        
       />
     </SignedIn>
   );

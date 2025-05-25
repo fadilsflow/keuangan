@@ -101,8 +101,17 @@ export function CategorySelect({ form, transactionType }: CategorySelectProps) {
     }
   });
 
-  const onSubmit = async (values: z.infer<typeof CategorySchema>) => {
-    await createCategory.mutateAsync(values);
+  const handleCreateCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    try {
+      await createCategory.mutateAsync(categoryForm.getValues());
+    } catch (error) {
+      // Error is handled by the mutation's onError
+      toast.error("Gagal menambahkan kategori");
+      console.log(error);
+    }
   };
 
   return (
@@ -162,7 +171,7 @@ export function CategorySelect({ form, transactionType }: CategorySelectProps) {
                 </div>
               </SelectContent>
             </Select>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[425px]" onPointerDownOutside={(e) => e.preventDefault()}>
               <DialogHeader>
                 <DialogTitle>Tambah Kategori Baru</DialogTitle>
                 <DialogDescription>
@@ -170,7 +179,11 @@ export function CategorySelect({ form, transactionType }: CategorySelectProps) {
                 </DialogDescription>
               </DialogHeader>
               <Form {...categoryForm}>
-                <form onSubmit={categoryForm.handleSubmit(onSubmit)} className="space-y-6">
+                <form 
+                  onSubmit={handleCreateCategory}
+                  onClick={(e) => e.stopPropagation()} 
+                  className="space-y-6"
+                >
                   <div className="space-y-4">
                     <FormField
                       control={categoryForm.control}
@@ -209,6 +222,7 @@ export function CategorySelect({ form, transactionType }: CategorySelectProps) {
                       type="submit"
                       disabled={createCategory.isPending}
                       className="w-full sm:w-auto"
+                      onClick={(e) => e.stopPropagation()}
                     >
                       {createCategory.isPending ? (
                         <>

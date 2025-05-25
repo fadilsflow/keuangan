@@ -31,10 +31,10 @@ export default function ResponsiveOrganizationSwitcher() {
             organizationSwitcherPopoverActionButtonIcon: "text-muted-foreground"
           }
         }}
-        createOrganizationUrl="/create-organization"
+        createOrganizationMode="modal"
         afterCreateOrganizationUrl="/switch-organization"
         afterSelectOrganizationUrl="/switch-organization"
-        afterLeaveOrganizationUrl="/switch-organization"
+        afterLeaveOrganizationUrl="/switch-organization" 
       />
     )
 }

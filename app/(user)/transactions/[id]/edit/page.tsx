@@ -15,7 +15,6 @@ interface Transaction {
     amountTotal: number;
     type: "pemasukan" | "pengeluaran";
     paymentImg: string;
-    monthHistoryId?: string;
     items: Array<{
         id: string;
         name: string;

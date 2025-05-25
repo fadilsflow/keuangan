@@ -22,8 +22,6 @@ model Transaction {
   userId        String
 
   items          Item[]
-  monthHistory   MonthHistory? @relation(fields: [monthHistoryId], references: [id])
-  monthHistoryId String?
 
   @@index([organizationId])
   @@index([userId])
@@ -48,29 +46,6 @@ model Item {
   @@index([userId])
   @@index([transactionId])
   @@index([masterItemId])
-}
-
-model MonthHistory {
-  id           String @id @default(cuid())
-  year         Int
-  month        Int
-  totalIncome  Float  @default(0)
-  totalExpense Float  @default(0)
-
-  transactions  Transaction[]
-  yearHistory   YearHistory   @relation(fields: [yearHistoryId], references: [id])
-  yearHistoryId String
-
-  @@unique([year, month])
-}
-
-model YearHistory {
-  id           String @id @default(cuid())
-  year         Int    @unique
-  totalIncome  Float  @default(0)
-  totalExpense Float  @default(0)
-
-  months MonthHistory[]
 }
 
 // Master Data Models

@@ -103,8 +103,17 @@ export function RelatedPartySelect({ form, transactionType }: RelatedPartySelect
     }
   });
 
-  const onSubmit = async (values: z.infer<typeof RelatedPartySchema>) => {
-    await createRelatedParty.mutateAsync(values);
+  const handleCreateRelatedParty = async (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    try {
+      await createRelatedParty.mutateAsync(relatedPartyForm.getValues());
+    } catch (error) {
+      // Error is handled by the mutation's onError
+      toast.error("Gagal menambahkan pihak terkait");
+      console.log(error);
+    }
   };
 
   return (
@@ -165,7 +174,7 @@ export function RelatedPartySelect({ form, transactionType }: RelatedPartySelect
                 </div>
               </SelectContent>
             </Select>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[425px]" onPointerDownOutside={(e) => e.preventDefault()}>
               <DialogHeader>
                 <DialogTitle>Tambah Pihak Terkait Baru</DialogTitle>
                 <DialogDescription>
@@ -173,7 +182,11 @@ export function RelatedPartySelect({ form, transactionType }: RelatedPartySelect
                 </DialogDescription>
               </DialogHeader>
               <Form {...relatedPartyForm}>
-                <form onSubmit={relatedPartyForm.handleSubmit(onSubmit)} className="space-y-6">
+                <form 
+                  onSubmit={handleCreateRelatedParty}
+                  onClick={(e) => e.stopPropagation()} 
+                  className="space-y-6"
+                >
                   <div className="space-y-4">
                     <FormField
                       control={relatedPartyForm.control}
@@ -225,6 +238,7 @@ export function RelatedPartySelect({ form, transactionType }: RelatedPartySelect
                       type="submit"
                       disabled={createRelatedParty.isPending}
                       className="w-full sm:w-auto"
+                      onClick={(e) => e.stopPropagation()}
                     >
                       {createRelatedParty.isPending ? (
                         <>

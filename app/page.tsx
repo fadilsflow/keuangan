@@ -1,6 +1,8 @@
 "use client"
 
 
+import { ModeToggle } from "@/components/mode-toggle";
+import { ResponsiveUserButton } from "@/components/responsive-user-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SignedIn, SignedOut } from "@clerk/nextjs";
@@ -11,8 +13,8 @@ export default function LandingPage() {
   return (
     <div className="flex items-center flex-col min-h-screen">
       {/* Header */}
-      <header className="w-full max-w-5xl space-y-4 p-4">
-            <nav className="flex container mx-auto h-16 justify-between items-center">
+      <header className="w-full space-y-4 ">
+            <nav className="flex px-4 border-b container mx-auto h-16 justify-between items-center">
                 <Link href="/">
                     <h1 className="text-2xl font-bold">CashLog</h1>
                 </Link>
@@ -31,7 +33,9 @@ export default function LandingPage() {
                   Go to Dashboard
                 </Link>
               </Button>
+              <ResponsiveUserButton/>
             </SignedIn>
+            <ModeToggle/>
                     {/* <ResponsiveUserButton /> */}
                 </div>
             </nav>

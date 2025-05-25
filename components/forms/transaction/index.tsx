@@ -87,7 +87,6 @@ export function TransactionForm({
       paymentImg: defaultValues?.paymentImg || "",
       items: defaultValues?.items || [{ name: "", itemPrice: 0, quantity: 1, totalPrice: 0 }],
       ...(defaultValues?.id && { id: defaultValues.id }),
-      ...(defaultValues?.monthHistoryId && { monthHistoryId: defaultValues.monthHistoryId })
     }
   });
 
@@ -103,8 +102,7 @@ export function TransactionForm({
         type: defaultValues?.type || defaultType,
         paymentImg: defaultValues?.paymentImg || "",
         items: defaultValues?.items || [{ name: "", itemPrice: 0, quantity: 1, totalPrice: 0 }],
-        ...(defaultValues?.id && { id: defaultValues.id }),
-        ...(defaultValues?.monthHistoryId && { monthHistoryId: defaultValues.monthHistoryId })
+        ...(defaultValues?.id && { id: defaultValues.id }), 
       };
       form.reset(resetValues);
       setTransactionType(resetValues.type as "pemasukan" | "pengeluaran");

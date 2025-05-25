@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { TransactionCreateSchema } from "../schemas/transaction.schema";
+import { TransactionCreateSchema } from "./transaction.schema";
 import { auth } from "@clerk/nextjs/server";
 
 export async function GET(request: Request) {
