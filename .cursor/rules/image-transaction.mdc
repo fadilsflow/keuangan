@@ -1,7 +1,0 @@
----
-description: 
-globs: 
-alwaysApply: true
----
-## implement upload image feature with Next Cloudinary
-Next Cloudinary website: @https://next.cloudinary.dev/cldimage/basic-usage
