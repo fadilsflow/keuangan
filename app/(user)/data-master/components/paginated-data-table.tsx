@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { ReactNode } from "react"
-import { Pagination } from "@/components/ui/pagination"
+import { ReactNode } from "react";
+import { Pagination } from "@/components/ui/pagination";
 import {
   Table,
   TableBody,
@@ -9,25 +9,33 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Skeleton } from "@/components/ui/skeleton"
+} from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface PaginatedDataTableProps<T> {
-  data: T[]
-  pageSize?: number
-  totalItems: number
-  totalPages: number
-  currentPage: number
-  onPageChange: (page: number) => void
+  data: T[];
+  pageSize?: number;
+  totalItems: number;
+  totalPages: number;
+  currentPage: number;
+  onPageChange: (page: number) => void;
   columns: {
-    header: string
-    key: string | ((item: T) => ReactNode)
-    cell?: (item: T) => ReactNode
-    isCurrency?: boolean
-  }[]
-  emptyMessage?: string
-  isLoading?: boolean
+    header: string;
+    key: string | ((item: T) => ReactNode);
+    cell?: (item: T) => ReactNode;
+    isCurrency?: boolean;
+  }[];
+  emptyMessage?: string;
+  isLoading?: boolean;
 }
+
+// Tambahkan helper function untuk handle empty values
+const renderEmptyValue = (value: any) => {
+  if (value === null || value === undefined || value === "") {
+    return "-";
+  }
+  return value;
+};
 
 export function PaginatedDataTable<T extends { id: string }>({
   data,
@@ -36,7 +44,7 @@ export function PaginatedDataTable<T extends { id: string }>({
   currentPage,
   onPageChange,
   columns,
-  emptyMessage = "No data available",
+  emptyMessage = "Tidak ada data",
   isLoading,
 }: PaginatedDataTableProps<T>) {
   return (
@@ -46,7 +54,11 @@ export function PaginatedDataTable<T extends { id: string }>({
           <TableHeader>
             <TableRow className="bg-muted/50">
               {columns.map((column) => (
-                <TableHead key={typeof column.key === 'string' ? column.key : column.header}>
+                <TableHead
+                  key={
+                    typeof column.key === "string" ? column.key : column.header
+                  }
+                >
                   {column.header}
                 </TableHead>
               ))}
@@ -60,7 +72,9 @@ export function PaginatedDataTable<T extends { id: string }>({
                     <TableCell key={`skeleton-cell-${index}-${colIndex}`}>
                       {column.isCurrency ? (
                         <div className="flex items-center">
-                          <span className="text-muted-foreground text-sm mr-1">Rp</span>
+                          <span className="text-muted-foreground text-sm mr-1">
+                            Rp
+                          </span>
                           <Skeleton className="h-4 w-20" />
                         </div>
                       ) : (
@@ -72,7 +86,10 @@ export function PaginatedDataTable<T extends { id: string }>({
               ))
             ) : data.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-6 text-muted-foreground">
+                <TableCell
+                  colSpan={columns.length}
+                  className="text-center py-6 text-muted-foreground"
+                >
                   {emptyMessage}
                 </TableCell>
               </TableRow>
@@ -83,12 +100,18 @@ export function PaginatedDataTable<T extends { id: string }>({
                   className="transition-colors hover:bg-muted/50"
                 >
                   {columns.map((column) => (
-                    <TableCell key={typeof column.key === 'string' ? `${item.id}-${column.key}` : `${item.id}-${column.header}`}>
+                    <TableCell
+                      key={
+                        typeof column.key === "string"
+                          ? `${item.id}-${column.key}`
+                          : `${item.id}-${column.header}`
+                      }
+                    >
                       {column.cell
                         ? column.cell(item)
-                        : typeof column.key === 'function'
-                          ? column.key(item)
-                          : (item as any)[column.key]}
+                        : typeof column.key === "function"
+                        ? column.key(item)
+                        : renderEmptyValue((item as any)[column.key]) } 
                     </TableCell>
                   ))}
                 </TableRow>
@@ -112,5 +135,5 @@ export function PaginatedDataTable<T extends { id: string }>({
         </div>
       )}
     </div>
-  )
-} 
+  );
+}

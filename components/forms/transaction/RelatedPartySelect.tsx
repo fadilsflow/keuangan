@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { UseFormReturn } from "react-hook-form";
 import { useState } from "react";
@@ -7,7 +7,14 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { RelatedPartySchema } from "@/lib/validations/related-party";
 import { CreateTransactionDTO } from "@/lib/validations/transaction";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -41,7 +48,10 @@ interface RelatedPartySelectProps {
   transactionType: "pemasukan" | "pengeluaran";
 }
 
-export function RelatedPartySelect({ form, transactionType }: RelatedPartySelectProps) {
+export function RelatedPartySelect({
+  form,
+  transactionType,
+}: RelatedPartySelectProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -53,12 +63,16 @@ export function RelatedPartySelect({ form, transactionType }: RelatedPartySelect
       description: "",
       contactInfo: "",
       type: transactionType === "pemasukan" ? "income" : "expense",
-    }
+    },
   });
 
   // Fetch related parties
   const { data, isLoading } = useQuery({
-    queryKey: ['relatedParties', "", transactionType === "pemasukan" ? "income" : "expense"],
+    queryKey: [
+      "relatedParties",
+      "",
+      transactionType === "pemasukan" ? "income" : "expense",
+    ],
     queryFn: async () => {
       const apiType = transactionType === "pemasukan" ? "income" : "expense";
       const response = await fetch(`/api/related-parties?type=${apiType}`);
@@ -66,7 +80,7 @@ export function RelatedPartySelect({ form, transactionType }: RelatedPartySelect
       const responseData = await response.json();
       // Return an empty array as default if data is undefined
       return responseData.data || responseData || [];
-    }
+    },
   });
 
   // Access relatedParties safely
@@ -87,7 +101,7 @@ export function RelatedPartySelect({ form, transactionType }: RelatedPartySelect
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['relatedParties'] });
+      queryClient.invalidateQueries({ queryKey: ["relatedParties"] });
       toast.success("Pihak terkait berhasil ditambahkan");
       form.setValue("relatedParty", data.name);
       setDialogOpen(false);
@@ -100,13 +114,13 @@ export function RelatedPartySelect({ form, transactionType }: RelatedPartySelect
     },
     onError: (error: Error) => {
       toast.error(`Gagal menambahkan pihak terkait: ${error.message}`);
-    }
+    },
   });
 
   const handleCreateRelatedParty = async (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     try {
       await createRelatedParty.mutateAsync(relatedPartyForm.getValues());
     } catch (error) {
@@ -116,18 +130,51 @@ export function RelatedPartySelect({ form, transactionType }: RelatedPartySelect
     }
   };
 
+  const getRelatedPartyLabel = () =>
+    transactionType === "pengeluaran" ? "Supplier" : "Konsumen";
+  const getRelatedPartyPlaceholder = () =>
+    transactionType === "pengeluaran" ? "Pilih supplier" : "Pilih konsumen";
+  const getAddRelatedPartyLabel = () =>
+    transactionType === "pengeluaran"
+      ? "Tambah Supplier Baru"
+      : "Tambah Konsumen Baru";
+  const getRelatedPartyDialogTitle = () =>
+    transactionType === "pengeluaran"
+      ? "Tambah Supplier Baru"
+      : "Tambah Konsumen Baru";
+  const getRelatedPartyDialogDesc = () =>
+    transactionType === "pengeluaran"
+      ? "Tambahkan supplier baru untuk transaksi pengeluaran"
+      : "Tambahkan konsumen baru untuk transaksi pemasukan";
+  const getRelatedPartyNameLabel = () =>
+    transactionType === "pengeluaran" ? "Nama Supplier" : "Nama Konsumen";
+  const getRelatedPartyNamePlaceholder = () =>
+    transactionType === "pengeluaran" ? "Nama supplier" : "Nama konsumen";
+  const getRelatedPartyDescPlaceholder = () =>
+    transactionType === "pengeluaran"
+      ? "Deskripsi supplier"
+      : "Deskripsi konsumen";
+  const getRelatedPartyContactPlaceholder = () =>
+    transactionType === "pengeluaran" ? "Kontak supplier" : "Kontak konsumen";
+  const getNoRelatedPartyText = () =>
+    transactionType === "pengeluaran"
+      ? "Tidak ada supplier"
+      : "Tidak ada konsumen";
+
   return (
     <FormField
       control={form.control}
       name="relatedParty"
       render={({ field }) => (
         <FormItem>
-          <FormLabel className="font-semibold">Pihak Terkait</FormLabel>
+          <FormLabel className="font-semibold">
+            {getRelatedPartyLabel()}
+          </FormLabel>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <Select onValueChange={field.onChange} value={field.value}>
               <FormControl>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih pihak terkait" />
+                  <SelectValue placeholder={getRelatedPartyPlaceholder()} />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
@@ -146,7 +193,7 @@ export function RelatedPartySelect({ form, transactionType }: RelatedPartySelect
                   ))
                 ) : (
                   <SelectItem value="no-parties" disabled>
-                    Tidak ada pihak terkait
+                    {getNoRelatedPartyText()}
                   </SelectItem>
                 )}
                 <div className="border-t border-border mt-2 pt-2">
@@ -162,29 +209,35 @@ export function RelatedPartySelect({ form, transactionType }: RelatedPartySelect
                           name: "",
                           description: "",
                           contactInfo: "",
-                          type: transactionType === "pemasukan" ? "income" : "expense",
+                          type:
+                            transactionType === "pemasukan"
+                              ? "income"
+                              : "expense",
                         });
                         setDialogOpen(true);
                       }}
                     >
                       <PlusCircle className="h-4 w-4 mr-2" />
-                      Tambah Pihak Terkait Baru
+                      {getAddRelatedPartyLabel()}
                     </Button>
                   </DialogTrigger>
                 </div>
               </SelectContent>
             </Select>
-            <DialogContent className="sm:max-w-[425px]" onPointerDownOutside={(e) => e.preventDefault()}>
+            <DialogContent
+              className="sm:max-w-[425px]"
+              onPointerDownOutside={(e) => e.preventDefault()}
+            >
               <DialogHeader>
-                <DialogTitle>Tambah Pihak Terkait Baru</DialogTitle>
+                <DialogTitle>{getRelatedPartyDialogTitle()}</DialogTitle>
                 <DialogDescription>
-                  Tambahkan pihak terkait baru untuk transaksi {transactionType}
+                  {getRelatedPartyDialogDesc()}
                 </DialogDescription>
               </DialogHeader>
               <Form {...relatedPartyForm}>
-                <form 
+                <form
                   onSubmit={handleCreateRelatedParty}
-                  onClick={(e) => e.stopPropagation()} 
+                  onClick={(e) => e.stopPropagation()}
                   className="space-y-6"
                 >
                   <div className="space-y-4">
@@ -193,9 +246,12 @@ export function RelatedPartySelect({ form, transactionType }: RelatedPartySelect
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Nama Pihak Terkait</FormLabel>
+                          <FormLabel>{getRelatedPartyNameLabel()}</FormLabel>
                           <FormControl>
-                            <Input placeholder="Nama pihak terkait" {...field} />
+                            <Input
+                              placeholder={getRelatedPartyNamePlaceholder()}
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -208,10 +264,10 @@ export function RelatedPartySelect({ form, transactionType }: RelatedPartySelect
                         <FormItem>
                           <FormLabel>Deskripsi (Opsional)</FormLabel>
                           <FormControl>
-                            <Textarea 
-                              placeholder="Deskripsi pihak terkait" 
-                              className="min-h-[100px]" 
-                              {...field} 
+                            <Textarea
+                              placeholder={getRelatedPartyDescPlaceholder()}
+                              className="min-h-[100px]"
+                              {...field}
                             />
                           </FormControl>
                           <FormMessage />
@@ -225,13 +281,19 @@ export function RelatedPartySelect({ form, transactionType }: RelatedPartySelect
                         <FormItem>
                           <FormLabel>Kontak (Opsional)</FormLabel>
                           <FormControl>
-                            <Input placeholder="Kontak pihak terkait" {...field} />
+                            <Input
+                              placeholder={getRelatedPartyContactPlaceholder()}
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    <input type="hidden" {...relatedPartyForm.register("type")} />
+                    <input
+                      type="hidden"
+                      {...relatedPartyForm.register("type")}
+                    />
                   </div>
                   <div className="flex justify-end">
                     <Button
@@ -259,4 +321,4 @@ export function RelatedPartySelect({ form, transactionType }: RelatedPartySelect
       )}
     />
   );
-} 
+}

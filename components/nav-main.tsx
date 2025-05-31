@@ -1,7 +1,7 @@
 "use client";
 
-
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import {
   SidebarGroup,
@@ -10,11 +10,11 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { LucideIcon, PlusCircleIcon } from "lucide-react";
+import { LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function NavMain({
   items,
-
 }: {
   items: {
     title: string;
@@ -22,29 +22,31 @@ export function NavMain({
     icon?: LucideIcon;
   }[];
 }) {
+  const pathname = usePathname();
   return (
     <SidebarGroup>
-      <SidebarGroupContent className="flex flex-col gap-2">
-        <SidebarMenu>
-                
-          <SidebarMenuItem className="flex items-center gap-2">
-            <Link href="/transactions/new" passHref>
-              <SidebarMenuButton
-                tooltip="Buat Transaksi"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
-              >
-                <PlusCircleIcon />
-                <span>Buat Transaksi</span>
-              </SidebarMenuButton>
-            </Link>
-          </SidebarMenuItem>
-        </SidebarMenu>
-        <SidebarMenu>
+      <SidebarGroupContent >
+        <SidebarMenu
+        className="gap-2"
+        >
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               <Link href={item.url} passHref>
-                <SidebarMenuButton tooltip={item.title}>
-                  {item.icon && <item.icon className="!size-5" />}
+                <SidebarMenuButton
+                  tooltip={item.title}
+                  className={cn(
+                    "hover:cursor-pointer",
+                    // when open new transaction page make the /transactions not active
+                    pathname === "/transactions/new" && item.url === "/transactions"
+
+                      ? "bg-transparent active:bg-transparent "
+                      : pathname === item.url || pathname.startsWith(item.url)
+                      ? "hover:text-background dark:hover:text-foreground hover:bg-primary/80 bg-primary/90 text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
+                      : " active:bg-muted"  
+
+                  )}
+                >
+                  {item.icon && <item.icon  />}
                   <span>{item.title}</span>
                 </SidebarMenuButton>
               </Link>

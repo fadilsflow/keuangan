@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
@@ -9,7 +9,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Loader2 } from "lucide-react";
-import { CreateTransactionDTO, TransactionCreateSchema } from "@/lib/validations/transaction";
+import {
+  CreateTransactionDTO,
+  TransactionCreateSchema,
+} from "@/lib/validations/transaction";
 import { formatDateForInput } from "@/lib/utils";
 import { TransactionBasicInfo } from "./TransactionBasicInfo";
 import { CategorySelect } from "./CategorySelect";
@@ -55,11 +58,13 @@ export function TransactionForm({
   defaultValues,
   defaultType = "pengeluaran",
   mode = "create",
-  onSuccess
+  onSuccess,
 }: TransactionFormProps) {
   const queryClient = useQueryClient();
   const [isInitialized, setIsInitialized] = useState(false);
-  const [transactionType, setTransactionType] = useState<"pemasukan" | "pengeluaran">(defaultType);
+  const [transactionType, setTransactionType] = useState<
+    "pemasukan" | "pengeluaran"
+  >(defaultType);
   const [items, setItems] = useState<TransactionItem[]>(() => {
     if (defaultValues?.items && defaultValues.items.length > 0) {
       return defaultValues.items.map((item: TransactionItem) => ({
@@ -69,7 +74,7 @@ export function TransactionForm({
         quantity: item.quantity,
         totalPrice: item.totalPrice,
         transactionId: item.transactionId,
-        masterItemId: item.masterItemId
+        masterItemId: item.masterItemId,
       }));
     }
     return [{ name: "", itemPrice: 0, quantity: 1, totalPrice: 0 }];
@@ -78,31 +83,39 @@ export function TransactionForm({
   const form = useForm<CreateTransactionDTO>({
     resolver: zodResolver(TransactionCreateSchema),
     defaultValues: {
-      date: defaultValues?.date ? formatDateForInput(new Date(defaultValues.date)) : formatDateForInput(new Date()),
+      date: defaultValues?.date
+        ? formatDateForInput(new Date(defaultValues.date))
+        : formatDateForInput(new Date()),
       description: defaultValues?.description || "",
       category: defaultValues?.category || "",
       relatedParty: defaultValues?.relatedParty || "",
       amountTotal: defaultValues?.amountTotal || 0,
       type: defaultValues?.type || defaultType,
       paymentImg: defaultValues?.paymentImg || "",
-      items: defaultValues?.items || [{ name: "", itemPrice: 0, quantity: 1, totalPrice: 0 }],
+      items: defaultValues?.items || [
+        { name: "", itemPrice: 0, quantity: 1, totalPrice: 0 },
+      ],
       ...(defaultValues?.id && { id: defaultValues.id }),
-    }
+    },
   });
 
   // Reset form when defaultValues change (for edit mode mainly)
   useEffect(() => {
     if (defaultValues) {
       const resetValues = {
-        date: defaultValues?.date ? formatDateForInput(new Date(defaultValues.date)) : formatDateForInput(new Date()),
+        date: defaultValues?.date
+          ? formatDateForInput(new Date(defaultValues.date))
+          : formatDateForInput(new Date()),
         description: defaultValues?.description || "",
         category: defaultValues?.category || "",
         relatedParty: defaultValues?.relatedParty || "",
         amountTotal: defaultValues?.amountTotal || 0,
         type: defaultValues?.type || defaultType,
         paymentImg: defaultValues?.paymentImg || "",
-        items: defaultValues?.items || [{ name: "", itemPrice: 0, quantity: 1, totalPrice: 0 }],
-        ...(defaultValues?.id && { id: defaultValues.id }), 
+        items: defaultValues?.items || [
+          { name: "", itemPrice: 0, quantity: 1, totalPrice: 0 },
+        ],
+        ...(defaultValues?.id && { id: defaultValues.id }),
       };
       form.reset(resetValues);
       setTransactionType(resetValues.type as "pemasukan" | "pengeluaran");
@@ -122,7 +135,8 @@ export function TransactionForm({
   }, [defaultValues, isInitialized]);
 
   const updateTransaction = async (data: CreateTransactionDTO) => {
-    if (!defaultValues?.id) throw new Error("Transaction ID is required for update");
+    if (!defaultValues?.id)
+      throw new Error("Transaction ID is required for update");
 
     const response = await fetch(`/api/transactions/${defaultValues.id}`, {
       method: "PUT",
@@ -180,15 +194,18 @@ export function TransactionForm({
     try {
       const submitData = {
         ...data,
-        amountTotal: items.reduce((sum, item) => sum + (item.itemPrice * item.quantity), 0),
+        amountTotal: items.reduce(
+          (sum, item) => sum + item.itemPrice * item.quantity,
+          0
+        ),
         items: items.map((item) => ({
           ...(item.id && { id: item.id }),
           name: item.name,
           itemPrice: item.itemPrice,
           quantity: item.quantity,
           totalPrice: item.itemPrice * item.quantity,
-          ...(item.masterItemId && { masterItemId: item.masterItemId })
-        }))
+          ...(item.masterItemId && { masterItemId: item.masterItemId }),
+        })),
       };
       if (!submitData.items) {
         submitData.items = [];
@@ -210,13 +227,16 @@ export function TransactionForm({
               setTransactionType(type);
               form.setValue("category", "");
               form.setValue("relatedParty", "");
-              setItems([{ name: "", itemPrice: 0, quantity: 1, totalPrice: 0 }]);
+              setItems([
+                { name: "", itemPrice: 0, quantity: 1, totalPrice: 0 },
+              ]);
               form.setValue("amountTotal", 0);
             }}
           />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <CategorySelect form={form} transactionType={transactionType} />
+            {/* Label RelatedPartySelect akan berubah sesuai jenis transaksi: pengeluaran=supplier, pemasukan=konsumen */}
             <RelatedPartySelect form={form} transactionType={transactionType} />
           </div>
 
@@ -233,14 +253,16 @@ export function TransactionForm({
               disabled={mutation.isPending}
               size="lg"
               className="w-full md:w-auto"
-            > 
+            >
               {mutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   {mode === "edit" ? "Memperbarui..." : "Membuat..."}
                 </>
+              ) : mode === "edit" ? (
+                "Perbarui Transaksi"
               ) : (
-                mode === "edit" ? "Perbarui Transaksi" : "Buat Transaksi"
+                "Buat Transaksi"
               )}
             </Button>
           </div>
@@ -248,4 +270,4 @@ export function TransactionForm({
       </form>
     </Form>
   );
-} 
+}

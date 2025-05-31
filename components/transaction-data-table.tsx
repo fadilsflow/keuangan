@@ -273,8 +273,13 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
             })}</span>
           </div>
           
+           <div class="detail-row">
+            <span class="label">Jenis Transaksi:</span>
+            <span>${transaction.type === "pemasukan" ? "Pemasukan" : "Pengeluaran"}</span>
+          </div>
+          
           <div class="detail-row">
-            <span class="label">Pihak Terkait:</span>
+            <span class="label">${transaction.type === "pemasukan" ? "Konsumen" : "Supplier"}:</span>
             <span>${transaction.relatedParty}</span>
           </div>
 
@@ -485,7 +490,7 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
               <TableHead>Tanggal</TableHead>
               <TableHead>Deskripsi</TableHead>
               <TableHead>Kategori</TableHead>
-              <TableHead>Pihak Terkait</TableHead>
+              <TableHead>{filters.type === "all" ? "Supplier/Konsumen" : filters.type === "pemasukan" ? "Konsumen" : "Supplier"}</TableHead>
               <TableHead>Jenis</TableHead>
               <TableHead>Item</TableHead>
               <TableHead>Total</TableHead>
