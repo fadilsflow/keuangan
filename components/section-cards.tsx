@@ -91,7 +91,7 @@ export function SectionCards({ dateRange }: SectionCardsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 px-4 lg:px-6 @xl/main:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 @xl/main:grid-cols-4">
       {cards.map((card, index) => (
         <Card key={index} className="overflow-hidden shadow-sm">
           <CardHeader >
