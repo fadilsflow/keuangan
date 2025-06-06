@@ -6,7 +6,7 @@ import { auth } from "@clerk/nextjs/server";
 export async function GET(request: Request) {
   try {
     const { orgId, userId } = await auth();
-    
+
     if (!orgId) {
       return NextResponse.json(
         { error: "No organization selected" },
@@ -15,10 +15,7 @@ export async function GET(request: Request) {
     }
 
     if (!userId) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -29,7 +26,7 @@ export async function GET(request: Request) {
     const search = searchParams.get("search");
     const page = parseInt(searchParams.get("page") || "1");
     const pageSize = parseInt(searchParams.get("pageSize") || "10");
-    
+
     // Calculate pagination values
     const skip = (page - 1) * pageSize;
 
@@ -54,23 +51,23 @@ export async function GET(request: Request) {
 
     // Get total count for pagination
     const totalItems = await prisma.transaction.count({ where });
-    
+
     // Calculate total pages
     const totalPages = Math.ceil(totalItems / pageSize);
 
     const transactions = await prisma.transaction.findMany({
       where,
       orderBy: {
-        date: 'desc'
+        date: "desc",
       },
       include: {
-        items: true
+        items: true,
       },
       skip,
-      take: pageSize
+      take: pageSize,
     });
 
-    const formattedTransactions = transactions.map(transaction => ({
+    const formattedTransactions = transactions.map((transaction) => ({
       id: transaction.id,
       date: transaction.date,
       type: transaction.type,
@@ -79,7 +76,7 @@ export async function GET(request: Request) {
       relatedParty: transaction.relatedParty,
       amountTotal: transaction.amountTotal,
       paymentImg: transaction.paymentImg,
-      items: transaction.items.map(item => ({
+      items: transaction.items.map((item) => ({
         id: item.id,
         name: item.name,
         itemPrice: item.itemPrice,
@@ -94,8 +91,8 @@ export async function GET(request: Request) {
         totalItems,
         totalPages,
         currentPage: page,
-        pageSize
-      }
+        pageSize,
+      },
     });
   } catch (error) {
     console.error("Failed to fetch transactions:", error);
@@ -109,7 +106,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const { orgId, userId } = await auth();
-    
+
     if (!orgId) {
       return NextResponse.json(
         { error: "No organization selected" },
@@ -118,10 +115,7 @@ export async function POST(request: Request) {
     }
 
     if (!userId) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
@@ -135,7 +129,10 @@ export async function POST(request: Request) {
 
     if (!validationResult.success) {
       return NextResponse.json(
-        { error: "Validation failed", details: validationResult.error.flatten() },
+        {
+          error: "Validation failed",
+          details: validationResult.error.flatten(),
+        },
         { status: 400 }
       );
     }
@@ -146,7 +143,7 @@ export async function POST(request: Request) {
       data: {
         ...transactionData,
         items: {
-          create: items.map(item => ({
+          create: items.map((item) => ({
             name: item.name,
             itemPrice: item.itemPrice,
             quantity: item.quantity,
@@ -154,17 +151,17 @@ export async function POST(request: Request) {
             masterItemId: item.masterItemId,
             organizationId: orgId,
             userId: userId,
-          }))
-        }
+          })),
+        },
       },
       include: {
-        items: true
-      }
+        items: true,
+      },
     });
 
     return NextResponse.json(
-      { 
-        message: "Transaction created", 
+      {
+        message: "Transaction created",
         transaction: {
           id: transaction.id,
           date: transaction.date,
@@ -173,14 +170,14 @@ export async function POST(request: Request) {
           category: transaction.category,
           relatedParty: transaction.relatedParty,
           amountTotal: transaction.amountTotal,
-          items: transaction.items.map(item => ({
+          items: transaction.items.map((item) => ({
             id: item.id,
             name: item.name,
             itemPrice: item.itemPrice,
             quantity: item.quantity,
             totalPrice: item.totalPrice,
           })),
-        }
+        },
       },
       { status: 201 }
     );
@@ -191,4 +188,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-} 
+}
