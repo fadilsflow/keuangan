@@ -201,7 +201,8 @@ export function TransactionItems({
           ...newItems[index],
           name: selectedItem.name,
           itemPrice: selectedItem.defaultPrice,
-          totalPrice: selectedItem.defaultPrice * newItems[index].quantity,
+          totalPrice:
+            selectedItem.defaultPrice * (newItems[index].quantity || 1),
           masterItemId: selectedItem.id,
         };
         setItems(newItems);
@@ -251,7 +252,7 @@ export function TransactionItems({
                   onValueChange={(value) => selectMasterItem(index, value)}
                 >
                   <SelectTrigger className="w-full mt-1.5">
-                    <SelectValue placeholder="Pilih item" />
+                    <SelectValue placeholder={item.name || "Pilih item"} />
                   </SelectTrigger>
                   <SelectContent>
                     {isMasterItemsLoading ? (
@@ -266,9 +267,6 @@ export function TransactionItems({
                         <SelectItem key={masterItem.id} value={masterItem.id}>
                           <div className="flex justify-between items-center w-full">
                             <span>{masterItem.name}</span>
-                            <span className="text-sm text-muted-foreground ml-2">
-                              {formatRupiah(masterItem.defaultPrice)}
-                            </span>
                           </div>
                         </SelectItem>
                       ))

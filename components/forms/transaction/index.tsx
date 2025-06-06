@@ -18,6 +18,8 @@ import { TransactionBasicInfo } from "./TransactionBasicInfo";
 import { CategorySelect } from "./CategorySelect";
 import { RelatedPartySelect } from "./RelatedPartySelect";
 import { TransactionItems } from "./TransactionItems";
+import { useRouter } from "next/navigation";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface TransactionItem {
   id?: string;
@@ -34,6 +36,7 @@ interface TransactionFormProps {
   defaultType?: "pemasukan" | "pengeluaran";
   mode?: "create" | "edit";
   onSuccess?: () => void;
+  isLoading?: boolean;
 }
 
 async function createTransaction(data: CreateTransactionDTO) {
@@ -59,6 +62,7 @@ export function TransactionForm({
   defaultType = "pengeluaran",
   mode = "create",
   onSuccess,
+  isLoading,
 }: TransactionFormProps) {
   const queryClient = useQueryClient();
   const [isInitialized, setIsInitialized] = useState(false);
@@ -101,15 +105,17 @@ export function TransactionForm({
   useEffect(() => {
     if (defaultValues && !isInitialized) {
       const formattedItems = defaultValues.items?.map(
-        (item: TransactionItem) => ({
-          id: item.id || undefined,
-          name: item.name || "",
-          itemPrice: Number(item.itemPrice) || 0,
-          quantity: Number(item.quantity) || 1,
-          totalPrice: Number(item.totalPrice) || 0,
-          transactionId: item.transactionId || undefined,
-          masterItemId: item.masterItemId || undefined,
-        })
+        (item: TransactionItem) => {
+          return {
+            id: item.id || undefined,
+            name: item.name || "",
+            itemPrice: Number(item.itemPrice) || 0,
+            quantity: Number(item.quantity) || 1,
+            totalPrice: Number(item.totalPrice) || 0,
+            transactionId: item.transactionId || undefined,
+            masterItemId: item.masterItemId || undefined,
+          };
+        }
       ) || [{ name: "", itemPrice: 0, quantity: 1, totalPrice: 0 }];
 
       const resetValues = {
@@ -211,10 +217,18 @@ export function TransactionForm({
       }
       mutation.mutate(submitData);
     } catch (error) {
-      console.error("Submit error:", error);
       toast.error("Error submitting form");
+      console.error(error);
     }
   };
+
+  const router = useRouter();
+
+  if (isLoading) {
+    return (
+      <Skeleton className="h-screen w-full border" />
+    );
+  }
 
   return (
     <Form {...form}>
@@ -235,7 +249,6 @@ export function TransactionForm({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <CategorySelect form={form} transactionType={transactionType} />
-            {/* Label RelatedPartySelect akan berubah sesuai jenis transaksi: pengeluaran=supplier, pemasukan=konsumen */}
             <RelatedPartySelect form={form} transactionType={transactionType} />
           </div>
 
@@ -246,7 +259,18 @@ export function TransactionForm({
             setItems={setItems}
           />
 
-          <div className="flex justify-end pt-4 border-t">
+          <div className="flex justify-end pt-4 border-t gap-2  ">
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              className="w-full md:w-auto"
+              onClick={() => {
+                router.back();
+              }}
+            >
+              Batal
+            </Button>
             <Button
               type="submit"
               disabled={mutation.isPending}

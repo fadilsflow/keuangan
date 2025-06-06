@@ -147,9 +147,7 @@ export function TransactionBasicInfo({
         name="paymentImg"
         render={({ field }) => (
           <FormItem className="md:col-span-2">
-            <FormLabel className="font-semibold">
-              Bukti Pembayaran
-            </FormLabel>
+            <FormLabel className="font-semibold">Bukti Pembayaran</FormLabel>
             <FormControl>
               <div className="flex flex-col gap-4">
                 {!field.value ? (
@@ -189,9 +187,9 @@ export function TransactionBasicInfo({
                           error: "#F44235",
                           inProgress: "#0078FF",
                           complete: "#20B832",
-                          sourceBg: "#E4EBF1"
-                        }
-                      }
+                          sourceBg: "#E4EBF1",
+                        },
+                      },
                     }}
                   >
                     {({ open }) => {
@@ -207,7 +205,9 @@ export function TransactionBasicInfo({
                         >
                           <ImageIcon className="h-6 w-6" />
                           <span>Unggah Bukti Pembayaran</span>
-                          <span className="text-xs text-muted-foreground">Maksimal size gambar 2MB</span>
+                          <span className="text-xs text-muted-foreground">
+                            Maksimal size gambar 2MB
+                          </span>
                         </Button>
                       );
                     }}
@@ -225,8 +225,12 @@ export function TransactionBasicInfo({
                         />
                       </div>
                       <div className="flex flex-col gap-2">
-                        <span className="text-sm font-medium ">Bukti Pembayaran</span>
-                        <span className="text-xs text-muted-foreground">Berhasil diunggah</span>
+                        <span className="text-sm font-medium ">
+                          Bukti Pembayaran
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          Berhasil diunggah
+                        </span>
                       </div>
 
                       <Button
