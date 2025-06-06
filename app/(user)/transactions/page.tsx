@@ -25,4 +25,4 @@ export default function TransactionsPage() {
       <TransactionDataTable filters={filters} />
     </div>
   );
-} 
+}

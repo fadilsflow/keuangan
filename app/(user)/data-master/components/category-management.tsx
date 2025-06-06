@@ -3,16 +3,39 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Search, Loader2 } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Search,
+  Loader2,
+  MoreHorizontal,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CategorySchema } from "@/lib/validations/category";
 import { z } from "zod";
+import useDebouncedSearch from "@/app/hooks/use-debounced-search";
 
 import {
   Select,
@@ -22,6 +45,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PaginatedDataTable } from "./paginated-data-table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // Define the type for category
 interface Category {
@@ -42,19 +71,22 @@ interface CategoryManagementProps {
 
 // Function to fetch categories
 async function fetchCategories(
-  search = "", 
+  search = "",
   type: "income" | "expense" = "expense",
   page = 1,
   pageSize = 10
-): Promise<{ data: Category[], meta: { totalItems: number, totalPages: number } }> {
+): Promise<{
+  data: Category[];
+  meta: { totalItems: number; totalPages: number };
+}> {
   const searchParams = new URLSearchParams();
   if (search) {
-    searchParams.append('search', search);
+    searchParams.append("search", search);
   }
-  searchParams.append('type', type);
-  searchParams.append('page', page.toString());
-  searchParams.append('pageSize', pageSize.toString());
-  
+  searchParams.append("type", type);
+  searchParams.append("page", page.toString());
+  searchParams.append("pageSize", pageSize.toString());
+
   const response = await fetch(`/api/categories?${searchParams.toString()}`);
   if (!response.ok) {
     throw new Error("Failed to fetch categories");
@@ -63,7 +95,9 @@ async function fetchCategories(
 }
 
 // Function to create a category
-async function createCategory(data: z.infer<typeof CategorySchema>): Promise<Category> {
+async function createCategory(
+  data: z.infer<typeof CategorySchema>
+): Promise<Category> {
   const response = await fetch("/api/categories", {
     method: "POST",
     headers: {
@@ -71,17 +105,20 @@ async function createCategory(data: z.infer<typeof CategorySchema>): Promise<Cat
     },
     body: JSON.stringify(data),
   });
-  
+
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.error || "Failed to create category");
   }
-  
+
   return response.json();
 }
 
 // Function to update a category
-async function updateCategory(id: string, data: z.infer<typeof CategorySchema>): Promise<Category> {
+async function updateCategory(
+  id: string,
+  data: z.infer<typeof CategorySchema>
+): Promise<Category> {
   const response = await fetch(`/api/categories/${id}`, {
     method: "PUT",
     headers: {
@@ -89,88 +126,104 @@ async function updateCategory(id: string, data: z.infer<typeof CategorySchema>):
     },
     body: JSON.stringify(data),
   });
-  
+
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.error || "Failed to update category");
   }
-  
+
   return response.json();
 }
 
 // Function to delete a category
-async function deleteCategory(id: string): Promise<{message: string}> {
+async function deleteCategory(id: string): Promise<{ message: string }> {
   const response = await fetch(`/api/categories/${id}`, {
     method: "DELETE",
   });
-  
+
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.error || "Failed to delete category");
   }
-  
+
   return response.json();
 }
 
-export function CategoryManagement({ transactionType }: CategoryManagementProps) {
-  const [search, setSearch] = useState("");
+export function CategoryManagement({
+  transactionType,
+}: CategoryManagementProps) {
+  const { search, debouncedSearch, setSearch } = useDebouncedSearch();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+    null
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
-  
+
   const queryClient = useQueryClient();
-  
+
   // Query to fetch categories
   const { data, isLoading } = useQuery({
-    queryKey: ['categories', search, transactionType, currentPage, pageSize],
-    queryFn: () => fetchCategories(search, transactionType, currentPage, pageSize)
+    queryKey: [
+      "categories",
+      debouncedSearch,
+      transactionType,
+      currentPage,
+      pageSize,
+    ],
+    queryFn: () =>
+      fetchCategories(debouncedSearch, transactionType, currentPage, pageSize),
   });
-  
+
   const categories = data?.data || [];
   const totalItems = data?.meta?.totalItems || 0;
   const totalPages = data?.meta?.totalPages || 1;
-  
+
   // Mutation to create a category
   const createMutation = useMutation({
     mutationFn: createCategory,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
       toast.success("Kategori berhasil ditambahkan");
       setIsAddDialogOpen(false);
     },
     onError: (error) => {
       toast.error(`Gagal menambahkan kategori: ${error.message}`);
-    }
+    },
   });
-  
+
   // Mutation to update a category
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: z.infer<typeof CategorySchema> }) => 
-      updateCategory(id, data),
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: z.infer<typeof CategorySchema>;
+    }) => updateCategory(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
       toast.success("Kategori berhasil diperbarui");
       setIsEditDialogOpen(false);
     },
     onError: (error) => {
       toast.error(`Gagal memperbarui kategori: ${error.message}`);
-    }
+    },
   });
-  
+
   // Mutation to delete a category
   const deleteMutation = useMutation({
     mutationFn: deleteCategory,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
       toast.success("Kategori berhasil dihapus");
       setIsDeleteDialogOpen(false);
     },
     onError: (error) => {
       toast.error(`Gagal menghapus kategori: ${error.message}`);
-    }
+    },
   });
 
   // Form for adding a category
@@ -180,7 +233,7 @@ export function CategoryManagement({ transactionType }: CategoryManagementProps)
       name: "",
       description: "",
       type: transactionType,
-    }
+    },
   });
 
   // Form for editing a category
@@ -190,7 +243,7 @@ export function CategoryManagement({ transactionType }: CategoryManagementProps)
       name: "",
       description: "",
       type: transactionType,
-    }
+    },
   });
 
   // Update form default values when type changes
@@ -238,6 +291,11 @@ export function CategoryManagement({ transactionType }: CategoryManagementProps)
     setCurrentPage(page);
   };
 
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, transactionType]);
+
   return (
     <div className="space-y-4">
       <div className="flex gap-2 items-center flex-wrap sm:flex-nowrap">
@@ -262,11 +320,15 @@ export function CategoryManagement({ transactionType }: CategoryManagementProps)
             <DialogHeader>
               <DialogTitle>Tambah Kategori</DialogTitle>
               <DialogDescription>
-                Tambahkan kategori baru untuk transaksi {transactionType === "income" ? "pemasukan" : "pengeluaran"}.
+                Tambahkan kategori baru untuk transaksi{" "}
+                {transactionType === "income" ? "pemasukan" : "pengeluaran"}.
               </DialogDescription>
             </DialogHeader>
             <Form {...addForm}>
-              <form onSubmit={addForm.handleSubmit(onAddSubmit)} className="space-y-4">
+              <form
+                onSubmit={addForm.handleSubmit(onAddSubmit)}
+                className="space-y-4"
+              >
                 <FormField
                   control={addForm.control}
                   name="name"
@@ -339,34 +401,50 @@ export function CategoryManagement({ transactionType }: CategoryManagementProps)
         onPageChange={handlePageChange}
         pageSize={pageSize}
         isLoading={isLoading}
-        emptyMessage={`Tidak ada kategori ${transactionType === "income" ? "pemasukan" : "pengeluaran"}`}
+        emptyMessage={`Tidak ada kategori ${
+          transactionType === "income" ? "pemasukan" : "pengeluaran"
+        }`}
         columns={[
           { header: "Nama", key: "name" },
-          { header: "Deskripsi", key: "description" },
-          { header: "Jenis", key: (category) => (
-            <span>
-              {category.type === "income" ? "Pemasukan" : "Pengeluaran"}
-            </span>
-          )},
-          { header: "Aksi", key: (category) => (
-            <div className="flex gap-2">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => handleEditClick(category)}
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => handleDeleteClick(category)}
-                className="text-red-500"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
+          {
+            header: "Deskripsi",
+            key: "description",
+            cell: (category) => (
+              <div className="max-w-[200px] text-wrap">
+                {category.description}
+              </div>
+            ),
+          },
+          {
+            header: "Jenis",
+            key: (category) => (
+              <span>
+                {category.type === "income" ? "Pemasukan" : "Pengeluaran"}
+              </span>
+            ),
+          },
+          {
+            header: "Aksi",
+            key: (category) => (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => handleEditClick(category)}>
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDeleteClick(category)}>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Hapus
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ),
+          },
         ]}
       />
 
@@ -376,11 +454,18 @@ export function CategoryManagement({ transactionType }: CategoryManagementProps)
           <DialogHeader>
             <DialogTitle>Edit Kategori</DialogTitle>
             <DialogDescription>
-              Edit kategori untuk transaksi {selectedCategory?.type === "income" ? "pemasukan" : "pengeluaran"}.
+              Edit kategori untuk transaksi{" "}
+              {selectedCategory?.type === "income"
+                ? "pemasukan"
+                : "pengeluaran"}
+              .
             </DialogDescription>
           </DialogHeader>
           <Form {...editForm}>
-            <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
+            <form
+              onSubmit={editForm.handleSubmit(onEditSubmit)}
+              className="space-y-4"
+            >
               <FormField
                 control={editForm.control}
                 name="name"
@@ -454,14 +539,14 @@ export function CategoryManagement({ transactionType }: CategoryManagementProps)
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setIsDeleteDialogOpen(false)}
             >
               Batal
             </Button>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={handleConfirmDelete}
               disabled={deleteMutation.isPending}
             >
@@ -475,4 +560,5 @@ export function CategoryManagement({ transactionType }: CategoryManagementProps)
       </Dialog>
     </div>
   );
-} 
+}
+

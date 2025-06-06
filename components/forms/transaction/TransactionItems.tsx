@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { UseFormReturn } from "react-hook-form";
 import { useState } from "react";
@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2, PlusCircle, Loader2 } from "lucide-react";
-import {  
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -54,7 +54,12 @@ interface TransactionItemsProps {
   setItems: (items: TransactionItem[]) => void;
 }
 
-export function TransactionItems({ form, transactionType, items, setItems }: TransactionItemsProps) {
+export function TransactionItems({
+  form,
+  transactionType,
+  items,
+  setItems,
+}: TransactionItemsProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [currentItemIndex, setCurrentItemIndex] = useState<number | null>(null);
   const queryClient = useQueryClient();
@@ -67,19 +72,22 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
       description: "",
       defaultPrice: 0,
       type: transactionType === "pemasukan" ? "income" : "expense",
-    }
+    },
   });
 
   // Fetch master items
   const { data, isLoading: isMasterItemsLoading } = useQuery({
-    queryKey: ['masterItems', transactionType === "pemasukan" ? "income" : "expense"],
+    queryKey: [
+      "masterItems",
+      transactionType === "pemasukan" ? "income" : "expense",
+    ],
     queryFn: async () => {
       const apiType = transactionType === "pemasukan" ? "income" : "expense";
       const response = await fetch(`/api/master-items?type=${apiType}`);
       if (!response.ok) throw new Error("Failed to fetch master items");
       const responseData = await response.json();
       return responseData.data || responseData || [];
-    }
+    },
   });
 
   // Access masterItems safely
@@ -100,9 +108,9 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['masterItems'] });
+      queryClient.invalidateQueries({ queryKey: ["masterItems"] });
       toast.success("Item master berhasil ditambahkan");
-      
+
       if (currentItemIndex !== null) {
         const newItems = [...items];
         newItems[currentItemIndex] = {
@@ -110,13 +118,13 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
           name: data.name,
           itemPrice: data.defaultPrice,
           totalPrice: data.defaultPrice * newItems[currentItemIndex].quantity,
-          masterItemId: data.id
+          masterItemId: data.id,
         };
         setItems(newItems);
         form.setValue("items", newItems);
         form.setValue("amountTotal", calculateTotal(newItems));
       }
-      
+
       setDialogOpen(false);
       masterItemForm.reset({
         name: "",
@@ -127,11 +135,16 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
     },
     onError: (error: Error) => {
       toast.error(`Gagal menambahkan item master: ${error.message}`);
-    }
+    },
   });
 
   const addItem = () => {
-    setItems([...items, { name: "", itemPrice: 0, quantity: 1, totalPrice: 0 }]);
+    const newItems = [
+      ...items,
+      { name: "", itemPrice: 0, quantity: 1, totalPrice: 0 },
+    ];
+    setItems(newItems);
+    form.setValue("items", newItems);
   };
 
   const removeItem = (index: number) => {
@@ -143,32 +156,45 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
     }
   };
 
-  const updateItem = (index: number, field: keyof TransactionItem, value: string | number) => {
+  const updateItem = (
+    index: number,
+    field: keyof TransactionItem,
+    value: any
+  ) => {
     const newItems = [...items];
     let newTotalPrice = newItems[index].totalPrice;
 
-    if (field === 'itemPrice') {
+    if (field === "itemPrice") {
       newItems[index].itemPrice = Number(value);
       newTotalPrice = newItems[index].itemPrice * newItems[index].quantity;
-    } else if (field === 'quantity') {
+    } else if (field === "quantity") {
       newItems[index].quantity = Number(value);
       newTotalPrice = newItems[index].itemPrice * newItems[index].quantity;
     } else {
       newItems[index] = {
         ...newItems[index],
-        [field]: value
+        [field]: value,
       };
     }
-    
+
     newItems[index].totalPrice = newTotalPrice;
     setItems(newItems);
     form.setValue("items", newItems);
     form.setValue("amountTotal", calculateTotal(newItems));
   };
 
+  const calculateTotal = (currentItems = items) => {
+    return currentItems.reduce(
+      (sum, item) => sum + item.itemPrice * item.quantity,
+      0
+    );
+  };
+
   const selectMasterItem = (index: number, itemId: string) => {
     if (masterItems) {
-      const selectedItem = masterItems.find((item: MasterItem) => item.id === itemId);
+      const selectedItem = masterItems.find(
+        (item: MasterItem) => item.id === itemId
+      );
       if (selectedItem) {
         const newItems = [...items];
         newItems[index] = {
@@ -176,7 +202,7 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
           name: selectedItem.name,
           itemPrice: selectedItem.defaultPrice,
           totalPrice: selectedItem.defaultPrice * newItems[index].quantity,
-          masterItemId: selectedItem.id
+          masterItemId: selectedItem.id,
         };
         setItems(newItems);
         form.setValue("items", newItems);
@@ -185,22 +211,19 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
     }
   };
 
-  const calculateTotal = (currentItems = items) => {
-    return currentItems.reduce((sum, item) =>
-      sum + (item.itemPrice * item.quantity), 0
-    );
-  };
-
   const handleCreateMasterItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    e.stopPropagation();
-    
+
     try {
       await createMasterItem.mutateAsync(masterItemForm.getValues());
+      masterItemForm.reset({
+        name: "",
+        description: "",
+        defaultPrice: 0,
+        type: transactionType === "pemasukan" ? "income" : "expense",
+      });
     } catch (error) {
-      // Error is handled by the mutation's onError
-      toast.error("Gagal menambahkan item master");
-      console.log(error);
+      console.error("Error creating master item:", error);
     }
   };
 
@@ -225,9 +248,7 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <Select
                   value={item.masterItemId || ""}
-                  onValueChange={(value) => {
-                    selectMasterItem(index, value);
-                  }}
+                  onValueChange={(value) => selectMasterItem(index, value)}
                 >
                   <SelectTrigger className="w-full mt-1.5">
                     <SelectValue placeholder="Pilih item" />
@@ -270,7 +291,10 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
                               name: "",
                               description: "",
                               defaultPrice: 0,
-                              type: transactionType === "pemasukan" ? "income" : "expense",
+                              type:
+                                transactionType === "pemasukan"
+                                  ? "income"
+                                  : "expense",
                             });
                             setDialogOpen(true);
                           }}
@@ -282,17 +306,20 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
                     </div>
                   </SelectContent>
                 </Select>
-                <DialogContent className="sm:max-w-[425px]" onPointerDownOutside={(e) => e.preventDefault()}>
+                <DialogContent
+                  className="sm:max-w-[425px]"
+                  onPointerDownOutside={(e) => e.preventDefault()}
+                >
                   <DialogHeader>
                     <DialogTitle>Tambah Item Master Baru</DialogTitle>
                     <DialogDescription>
-                      Tambahkan item master baru untuk transaksi {transactionType}
+                      Tambahkan item master baru untuk transaksi{" "}
+                      {transactionType}
                     </DialogDescription>
                   </DialogHeader>
                   <Form {...masterItemForm}>
-                    <form 
+                    <form
                       onSubmit={handleCreateMasterItem}
-                      onClick={(e) => e.stopPropagation()} 
                       className="space-y-6"
                     >
                       <div className="space-y-4">
@@ -316,11 +343,13 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
                             <FormItem>
                               <FormLabel>Harga Default</FormLabel>
                               <FormControl>
-                                <Input 
-                                  type="number" 
-                                  placeholder="Harga default" 
+                                <Input
+                                  type="number"
+                                  placeholder="Harga default"
                                   {...field}
-                                  onChange={(e) => field.onChange(Number(e.target.value))}
+                                  onChange={(e) =>
+                                    field.onChange(Number(e.target.value))
+                                  }
                                 />
                               </FormControl>
                               <FormMessage />
@@ -334,17 +363,20 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
                             <FormItem>
                               <FormLabel>Deskripsi (Opsional)</FormLabel>
                               <FormControl>
-                                <Textarea 
-                                  placeholder="Deskripsi item" 
-                                  className="min-h-[100px]" 
-                                  {...field} 
+                                <Textarea
+                                  placeholder="Deskripsi item"
+                                  className="min-h-[100px]"
+                                  {...field}
                                 />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
-                        <input type="hidden" {...masterItemForm.register("type")} />
+                        <input
+                          type="hidden"
+                          {...masterItemForm.register("type")}
+                        />
                       </div>
                       <div className="flex justify-end">
                         <Button
@@ -368,7 +400,7 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
                 </DialogContent>
               </Dialog>
             </div>
-            
+
             <div className="col-span-6 md:col-span-3">
               <Label className="font-medium">Harga</Label>
               <Input
@@ -422,4 +454,4 @@ export function TransactionItems({ form, transactionType, items, setItems }: Tra
       </div>
     </div>
   );
-} 
+}

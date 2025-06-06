@@ -14,7 +14,14 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import ResponsiveOrganizationSwitcher from "./responsive-organization-switcher";
-import { BarChart3, Folder, Home, Receipt, PlusCircle, DollarSign } from "lucide-react";
+import {
+  BarChart3,
+  Folder,
+  Home,
+  Receipt,
+  PlusCircle,
+  DollarSign,
+} from "lucide-react";
 
 const data = {
   navMain: [
@@ -52,14 +59,9 @@ const data = {
   ],
 };
 
-interface AppSidebarProps {
-  variant?: "inset" | "sidebar" | "floating";
-}
-
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>){
-
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar  collapsible="icon" {...props}  >
+    <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -72,9 +74,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>){
       </SidebarHeader>
 
       <SidebarContent>
-        <NavMain items={data.navMain}/>
+        <NavMain items={data.navMain} />
       </SidebarContent>
-      
+
       <SidebarFooter>
         <div className="block sm:hidden">
           <ResponsiveOrganizationSwitcher />

@@ -68,13 +68,13 @@ export function TransactionForm({
   const [items, setItems] = useState<TransactionItem[]>(() => {
     if (defaultValues?.items && defaultValues.items.length > 0) {
       return defaultValues.items.map((item: TransactionItem) => ({
-        id: item.id,
-        name: item.name,
-        itemPrice: item.itemPrice,
-        quantity: item.quantity,
-        totalPrice: item.totalPrice,
-        transactionId: item.transactionId,
-        masterItemId: item.masterItemId,
+        id: item.id || undefined,
+        name: item.name || "",
+        itemPrice: Number(item.itemPrice) || 0,
+        quantity: Number(item.quantity) || 1,
+        totalPrice: Number(item.totalPrice) || 0,
+        transactionId: item.transactionId || undefined,
+        masterItemId: item.masterItemId || undefined,
       }));
     }
     return [{ name: "", itemPrice: 0, quantity: 1, totalPrice: 0 }];
@@ -92,16 +92,26 @@ export function TransactionForm({
       amountTotal: defaultValues?.amountTotal || 0,
       type: defaultValues?.type || defaultType,
       paymentImg: defaultValues?.paymentImg || "",
-      items: defaultValues?.items || [
-        { name: "", itemPrice: 0, quantity: 1, totalPrice: 0 },
-      ],
+      items: items,
       ...(defaultValues?.id && { id: defaultValues.id }),
     },
   });
 
   // Reset form when defaultValues change (for edit mode mainly)
   useEffect(() => {
-    if (defaultValues) {
+    if (defaultValues && !isInitialized) {
+      const formattedItems = defaultValues.items?.map(
+        (item: TransactionItem) => ({
+          id: item.id || undefined,
+          name: item.name || "",
+          itemPrice: Number(item.itemPrice) || 0,
+          quantity: Number(item.quantity) || 1,
+          totalPrice: Number(item.totalPrice) || 0,
+          transactionId: item.transactionId || undefined,
+          masterItemId: item.masterItemId || undefined,
+        })
+      ) || [{ name: "", itemPrice: 0, quantity: 1, totalPrice: 0 }];
+
       const resetValues = {
         date: defaultValues?.date
           ? formatDateForInput(new Date(defaultValues.date))
@@ -112,27 +122,16 @@ export function TransactionForm({
         amountTotal: defaultValues?.amountTotal || 0,
         type: defaultValues?.type || defaultType,
         paymentImg: defaultValues?.paymentImg || "",
-        items: defaultValues?.items || [
-          { name: "", itemPrice: 0, quantity: 1, totalPrice: 0 },
-        ],
+        items: formattedItems,
         ...(defaultValues?.id && { id: defaultValues.id }),
       };
+
       form.reset(resetValues);
       setTransactionType(resetValues.type as "pemasukan" | "pengeluaran");
-      if (defaultValues.items) {
-        setItems(defaultValues.items);
-      } else {
-        setItems([{ name: "", itemPrice: 0, quantity: 1, totalPrice: 0 }]);
-      }
-    }
-  }, [defaultValues, form, defaultType]);
-
-  // Initialize form with defaultValues once
-  useEffect(() => {
-    if (defaultValues && !isInitialized) {
+      setItems(formattedItems);
       setIsInitialized(true);
     }
-  }, [defaultValues, isInitialized]);
+  }, [defaultValues, form, defaultType, isInitialized]);
 
   const updateTransaction = async (data: CreateTransactionDTO) => {
     if (!defaultValues?.id)

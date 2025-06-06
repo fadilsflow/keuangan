@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { DateRange } from "react-day-picker";
 import { DatePickerWithRange } from "./ui/date-range-picker";
+import useDebouncedSearch from "@/app/hooks/use-debounced-search";
 
 interface Filters {
   search: string;
@@ -38,38 +39,24 @@ interface CategoryResponse {
 export function TransactionFilters({
   onFilterChange,
 }: TransactionFiltersProps) {
+  const { search, debouncedSearch, setSearch } = useDebouncedSearch(500);
   const [filters, setFilters] = useState<Filters>({
     search: "",
     type: "all",
     category: "all",
     dateRange: undefined,
   });
-
-  const [searchInput, setSearchInput] = useState("");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
 
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
+  // Update filters when debounced search changes
   useEffect(() => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
-    searchTimeoutRef.current = setTimeout(() => {
-      setFilters((prev) => ({
-        ...prev,
-        search: searchInput,
-      }));
-    }, 500);
-
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, [searchInput]);
+    setFilters((prev) => ({
+      ...prev,
+      search: debouncedSearch,
+    }));
+  }, [debouncedSearch]);
 
   useEffect(() => {
     async function fetchCategories() {
@@ -131,7 +118,7 @@ export function TransactionFilters({
   };
 
   const handleReset = () => {
-    setSearchInput("");
+    setSearch("");
     const resetFilters = {
       search: "",
       type: "all",
@@ -150,8 +137,8 @@ export function TransactionFilters({
           <Input
             placeholder="Cari transaksi..."
             className="w-full pl-9"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
         </div>
 
@@ -200,7 +187,7 @@ export function TransactionFilters({
           <DatePickerWithRange date={dateRange} setDate={setDateRange} />
         </div>
 
-        <Button variant="outline" onClick={handleReset} className="flex-1 ">
+        <Button variant="outline" onClick={handleReset}>
           Reset
         </Button>
       </div>

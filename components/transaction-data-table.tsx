@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import useDebouncedSearch from "@/app/hooks/use-debounced-search";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -25,8 +26,17 @@ import {
   FileText,
   Printer,
   Eye,
+  Loader2,
 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Download } from "lucide-react";
 import { Link } from "lucide-react";
 import { ExternalLink } from "lucide-react";
@@ -142,18 +152,47 @@ async function deleteMultipleTransactions(
 }
 
 export function TransactionDataTable({ filters }: TransactionDataTableProps) {
+  const { search, debouncedSearch, setSearch } = useDebouncedSearch(500);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const queryClient = useQueryClient();
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10; // Items per page
+  const pageSize = 10;
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] = useState<string | null>(
+    null
+  );
+  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
 
-  const { data, isLoading } = useQuery<TransactionResponse, Error>({
-    queryKey: ["transactions", filters, currentPage, pageSize],
-    queryFn: () => fetchTransactions(filters, currentPage, pageSize),
-    staleTime: 30000, // 30 detik
-    placeholderData: (prevData) => prevData, // Pengganti keepPreviousData
+  // Initialize search from filters
+  useEffect(() => {
+    if (filters.search !== search) {
+      setSearch(filters.search);
+    }
+  }, [filters.search, search, setSearch]);
+
+  // Query to fetch transactions with debounced search
+  const { data, isLoading, isFetching } = useQuery<TransactionResponse, Error>({
+    queryKey: [
+      "transactions",
+      { ...filters, search: debouncedSearch },
+      currentPage,
+      pageSize,
+    ],
+    queryFn: () =>
+      fetchTransactions(
+        { ...filters, search: debouncedSearch },
+        currentPage,
+        pageSize
+      ),
+    staleTime: 30000,
+    placeholderData: (prevData) => prevData,
   });
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, filters.type, filters.category, filters.dateRange]);
 
   const transactions = useMemo(() => data?.data || [], [data?.data]);
   const totalPages = data?.meta?.totalPages || 1;
@@ -209,20 +248,27 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
   };
 
   const handleDelete = (id: string) => {
-    if (window.confirm("Apakah Anda yakin ingin menghapus transaksi ini?")) {
-      deleteMutation.mutate(id);
+    setTransactionToDelete(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (transactionToDelete) {
+      deleteMutation.mutate(transactionToDelete);
+      setIsDeleteDialogOpen(false);
+      setTransactionToDelete(null);
     }
   };
 
   const handleBulkDelete = () => {
     if (selectedRows.length === 0) return;
+    setIsBulkDeleteDialogOpen(true);
+  };
 
-    if (
-      window.confirm(
-        `Apakah Anda yakin ingin menghapus ${selectedRows.length} transaksi terpilih?`
-      )
-    ) {
+  const handleConfirmBulkDelete = () => {
+    if (selectedRows.length > 0) {
       bulkDeleteMutation.mutate(selectedRows);
+      setIsBulkDeleteDialogOpen(false);
     }
   };
 
@@ -262,7 +308,9 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
         </head>
         <body>
           <div class="header">
-            <h1>${transaction.type === "pemasukan" ? "INVOICE" : "KUITANSI"}</h1>
+            <h1>${
+              transaction.type === "pemasukan" ? "INVOICE" : "KUITANSI"
+            }</h1>
             <p>No: ${transaction.id}</p>
           </div>
           
@@ -275,11 +323,15 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
           
            <div class="detail-row">
             <span class="label">Jenis Transaksi:</span>
-            <span>${transaction.type === "pemasukan" ? "Pemasukan" : "Pengeluaran"}</span>
+            <span>${
+              transaction.type === "pemasukan" ? "Pemasukan" : "Pengeluaran"
+            }</span>
           </div>
           
           <div class="detail-row">
-            <span class="label">${transaction.type === "pemasukan" ? "Konsumen" : "Supplier"}:</span>
+            <span class="label">${
+              transaction.type === "pemasukan" ? "Konsumen" : "Supplier"
+            }:</span>
             <span>${transaction.relatedParty}</span>
           </div>
 
@@ -368,7 +420,8 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
     }
   };
 
-  if (isLoading) {
+  // Show skeleton loading state during initial load or search
+  if (isLoading || (isFetching && debouncedSearch !== "")) {
     return (
       <div className="space-y-4">
         <div className="overflow-hidden rounded-lg border">
@@ -490,7 +543,13 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
               <TableHead>Tanggal</TableHead>
               <TableHead>Deskripsi</TableHead>
               <TableHead>Kategori</TableHead>
-              <TableHead>{filters.type === "all" ? "Supplier/Konsumen" : filters.type === "pemasukan" ? "Konsumen" : "Supplier"}</TableHead>
+              <TableHead>
+                {filters.type === "all"
+                  ? "Supplier/Konsumen"
+                  : filters.type === "pemasukan"
+                  ? "Konsumen"
+                  : "Supplier"}
+              </TableHead>
               <TableHead>Jenis</TableHead>
               <TableHead>Item</TableHead>
               <TableHead>Total</TableHead>
@@ -570,14 +629,18 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
                       ))}
                     </div>
                   </TableCell>
-                  <TableCell >
+                  <TableCell>
                     <span>{formatRupiah(transaction.amountTotal)}</span>
                   </TableCell>
                   <TableCell className="text-center">
                     {transaction.paymentImg ? (
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="flex justify-center items-center">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="flex justify-center items-center"
+                          >
                             <Eye className="w-4 h-4" />
                           </Button>
                         </DialogTrigger>
@@ -590,8 +653,8 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
                               {isLoading ? (
                                 <Skeleton className="w-full h-full" />
                               ) : (
-                                <CldImage 
-                                  src={transaction.paymentImg} 
+                                <CldImage
+                                  src={transaction.paymentImg}
                                   alt="Bukti Pembayaran"
                                   width={200}
                                   height={200}
@@ -605,10 +668,13 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
                                 onClick={async () => {
                                   if (transaction.paymentImg) {
                                     try {
-                                      const response = await fetch(transaction.paymentImg);
+                                      const response = await fetch(
+                                        transaction.paymentImg
+                                      );
                                       const blob = await response.blob();
-                                      const url = window.URL.createObjectURL(blob);
-                                      const link = document.createElement('a');
+                                      const url =
+                                        window.URL.createObjectURL(blob);
+                                      const link = document.createElement("a");
                                       link.href = url;
                                       link.download = `payment-${transaction.id}.jpg`;
                                       document.body.appendChild(link);
@@ -616,8 +682,11 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
                                       document.body.removeChild(link);
                                       window.URL.revokeObjectURL(url);
                                     } catch (error) {
-                                      console.error('Error downloading image:', error);
-                                      toast.error('Failed to download image');
+                                      console.error(
+                                        "Error downloading image:",
+                                        error
+                                      );
+                                      toast.error("Failed to download image");
                                     }
                                   }
                                 }}
@@ -626,8 +695,10 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
                                 Download
                               </Button>
                               <Button
-                                variant="outline" 
-                                onClick={() => window.open(transaction.paymentImg, '_blank')}
+                                variant="outline"
+                                onClick={() =>
+                                  window.open(transaction.paymentImg, "_blank")
+                                }
                               >
                                 <ExternalLink className="w-4 h-4 mr-2" />
                                 Buka di Tab Baru
@@ -635,8 +706,12 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
                               <Button
                                 variant="outline"
                                 onClick={() => {
-                                  navigator.clipboard.writeText(transaction.paymentImg || '');
-                                  toast.success('Link berhasil disalin ke papan klip');
+                                  navigator.clipboard.writeText(
+                                    transaction.paymentImg || ""
+                                  );
+                                  toast.success(
+                                    "Link berhasil disalin ke papan klip"
+                                  );
                                 }}
                               >
                                 <Link className="w-4 h-4 mr-2" />
@@ -647,7 +722,9 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
                         </DialogContent>
                       </Dialog>
                     ) : (
-                      <span className="text-muted-foreground text-xs text-center">N/A</span>
+                      <span className="text-muted-foreground text-xs text-center">
+                        N/A
+                      </span>
                     )}
                   </TableCell>
 
@@ -703,6 +780,79 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
           />
         </div>
       )}
+
+      {/* Single Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Konfirmasi Hapus</DialogTitle>
+            <DialogDescription>
+              Apakah Anda yakin ingin menghapus transaksi ini? Tindakan ini
+              tidak dapat dibatalkan.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Batal
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Menghapus...
+                </>
+              ) : (
+                "Hapus"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <Dialog
+        open={isBulkDeleteDialogOpen}
+        onOpenChange={setIsBulkDeleteDialogOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Konfirmasi Hapus Massal</DialogTitle>
+            <DialogDescription>
+              Apakah Anda yakin ingin menghapus {selectedRows.length} transaksi
+              yang dipilih? Tindakan ini tidak dapat dibatalkan.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsBulkDeleteDialogOpen(false)}
+            >
+              Batal
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmBulkDelete}
+              disabled={bulkDeleteMutation.isPending}
+            >
+              {bulkDeleteMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Menghapus...
+                </>
+              ) : (
+                "Hapus"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

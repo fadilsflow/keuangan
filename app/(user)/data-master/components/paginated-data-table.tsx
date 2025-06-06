@@ -111,7 +111,7 @@ export function PaginatedDataTable<T extends { id: string }>({
                         ? column.cell(item)
                         : typeof column.key === "function"
                         ? column.key(item)
-                        : renderEmptyValue((item as any)[column.key]) } 
+                        : renderEmptyValue((item as any)[column.key])}
                     </TableCell>
                   ))}
                 </TableRow>

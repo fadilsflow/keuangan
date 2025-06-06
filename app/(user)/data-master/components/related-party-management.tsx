@@ -3,18 +3,45 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Search, Loader2 } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Search,
+  Loader2,
+  MoreHorizontal,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RelatedPartySchema } from "@/lib/validations/related-party";
 import { z } from "zod";
-
-
+import useDebouncedSearch from "@/app/hooks/use-debounced-search";
 
 import { PaginatedDataTable } from "./paginated-data-table";
 
@@ -38,20 +65,25 @@ interface RelatedPartyManagementProps {
 
 // Function to fetch related parties
 async function fetchRelatedParties(
-  search = "", 
+  search = "",
   type: "income" | "expense" = "expense",
   page = 1,
   pageSize = 10
-): Promise<{ data: RelatedParty[], meta: { totalItems: number, totalPages: number } }> {
+): Promise<{
+  data: RelatedParty[];
+  meta: { totalItems: number; totalPages: number };
+}> {
   const searchParams = new URLSearchParams();
   if (search) {
-    searchParams.append('search', search);
+    searchParams.append("search", search);
   }
-  searchParams.append('type', type);
-  searchParams.append('page', page.toString());
-  searchParams.append('pageSize', pageSize.toString());
-  
-  const response = await fetch(`/api/related-parties?${searchParams.toString()}`);
+  searchParams.append("type", type);
+  searchParams.append("page", page.toString());
+  searchParams.append("pageSize", pageSize.toString());
+
+  const response = await fetch(
+    `/api/related-parties?${searchParams.toString()}`
+  );
   if (!response.ok) {
     throw new Error("Failed to fetch related parties");
   }
@@ -59,7 +91,9 @@ async function fetchRelatedParties(
 }
 
 // Function to create a related party
-async function createRelatedParty(data: z.infer<typeof RelatedPartySchema>): Promise<RelatedParty> {
+async function createRelatedParty(
+  data: z.infer<typeof RelatedPartySchema>
+): Promise<RelatedParty> {
   const response = await fetch("/api/related-parties", {
     method: "POST",
     headers: {
@@ -67,17 +101,20 @@ async function createRelatedParty(data: z.infer<typeof RelatedPartySchema>): Pro
     },
     body: JSON.stringify(data),
   });
-  
+
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.error || "Failed to create related party");
   }
-  
+
   return response.json();
 }
 
 // Function to update a related party
-async function updateRelatedParty(id: string, data: z.infer<typeof RelatedPartySchema>): Promise<RelatedParty> {
+async function updateRelatedParty(
+  id: string,
+  data: z.infer<typeof RelatedPartySchema>
+): Promise<RelatedParty> {
   const response = await fetch(`/api/related-parties/${id}`, {
     method: "PUT",
     headers: {
@@ -85,88 +122,108 @@ async function updateRelatedParty(id: string, data: z.infer<typeof RelatedPartyS
     },
     body: JSON.stringify(data),
   });
-  
+
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.error || "Failed to update related party");
   }
-  
+
   return response.json();
 }
 
 // Function to delete a related party
-async function deleteRelatedParty(id: string): Promise<{message: string}> {
+async function deleteRelatedParty(id: string): Promise<{ message: string }> {
   const response = await fetch(`/api/related-parties/${id}`, {
     method: "DELETE",
   });
-  
+
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.error || "Failed to delete related party");
   }
-  
+
   return response.json();
 }
 
-export function RelatedPartyManagement({ transactionType }: RelatedPartyManagementProps) {
-  const [search, setSearch] = useState("");
+export function RelatedPartyManagement({
+  transactionType,
+}: RelatedPartyManagementProps) {
+  const { search, debouncedSearch, setSearch } = useDebouncedSearch();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedRelatedParty, setSelectedRelatedParty] = useState<RelatedParty | null>(null);
+  const [selectedRelatedParty, setSelectedRelatedParty] =
+    useState<RelatedParty | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
-  
+
   const queryClient = useQueryClient();
-  
+
   // Query to fetch related parties
   const { data, isLoading } = useQuery({
-    queryKey: ['relatedParties', search, transactionType, currentPage, pageSize],
-    queryFn: () => fetchRelatedParties(search, transactionType, currentPage, pageSize)
+    queryKey: [
+      "relatedParties",
+      debouncedSearch,
+      transactionType,
+      currentPage,
+      pageSize,
+    ],
+    queryFn: () =>
+      fetchRelatedParties(
+        debouncedSearch,
+        transactionType,
+        currentPage,
+        pageSize
+      ),
   });
-  
+
   const relatedParties = data?.data || [];
   const totalItems = data?.meta?.totalItems || 0;
   const totalPages = data?.meta?.totalPages || 1;
-  
+
   // Mutation to create a related party
   const createMutation = useMutation({
     mutationFn: createRelatedParty,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['relatedParties'] });
+      queryClient.invalidateQueries({ queryKey: ["relatedParties"] });
       toast.success("Pihak terkait berhasil ditambahkan");
       setIsAddDialogOpen(false);
     },
     onError: (error) => {
       toast.error(`Gagal menambahkan pihak terkait: ${error.message}`);
-    }
+    },
   });
-  
+
   // Mutation to update a related party
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: z.infer<typeof RelatedPartySchema> }) => 
-      updateRelatedParty(id, data),
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: z.infer<typeof RelatedPartySchema>;
+    }) => updateRelatedParty(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['relatedParties'] });
+      queryClient.invalidateQueries({ queryKey: ["relatedParties"] });
       toast.success("Pihak terkait berhasil diperbarui");
       setIsEditDialogOpen(false);
     },
     onError: (error) => {
       toast.error(`Gagal memperbarui pihak terkait: ${error.message}`);
-    }
+    },
   });
-  
+
   // Mutation to delete a related party
   const deleteMutation = useMutation({
     mutationFn: deleteRelatedParty,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['relatedParties'] });
+      queryClient.invalidateQueries({ queryKey: ["relatedParties"] });
       toast.success("Pihak terkait berhasil dihapus");
       setIsDeleteDialogOpen(false);
     },
     onError: (error) => {
       toast.error(`Gagal menghapus pihak terkait: ${error.message}`);
-    }
+    },
   });
 
   // Form for adding a related party
@@ -177,7 +234,7 @@ export function RelatedPartyManagement({ transactionType }: RelatedPartyManageme
       description: "",
       contactInfo: "",
       type: transactionType,
-    }
+    },
   });
 
   // Form for editing a related party
@@ -188,7 +245,7 @@ export function RelatedPartyManagement({ transactionType }: RelatedPartyManageme
       description: "",
       contactInfo: "",
       type: transactionType,
-    }
+    },
   });
 
   // Update form default values when type changes
@@ -240,7 +297,7 @@ export function RelatedPartyManagement({ transactionType }: RelatedPartyManageme
   // Reset pagination when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, transactionType]);
+  }, [debouncedSearch, transactionType]);
 
   return (
     <div className="space-y-4">
@@ -269,9 +326,12 @@ export function RelatedPartyManagement({ transactionType }: RelatedPartyManageme
                 Buat pihak terkait baru untuk transaksi Anda.
               </DialogDescription>
             </DialogHeader>
-            
+
             <Form {...addForm}>
-              <form onSubmit={addForm.handleSubmit(onAddSubmit)} className="space-y-4">
+              <form
+                onSubmit={addForm.handleSubmit(onAddSubmit)}
+                className="space-y-4"
+              >
                 <FormField
                   control={addForm.control}
                   name="name"
@@ -279,13 +339,16 @@ export function RelatedPartyManagement({ transactionType }: RelatedPartyManageme
                     <FormItem>
                       <FormLabel>Nama Pihak Terkait</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="Masukkan nama pihak terkait" />
+                        <Input
+                          {...field}
+                          placeholder="Masukkan nama pihak terkait"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={addForm.control}
                   name="contactInfo"
@@ -293,13 +356,16 @@ export function RelatedPartyManagement({ transactionType }: RelatedPartyManageme
                     <FormItem>
                       <FormLabel>Informasi Kontak (Opsional)</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="Masukkan informasi kontak" />
+                        <Input
+                          {...field}
+                          placeholder="Masukkan informasi kontak"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={addForm.control}
                   name="description"
@@ -307,13 +373,16 @@ export function RelatedPartyManagement({ transactionType }: RelatedPartyManageme
                     <FormItem>
                       <FormLabel>Deskripsi (Opsional)</FormLabel>
                       <FormControl>
-                        <Textarea {...field} placeholder="Masukkan deskripsi pihak terkait" />
+                        <Textarea
+                          {...field}
+                          placeholder="Masukkan deskripsi pihak terkait"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={addForm.control}
                   name="type"
@@ -321,9 +390,9 @@ export function RelatedPartyManagement({ transactionType }: RelatedPartyManageme
                     <FormItem>
                       <FormLabel>Tipe</FormLabel>
                       <FormControl>
-                        <select 
+                        <select
                           className="w-full p-2 rounded-md border border-input"
-                          {...field}  
+                          {...field}
                         >
                           <option value="expense">Pengeluaran</option>
                           <option value="income">Pemasukan</option>
@@ -333,18 +402,17 @@ export function RelatedPartyManagement({ transactionType }: RelatedPartyManageme
                     </FormItem>
                   )}
                 />
-                
+
                 <DialogFooter>
-                  <Button 
-                    type="submit" 
-                    disabled={createMutation.isPending}
-                  >
+                  <Button type="submit" disabled={createMutation.isPending}>
                     {createMutation.isPending ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Menyimpan...
                       </>
-                    ) : "Simpan"}
+                    ) : (
+                      "Simpan"
+                    )}
                   </Button>
                 </DialogFooter>
               </form>
@@ -361,36 +429,44 @@ export function RelatedPartyManagement({ transactionType }: RelatedPartyManageme
         onPageChange={handlePageChange}
         pageSize={pageSize}
         isLoading={isLoading}
-        emptyMessage={`Tidak ada pihak terkait ${transactionType === "income" ? "pemasukan" : "pengeluaran"}`}
+        emptyMessage={`Tidak ada pihak terkait ${
+          transactionType === "income" ? "pemasukan" : "pengeluaran"
+        }`}
         columns={[
           { header: "Nama", key: "name" },
-          { header: "Tipe", key: (party) => (
-            <span>
-              {party.type === "income" ? "Pemasukan" : "Pengeluaran"}
-            </span>
-          )},
+          {
+            header: "Tipe",
+            key: (party) => (
+              <span>
+                {party.type === "income" ? "Pemasukan" : "Pengeluaran"}
+              </span>
+            ),
+          },
           { header: "Alamat", key: "address" },
           { header: "Telepon", key: "phone" },
           { header: "Email", key: "email" },
-          { header: "Aksi", key: (party) => (
-            <div className="flex gap-2">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => handleEditClick(party)}
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => handleDeleteClick(party)}
-                className="text-red-500"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
+          {
+            header: "Aksi",
+            key: (party) => (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => handleEditClick(party)}>
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDeleteClick(party)}>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Hapus
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ),
+          },
         ]}
       />
 
@@ -403,9 +479,12 @@ export function RelatedPartyManagement({ transactionType }: RelatedPartyManageme
               Perbarui informasi pihak terkait.
             </DialogDescription>
           </DialogHeader>
-          
+
           <Form {...editForm}>
-            <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
+            <form
+              onSubmit={editForm.handleSubmit(onEditSubmit)}
+              className="space-y-4"
+            >
               <FormField
                 control={editForm.control}
                 name="name"
@@ -413,13 +492,16 @@ export function RelatedPartyManagement({ transactionType }: RelatedPartyManageme
                   <FormItem>
                     <FormLabel>Nama Pihak Terkait</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Masukkan nama pihak terkait" />
+                      <Input
+                        {...field}
+                        placeholder="Masukkan nama pihak terkait"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={editForm.control}
                 name="contactInfo"
@@ -427,13 +509,16 @@ export function RelatedPartyManagement({ transactionType }: RelatedPartyManageme
                   <FormItem>
                     <FormLabel>Informasi Kontak (Opsional)</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Masukkan informasi kontak" />
+                      <Input
+                        {...field}
+                        placeholder="Masukkan informasi kontak"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={editForm.control}
                 name="description"
@@ -441,13 +526,16 @@ export function RelatedPartyManagement({ transactionType }: RelatedPartyManageme
                   <FormItem>
                     <FormLabel>Deskripsi (Opsional)</FormLabel>
                     <FormControl>
-                      <Textarea {...field} placeholder="Masukkan deskripsi pihak terkait" />
+                      <Textarea
+                        {...field}
+                        placeholder="Masukkan deskripsi pihak terkait"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={editForm.control}
                 name="type"
@@ -455,7 +543,7 @@ export function RelatedPartyManagement({ transactionType }: RelatedPartyManageme
                   <FormItem>
                     <FormLabel>Tipe</FormLabel>
                     <FormControl>
-                      <select 
+                      <select
                         className="w-full p-2 rounded-md border border-input"
                         {...field}
                       >
@@ -467,18 +555,17 @@ export function RelatedPartyManagement({ transactionType }: RelatedPartyManageme
                   </FormItem>
                 )}
               />
-              
+
               <DialogFooter>
-                <Button 
-                  type="submit" 
-                  disabled={updateMutation.isPending}
-                >
+                <Button type="submit" disabled={updateMutation.isPending}>
                   {updateMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Memperbarui...
                     </>
-                  ) : "Perbarui"}
+                  ) : (
+                    "Perbarui"
+                  )}
                 </Button>
               </DialogFooter>
             </form>
@@ -492,19 +579,20 @@ export function RelatedPartyManagement({ transactionType }: RelatedPartyManageme
           <DialogHeader>
             <DialogTitle>Konfirmasi Penghapusan</DialogTitle>
             <DialogDescription>
-              Apakah Anda yakin ingin menghapus pihak terkait ini? Tindakan ini tidak dapat dibatalkan.
+              Apakah Anda yakin ingin menghapus pihak terkait ini? Tindakan ini
+              tidak dapat dibatalkan.
             </DialogDescription>
           </DialogHeader>
-          
+
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setIsDeleteDialogOpen(false)}
             >
               Batal
             </Button>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={handleConfirmDelete}
               disabled={deleteMutation.isPending}
             >
@@ -513,11 +601,15 @@ export function RelatedPartyManagement({ transactionType }: RelatedPartyManageme
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Menghapus...
                 </>
-              ) : "Hapus"}
+              ) : (
+                "Hapus"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
-} 
+}
+
+export default RelatedPartyManagement;

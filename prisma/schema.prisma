@@ -29,6 +29,8 @@ model Transaction {
   @@index([organizationId, userId])
 }
 
+
+// item pada setiap transaksi
 model Item {
   id           String @id @default(cuid())
   name         String
@@ -80,6 +82,7 @@ model RelatedParty {
   @@index([userId])
   @@unique([name, organizationId, type])
 }
+
 
 model MasterItem {
   id            String   @id @default(cuid())
