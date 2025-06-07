@@ -70,6 +70,7 @@ async function getOrganizationName(
 export async function GET(request: Request) {
   try {
     const { userId, orgId } = await auth();
+
     if (!userId || !orgId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
@@ -183,7 +184,7 @@ async function generateExcel(
   // Get the organization name using the server-side function
   const { orgId } = await auth();
   const orgName = await getOrganizationName(orgId);
-
+  const orgImage = await getOrganizationImage(orgId);
   // Create a new Excel workbook
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet(
@@ -193,6 +194,11 @@ async function generateExcel(
   // Add organization name
   worksheet.mergeCells("A1:E1");
   const orgCell = worksheet.getCell("A1");
+  orgCell.image = {
+    url: orgImage,
+    width: 100,
+    height: 100,
+  };
   orgCell.value = orgName;
   orgCell.font = { size: 14, bold: true };
   orgCell.alignment = { horizontal: "center" };
@@ -1057,10 +1063,8 @@ async function generatePDF(
     if (transactionType === "all") {
       const nameKey = reportType === "category" ? "category" : "relatedParty";
       const titleColumn =
-        reportType === "category"
-          ? "Kategori"
-          : "Pihak Terkait";
-      
+        reportType === "category" ? "Kategori" : "Pihak Terkait";
+
       // Filter data based on transaction type
       const incomeData = reportData.filter(
         (item: any) => item.type === "income"
