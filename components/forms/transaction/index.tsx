@@ -225,9 +225,7 @@ export function TransactionForm({
   const router = useRouter();
 
   if (isLoading) {
-    return (
-      <Skeleton className="h-screen w-full border" />
-    );
+    return <Skeleton className="h-screen w-full border" />;
   }
 
   return (
@@ -238,12 +236,14 @@ export function TransactionForm({
             form={form}
             onTypeChange={(type) => {
               setTransactionType(type);
-              form.setValue("category", "");
-              form.setValue("relatedParty", "");
-              setItems([
-                { name: "", itemPrice: 0, quantity: 1, totalPrice: 0 },
-              ]);
-              form.setValue("amountTotal", 0);
+              if (mode === "create") {
+                form.setValue("category", "");
+                form.setValue("relatedParty", "");
+                setItems([
+                  { name: "", itemPrice: 0, quantity: 1, totalPrice: 0 },
+                ]);
+                form.setValue("amountTotal", 0);
+              }
             }}
           />
 
@@ -259,7 +259,7 @@ export function TransactionForm({
             setItems={setItems}
           />
 
-          <div className="flex justify-end pt-4 border-t gap-2  ">
+          <div className="flex justify-end gap-2  ">
             <Button
               type="button"
               variant="outline"
