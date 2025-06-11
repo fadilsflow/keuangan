@@ -83,7 +83,7 @@ export function TransactionItems({
     ],
     queryFn: async () => {
       const apiType = transactionType === "pemasukan" ? "income" : "expense";
-      const response = await fetch(`/api/master-items?type=${apiType}`);
+      const response = await fetch(`/api/master-items/all?type=${apiType}`);
       if (!response.ok) throw new Error("Failed to fetch master items");
       const responseData = await response.json();
       return responseData.data || responseData || [];
@@ -317,7 +317,11 @@ export function TransactionItems({
                   </DialogHeader>
                   <Form {...masterItemForm}>
                     <form
-                      onSubmit={handleCreateMasterItem}
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleCreateMasterItem(e);
+                      }}
                       className="space-y-6"
                     >
                       <div className="space-y-4">

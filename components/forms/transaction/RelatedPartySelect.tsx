@@ -75,7 +75,7 @@ export function RelatedPartySelect({
     ],
     queryFn: async () => {
       const apiType = transactionType === "pemasukan" ? "income" : "expense";
-      const response = await fetch(`/api/related-parties?type=${apiType}`);
+      const response = await fetch(`/api/related-parties/all?type=${apiType}`);
       if (!response.ok) throw new Error("Failed to fetch related parties");
       const responseData = await response.json();
       // Return an empty array as default if data is undefined
@@ -236,7 +236,11 @@ export function RelatedPartySelect({
               </DialogHeader>
               <Form {...relatedPartyForm}>
                 <form
-                  onSubmit={handleCreateRelatedParty}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleCreateRelatedParty(e);
+                  }}
                   onClick={(e) => e.stopPropagation()}
                   className="space-y-6"
                 >

@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { UseFormReturn } from "react-hook-form";
 import { useState } from "react";
@@ -7,7 +7,14 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { CategorySchema } from "@/lib/validations/category";
 import { CreateTransactionDTO } from "@/lib/validations/transaction";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -52,20 +59,24 @@ export function CategorySelect({ form, transactionType }: CategorySelectProps) {
       name: "",
       description: "",
       type: transactionType === "pemasukan" ? "income" : "expense",
-    }
+    },
   });
 
   // Fetch categories
   const { data, isLoading } = useQuery({
-    queryKey: ['categories', "", transactionType === "pemasukan" ? "income" : "expense"],
+    queryKey: [
+      "categories",
+      "",
+      transactionType === "pemasukan" ? "income" : "expense",
+    ],
     queryFn: async () => {
       const apiType = transactionType === "pemasukan" ? "income" : "expense";
-      const response = await fetch(`/api/categories?type=${apiType}`);
+      const response = await fetch(`/api/categories/all?type=${apiType}`);
       if (!response.ok) throw new Error("Failed to fetch categories");
       const responseData = await response.json();
       // Return an empty array as default if data is undefined
       return responseData.data || responseData || [];
-    }
+    },
   });
 
   // Access categories safely
@@ -86,7 +97,7 @@ export function CategorySelect({ form, transactionType }: CategorySelectProps) {
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
       toast.success("Kategori berhasil ditambahkan");
       form.setValue("category", data.name);
       setDialogOpen(false);
@@ -98,13 +109,13 @@ export function CategorySelect({ form, transactionType }: CategorySelectProps) {
     },
     onError: (error: Error) => {
       toast.error(`Gagal menambahkan kategori: ${error.message}`);
-    }
+    },
   });
 
   const handleCreateCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     try {
       await createCategory.mutateAsync(categoryForm.getValues());
     } catch (error) {
@@ -159,7 +170,10 @@ export function CategorySelect({ form, transactionType }: CategorySelectProps) {
                         categoryForm.reset({
                           name: "",
                           description: "",
-                          type: transactionType === "pemasukan" ? "income" : "expense",
+                          type:
+                            transactionType === "pemasukan"
+                              ? "income"
+                              : "expense",
                         });
                         setDialogOpen(true);
                       }}
@@ -171,7 +185,10 @@ export function CategorySelect({ form, transactionType }: CategorySelectProps) {
                 </div>
               </SelectContent>
             </Select>
-            <DialogContent className="sm:max-w-[425px]" onPointerDownOutside={(e) => e.preventDefault()}>
+            <DialogContent
+              className="sm:max-w-[425px]"
+              onPointerDownOutside={(e) => e.preventDefault()}
+            >
               <DialogHeader>
                 <DialogTitle>Tambah Kategori Baru</DialogTitle>
                 <DialogDescription>
@@ -179,9 +196,13 @@ export function CategorySelect({ form, transactionType }: CategorySelectProps) {
                 </DialogDescription>
               </DialogHeader>
               <Form {...categoryForm}>
-                <form 
-                  onSubmit={handleCreateCategory}
-                  onClick={(e) => e.stopPropagation()} 
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleCreateCategory(e);
+                  }}
+                  onClick={(e) => e.stopPropagation()}
                   className="space-y-6"
                 >
                   <div className="space-y-4">
@@ -205,10 +226,10 @@ export function CategorySelect({ form, transactionType }: CategorySelectProps) {
                         <FormItem>
                           <FormLabel>Deskripsi (Opsional)</FormLabel>
                           <FormControl>
-                            <Textarea 
-                              placeholder="Deskripsi kategori" 
-                              className="min-h-[100px]" 
-                              {...field} 
+                            <Textarea
+                              placeholder="Deskripsi kategori"
+                              className="min-h-[100px]"
+                              {...field}
                             />
                           </FormControl>
                           <FormMessage />
@@ -243,4 +264,4 @@ export function CategorySelect({ form, transactionType }: CategorySelectProps) {
       )}
     />
   );
-} 
+}
