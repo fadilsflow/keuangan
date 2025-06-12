@@ -38,18 +38,18 @@ export default function LandingPage() {
               <SignedOut>
                 <Button variant="link" asChild>
                   <Link href="/sign-in" className="hover:no-underline">
-                    Masuk
+                    Sign In
                   </Link>
                 </Button>
                 <Button asChild>
                   <Link href="/sign-up" className="rounded-full">
-                    Mulai Gratis
+                    Sign Up
                   </Link>
                 </Button>
               </SignedOut>
               <SignedIn>
                 <Button size="sm" className="rounded-full" asChild>
-                  <Link href="/dashboard">Dashboard</Link>
+                  <Link href="/dashboard">Masuk</Link>
                 </Button>
                 <ResponsiveUserButton />
               </SignedIn>
