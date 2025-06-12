@@ -24,18 +24,25 @@ import {
 } from "lucide-react";
 
 const data = {
+  // susunan fitur menjadi : dashboard, data master, buat transaksi, transaksi, laporan
   navMain: [
-    {
-      title: "Buat Transaksi",
-      url: "/transactions/new",
-      pageName: "Buat Transaksi",
-      icon: PlusCircle,
-    },
     {
       title: "Dashboard",
       url: "/dashboard",
       pageName: "Dashboard",
       icon: Home,
+    },
+    {
+      title: "Data Master",
+      url: "/data-master",
+      pageName: "Data Master",
+      icon: Folder,
+    },
+    {
+      title: "Buat Transaksi",
+      url: "/transactions/new",
+      pageName: "Buat Transaksi",
+      icon: PlusCircle,
     },
     {
       title: "Transaksi",
@@ -49,12 +56,6 @@ const data = {
       url: "/report",
       pageName: "Laporan",
       icon: BarChart3,
-    },
-    {
-      title: "Master Data",
-      url: "/data-master",
-      pageName: "Master Data",
-      icon: Folder,
     },
   ],
 };
