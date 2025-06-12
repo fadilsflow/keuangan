@@ -68,7 +68,8 @@ export function TransactionForm({
   const [isInitialized, setIsInitialized] = useState(false);
   const [transactionType, setTransactionType] = useState<
     "pemasukan" | "pengeluaran"
-  >(defaultType);
+  >(defaultValues?.type || defaultType);
+
   const [items, setItems] = useState<TransactionItem[]>(() => {
     if (defaultValues?.items && defaultValues.items.length > 0) {
       return defaultValues.items.map((item: TransactionItem) => ({
@@ -101,41 +102,51 @@ export function TransactionForm({
     },
   });
 
-  // Reset form when defaultValues change (for edit mode mainly)
+  // Initialize form values immediately when defaultValues are available
   useEffect(() => {
     if (defaultValues && !isInitialized) {
       const formattedItems = defaultValues.items?.map(
-        (item: TransactionItem) => {
-          return {
-            id: item.id || undefined,
-            name: item.name || "",
-            itemPrice: Number(item.itemPrice) || 0,
-            quantity: Number(item.quantity) || 1,
-            totalPrice: Number(item.totalPrice) || 0,
-            transactionId: item.transactionId || undefined,
-            masterItemId: item.masterItemId || undefined,
-          };
-        }
+        (item: TransactionItem) => ({
+          id: item.id || undefined,
+          name: item.name || "",
+          itemPrice: Number(item.itemPrice) || 0,
+          quantity: Number(item.quantity) || 1,
+          totalPrice: Number(item.totalPrice) || 0,
+          transactionId: item.transactionId || undefined,
+          masterItemId: item.masterItemId || undefined,
+        })
       ) || [{ name: "", itemPrice: 0, quantity: 1, totalPrice: 0 }];
 
-      const resetValues = {
-        date: defaultValues?.date
-          ? formatDateForInput(new Date(defaultValues.date))
-          : formatDateForInput(new Date()),
-        description: defaultValues?.description || "",
-        category: defaultValues?.category || "",
-        relatedParty: defaultValues?.relatedParty || "",
-        amountTotal: defaultValues?.amountTotal || 0,
-        type: defaultValues?.type || defaultType,
-        paymentImg: defaultValues?.paymentImg || "",
-        items: formattedItems,
-        ...(defaultValues?.id && { id: defaultValues.id }),
-      };
+      // Set all form values at once
+      form.reset(
+        {
+          date: defaultValues?.date
+            ? formatDateForInput(new Date(defaultValues.date))
+            : formatDateForInput(new Date()),
+          description: defaultValues?.description || "",
+          category: defaultValues?.category || "",
+          relatedParty: defaultValues?.relatedParty || "",
+          amountTotal: defaultValues?.amountTotal || 0,
+          type: defaultValues?.type || defaultType,
+          paymentImg: defaultValues?.paymentImg || "",
+          items: formattedItems,
+          ...(defaultValues?.id && { id: defaultValues.id }),
+        },
+        { keepDefaultValues: true }
+      );
 
-      form.reset(resetValues);
-      setTransactionType(resetValues.type as "pemasukan" | "pengeluaran");
+      // Update state
+      setTransactionType(defaultValues?.type || defaultType);
       setItems(formattedItems);
       setIsInitialized(true);
+
+      // Explicitly set category and relatedParty values
+      if (defaultValues?.category) {
+        form.setValue("category", defaultValues.category);
+      }
+      if (defaultValues?.relatedParty) {
+        form.setValue("relatedParty", defaultValues.relatedParty);
+      }
     }
   }, [defaultValues, form, defaultType, isInitialized]);
 
@@ -259,7 +270,7 @@ export function TransactionForm({
             setItems={setItems}
           />
 
-          <div className="flex justify-end gap-2  ">
+          <div className="flex justify-end gap-2">
             <Button
               type="button"
               variant="outline"
