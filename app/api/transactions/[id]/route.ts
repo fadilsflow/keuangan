@@ -34,7 +34,7 @@ export async function GET(
 
     const transaction = (await prisma.transaction.findUnique({
       where: {
-        id: id,
+        id: parseInt(id),
       },
       include: {
         items: true,
@@ -91,7 +91,7 @@ export async function PUT(
 
     // Verify the transaction exists and belongs to the user's organization
     const existingTransaction = (await prisma.transaction.findUnique({
-      where: { id },
+      where: { id: parseInt(id) },
     })) as unknown as ExtendedTransaction;
 
     if (!existingTransaction) {
@@ -117,7 +117,7 @@ export async function PUT(
     // Delete existing items
     await prisma.item.deleteMany({
       where: {
-        transactionId: id,
+        transactionId: parseInt(id),
       },
     });
 
@@ -144,7 +144,7 @@ export async function PUT(
 
     const transaction = await prisma.transaction.update({
       where: {
-        id: id,
+        id: parseInt(id),
       },
       data: updateData,
       include: {
@@ -187,7 +187,7 @@ export async function DELETE(
 
     // Verify the transaction exists and belongs to the user's organization
     const existingTransaction = (await prisma.transaction.findUnique({
-      where: { id },
+      where: { id: parseInt(id) },
     })) as unknown as ExtendedTransaction;
 
     if (!existingTransaction) {
@@ -210,12 +210,12 @@ export async function DELETE(
 
     // Delete related items first
     await prisma.item.deleteMany({
-      where: { transactionId: id },
+      where: { transactionId: parseInt(id) },
     });
 
     // Delete the transaction
     await prisma.transaction.delete({
-      where: { id },
+      where: { id: parseInt(id) },
     });
 
     return NextResponse.json({ success: true });

@@ -6,6 +6,43 @@ import { id } from "date-fns/locale";
 import jsPDF from "jspdf";
 import { formatRupiah } from "@/lib/utils";
 
+interface OrgMetadata {
+  name?: string;
+}
+
+interface SessionClaims {
+  org_metadata?: OrgMetadata;
+  org_name?: string;
+  org_slug?: string;
+}
+
+// Helper function to get organization name
+async function getOrganizationName(): Promise<string> {
+  const { sessionClaims } = await auth();
+  const claims = sessionClaims as SessionClaims;
+
+  // Check if we have org_metadata with name
+  if (claims?.org_metadata?.name) {
+    return claims.org_metadata.name;
+  }
+
+  // Fallback to org_name if available
+  if (claims?.org_name) {
+    return claims.org_name;
+  }
+
+  // Fallback to org_slug if available
+  if (claims?.org_slug) {
+    // Convert slug to display name (replace hyphens with spaces and capitalize each word)
+    return String(claims.org_slug)
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  }
+
+  return "Organization";
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -17,10 +54,13 @@ export async function GET(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    // Get organization name
+    const orgName = await getOrganizationName();
+
     // Fetch transaction with items
     const transaction = await prisma.transaction.findUnique({
       where: {
-        id: transactionId,
+        id: parseInt(transactionId),
         organizationId: orgId,
       },
       include: {
@@ -30,34 +70,60 @@ export async function GET(
 
     if (!transaction) {
       return new NextResponse("Transaction not found", { status: 404 });
-      }
-
+    }
+    function capitalize(str: string) {
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
     // Generate PDF
     const doc = new jsPDF();
-    let y = 20;
+    let y = 30;
+    const margin = 20;
+    const pageWidth = doc.internal.pageSize.width;
 
-    // Add header
-    doc.setFontSize(20);
-    doc.text(transaction.type === "pemasukan" ? "INVOICE" : "KUITANSI", doc.internal.pageSize.width / 2, y, { align: "center" });
+    // Add header with organization name on left and INVOICE/KUITANSI on right
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+
+    // Organization name on left
+    doc.text(capitalize(orgName), margin, y);
+
+    // INVOICE/KUITANSI on right
+    const headerText = "INVOICE";
+    doc.text(headerText, pageWidth - margin, y, { align: "right" });
+
+    // Add full-width line below header
+    y += 5;
+    doc.setLineWidth(0.5);
+    doc.line(margin, y, pageWidth - margin, y);
     y += 20;
 
     // Add transaction details
     doc.setFontSize(12);
-    doc.text(`No: ${transaction.id}`, 20, y);
-    doc.text(`Tanggal: ${format(new Date(transaction.date), "d MMMM yyyy", { locale: id })}`, doc.internal.pageSize.width - 20, y, { align: "right" });
+    doc.setFont("helvetica", "normal");
+    doc.text(`No: INV-${transaction.id}`, margin, y);
     y += 10;
-    doc.text(`Deskripsi: ${transaction.description}`, 20, y);
+    doc.text(`Deskripsi: ${transaction.description}`, margin, y);
     y += 10;
-    doc.text(`Pihak Terkait: ${transaction.relatedParty}`, 20, y);
+    //make it capitalize
+    doc.text(
+      `${
+        transaction.type === "pemasukan" ? "Konsumen" : "Supplier"
+      } ${capitalize(transaction.relatedParty)}`,
+      margin,
+      y
+    );
     y += 10;
-    doc.text(`Kategori: ${transaction.category}`, 20, y);
+    doc.text(`Kategori: ${capitalize(transaction.category)}`, margin, y);
     y += 20;
 
     // Add items table
     const headers = ["Item", "Quantity", "Harga", "Total"];
-    const margin = 20;
-    const pageWidth = doc.internal.pageSize.width - 2 * margin;
-    const colWidths = [pageWidth * 0.4, pageWidth * 0.2, pageWidth * 0.2, pageWidth * 0.2];
+    const colWidths = [
+      pageWidth * 0.4,
+      pageWidth * 0.15,
+      pageWidth * 0.15,
+      pageWidth * 0.15,
+    ];
 
     // Draw table headers
     doc.setFontSize(10);
@@ -94,14 +160,39 @@ export async function GET(
       y += 10;
     });
 
-    // Add total
+    // Add total with better spacing
     y += 10;
     doc.setFont("helvetica", "bold");
-    doc.text("Total:", doc.internal.pageSize.width - margin - colWidths[3], y);
-    doc.text(formatRupiah(transaction.amountTotal), doc.internal.pageSize.width - margin, y, { align: "right" });
+    const totalLabelX = pageWidth - margin - colWidths[3] - 20; // Added more space between label and value
+    const totalValueX = pageWidth - margin;
 
-    
-  
+    doc.text("Total:", totalLabelX, y);
+    doc.text(formatRupiah(transaction.amountTotal), totalValueX, y, {
+      align: "right",
+    });
+
+    // Add signature section
+    y += 40;
+    const signatureWidth = 60;
+    const signatureX = pageWidth - margin - signatureWidth;
+    const currentDate = format(new Date(), "d MMMM yyyy", { locale: id });
+
+    doc.setFont("helvetica", "normal");
+    doc.text(`${currentDate}`, signatureX, y);
+    y += 10;
+    doc.text("Hormat Kami,", signatureX, y);
+    y += 30;
+    doc.line(signatureX, y, signatureX + signatureWidth, y); // Signature line
+    y += 5;
+    doc.text(
+      capitalize(transaction.relatedParty),
+      signatureX + signatureWidth / 2,
+      y,
+      {
+        align: "center",
+      }
+    );
+
     // Return the PDF
     const pdfBuffer = doc.output("arraybuffer");
     return new Response(pdfBuffer, {
@@ -114,4 +205,4 @@ export async function GET(
     console.error("Failed to generate invoice:", error);
     return new NextResponse("Internal Server Error", { status: 500 });
   }
-} 
+}

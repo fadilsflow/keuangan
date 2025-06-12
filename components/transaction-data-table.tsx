@@ -24,7 +24,6 @@ import {
   TrendingDown,
   Pencil,
   FileText,
-  Printer,
   Eye,
   Loader2,
 } from "lucide-react";
@@ -275,126 +274,6 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     setSelectedRows([]);
-  };
-
-  const handlePrintDetail = (transaction: TransactionItem) => {
-    // Create a new window for printing
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-
-    // Generate the HTML content
-    const content = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Detail Transaksi</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            .header { text-align: center; margin-bottom: 30px; }
-            .detail-row { margin: 10px 0; }
-            .label { font-weight: bold; }
-            .items-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-            .items-table th, .items-table td { 
-              border: 1px solid #ddd; 
-              padding: 8px; 
-              text-align: left; 
-            }
-            .items-table th { background-color: #f5f5f5; }
-            .total { text-align: right; margin-top: 20px; font-weight: bold; }
-            @media print {
-              .no-print { display: none; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>${
-              transaction.type === "pemasukan" ? "INVOICE" : "KUITANSI"
-            }</h1>
-            <p>No: ${transaction.id}</p>
-          </div>
-          
-          <div class="detail-row">
-            <span class="label">Tanggal:</span>
-            <span>${format(new Date(transaction.date), "d MMMM yyyy", {
-              locale: id,
-            })}</span>
-          </div>
-          
-           <div class="detail-row">
-            <span class="label">Jenis Transaksi:</span>
-            <span>${
-              transaction.type === "pemasukan" ? "Pemasukan" : "Pengeluaran"
-            }</span>
-          </div>
-          
-          <div class="detail-row">
-            <span class="label">${
-              transaction.type === "pemasukan" ? "Konsumen" : "Supplier"
-            }:</span>
-            <span>${transaction.relatedParty}</span>
-          </div>
-
-          <div class="detail-row">
-            <span class="label">Kategori:</span>
-            <span>${transaction.category}</span>
-          </div>
-          
-          <div class="detail-row">
-            <span class="label">Deskripsi:</span>
-            <span>${transaction.description}</span>
-          </div>
-          
-          <table class="items-table">
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th>Jumlah</th>
-                <th>Harga</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${transaction.items
-                .map(
-                  (item: Item) => `
-                <tr>
-                  <td>${item.name}</td>
-                  <td>${item.quantity}</td>
-                  <td>${formatRupiah(item.itemPrice)}</td>
-                  <td>${formatRupiah(item.totalPrice)}</td>
-                </tr>
-              `
-                )
-                .join("")}
-            </tbody>
-          </table>
-          
-          <div class="total">
-            Total: ${formatRupiah(transaction.amountTotal)}
-          </div>
-
-          ${
-            transaction.paymentImg
-              ? `
-            <div style="margin-top: 30px;">
-              <div class="label">Bukti Pembayaran:</div>
-              <img src="${transaction.paymentImg}" style="max-width: 200px; margin-top: 10px;" />
-            </div>
-          `
-              : ""
-          }
-          
-          <button class="no-print" onclick="window.print()" style="margin-top: 20px; padding: 10px;">
-            Print
-          </button>
-        </body>
-      </html>
-    `;
-
-    // Write the content to the new window and print
-    printWindow.document.write(content);
-    printWindow.document.close();
   };
 
   const handleDownloadInvoice = async (id: string): Promise<void> => {
@@ -741,12 +620,6 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
                         >
                           <Pencil className="w-4 h-4 mr-2" />
                           Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handlePrintDetail(transaction)}
-                        >
-                          <Printer className="w-4 h-4 mr-2" />
-                          Print Detail
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => handleDownloadInvoice(transaction.id)}

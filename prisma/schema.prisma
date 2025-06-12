@@ -2,47 +2,51 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// datasource db {
+//   provider  = "postgresql"
+//   url       = env("DATABASE_URL")
+//   directUrl = env("DIRECT_URL")
+// }
+
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model Transaction {
-  id            String   @id @default(cuid())
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  date          DateTime
-  description   String
-  category      String
-  relatedParty  String
-  amountTotal   Float
-  paymentImg    String   @default("")
-  type          String   @default("pengeluaran")
+  id             Int      @id @default(autoincrement())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  date           DateTime
+  description    String
+  category       String
+  relatedParty   String
+  amountTotal    Float
+  paymentImg     String   @default("")
+  type           String   @default("pengeluaran")
   organizationId String
-  userId        String
+  userId         String
 
-  items          Item[]
+  items Item[]
 
   @@index([organizationId])
   @@index([userId])
   @@index([organizationId, userId])
 }
 
-
 // item pada setiap transaksi
 model Item {
-  id           String @id @default(cuid())
-  name         String
-  itemPrice    Float
-  quantity     Int
-  totalPrice   Float // itemPrice * quantity (harus dihitung saat transaksi dibuat)
+  id             String  @id @default(cuid())
+  name           String
+  itemPrice      Float
+  quantity       Int
+  totalPrice     Float // itemPrice * quantity (harus dihitung saat transaksi dibuat)
   organizationId String
-  userId       String
-  masterItemId String?
+  userId         String
+  masterItemId   String?
 
   transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
-  transactionId String
+  transactionId Int
   masterItem    MasterItem? @relation(fields: [masterItemId], references: [id])
 
   @@index([organizationId])
@@ -52,52 +56,51 @@ model Item {
 }
 
 // Master Data Models
-  model Category {
-    id            String   @id @default(cuid())
-    name          String
-    description   String?
-    type          String   @default("expense")
-    createdAt     DateTime @default(now())
-    updatedAt     DateTime @updatedAt
-    organizationId String
-    userId        String
-
-    @@index([organizationId])
-    @@index([userId])
-    @@unique([name, organizationId, type])
-  }
-
-model RelatedParty {
-  id            String   @id @default(cuid())
-  name          String
-  description   String?
-  contactInfo   String?
-  type          String   @default("expense")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+model Category {
+  id             String   @id @default(cuid())
+  name           String
+  description    String?
+  type           String   @default("expense")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
   organizationId String
-  userId        String
+  userId         String
 
+  @@unique([name, organizationId, type])
   @@index([organizationId])
   @@index([userId])
-  @@unique([name, organizationId, type])
 }
 
-
-model MasterItem {
-  id            String   @id @default(cuid())
-  name          String
-  description   String?
-  defaultPrice  Float
-  type          String   @default("expense")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+model RelatedParty {
+  id             String   @id @default(cuid())
+  name           String
+  description    String?
+  contactInfo    String?
+  type           String   @default("expense")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
   organizationId String
-  userId        String
-  
-  items         Item[]
+  userId         String
 
+  @@unique([name, organizationId, type])
   @@index([organizationId])
   @@index([userId])
+}
+
+model MasterItem {
+  id             String   @id @default(cuid())
+  name           String
+  description    String?
+  defaultPrice   Float
+  type           String   @default("expense")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  organizationId String
+  userId         String
+
+  items Item[]
+
   @@unique([name, organizationId, type])
+  @@index([organizationId])
+  @@index([userId])
 }
