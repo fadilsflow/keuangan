@@ -74,7 +74,6 @@ export function CategorySelect({ form, transactionType }: CategorySelectProps) {
       const response = await fetch(`/api/categories/all?type=${apiType}`);
       if (!response.ok) throw new Error("Failed to fetch categories");
       const responseData = await response.json();
-      // Return an empty array as default if data is undefined
       return responseData.data || responseData || [];
     },
   });
@@ -99,7 +98,7 @@ export function CategorySelect({ form, transactionType }: CategorySelectProps) {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       toast.success("Kategori berhasil ditambahkan");
-      form.setValue("category", data.name);
+      form.setValue("category", data.name, { shouldValidate: true });
       setDialogOpen(false);
       categoryForm.reset({
         name: "",
@@ -125,6 +124,19 @@ export function CategorySelect({ form, transactionType }: CategorySelectProps) {
     }
   };
 
+  const selectCategory = (categoryName: string) => {
+    if (categories) {
+      const selectedCategory = categories.find(
+        (category: Category) => category.name === categoryName
+      );
+      if (selectedCategory) {
+        form.setValue("category", selectedCategory.name, {
+          shouldValidate: true,
+        });
+      }
+    }
+  };
+
   return (
     <FormField
       control={form.control}
@@ -133,7 +145,7 @@ export function CategorySelect({ form, transactionType }: CategorySelectProps) {
         <FormItem>
           <FormLabel className="font-semibold">Kategori</FormLabel>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <Select onValueChange={field.onChange} value={field.value}>
+            <Select value={field.value} onValueChange={selectCategory}>
               <FormControl>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Pilih kategori" />

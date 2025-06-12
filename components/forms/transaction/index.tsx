@@ -69,7 +69,6 @@ export function TransactionForm({
   const [transactionType, setTransactionType] = useState<
     "pemasukan" | "pengeluaran"
   >(defaultValues?.type || defaultType);
-
   const [items, setItems] = useState<TransactionItem[]>(() => {
     if (defaultValues?.items && defaultValues.items.length > 0) {
       return defaultValues.items.map((item: TransactionItem) => ({
@@ -102,51 +101,54 @@ export function TransactionForm({
     },
   });
 
-  // Initialize form values immediately when defaultValues are available
+  // Reset form when defaultValues change (for edit mode mainly)
   useEffect(() => {
     if (defaultValues && !isInitialized) {
       const formattedItems = defaultValues.items?.map(
-        (item: TransactionItem) => ({
-          id: item.id || undefined,
-          name: item.name || "",
-          itemPrice: Number(item.itemPrice) || 0,
-          quantity: Number(item.quantity) || 1,
-          totalPrice: Number(item.totalPrice) || 0,
-          transactionId: item.transactionId || undefined,
-          masterItemId: item.masterItemId || undefined,
-        })
+        (item: TransactionItem) => {
+          return {
+            id: item.id || undefined,
+            name: item.name || "",
+            itemPrice: Number(item.itemPrice) || 0,
+            quantity: Number(item.quantity) || 1,
+            totalPrice: Number(item.totalPrice) || 0,
+            transactionId: item.transactionId || undefined,
+            masterItemId: item.masterItemId || undefined,
+          };
+        }
       ) || [{ name: "", itemPrice: 0, quantity: 1, totalPrice: 0 }];
 
-      // Set all form values at once
-      form.reset(
-        {
-          date: defaultValues?.date
-            ? formatDateForInput(new Date(defaultValues.date))
-            : formatDateForInput(new Date()),
-          description: defaultValues?.description || "",
-          category: defaultValues?.category || "",
-          relatedParty: defaultValues?.relatedParty || "",
-          amountTotal: defaultValues?.amountTotal || 0,
-          type: defaultValues?.type || defaultType,
-          paymentImg: defaultValues?.paymentImg || "",
-          items: formattedItems,
-          ...(defaultValues?.id && { id: defaultValues.id }),
-        },
-        { keepDefaultValues: true }
-      );
+      const resetValues = {
+        date: defaultValues?.date
+          ? formatDateForInput(new Date(defaultValues.date))
+          : formatDateForInput(new Date()),
+        description: defaultValues?.description || "",
+        category: defaultValues?.category || "",
+        relatedParty: defaultValues?.relatedParty || "",
+        amountTotal: defaultValues?.amountTotal || 0,
+        type: defaultValues?.type || defaultType,
+        paymentImg: defaultValues?.paymentImg || "",
+        items: formattedItems,
+        ...(defaultValues?.id && { id: defaultValues.id }),
+      };
 
-      // Update state
-      setTransactionType(defaultValues?.type || defaultType);
+      form.reset(resetValues);
+      setTransactionType(resetValues.type as "pemasukan" | "pengeluaran");
       setItems(formattedItems);
-      setIsInitialized(true);
 
-      // Explicitly set category and relatedParty values
-      if (defaultValues?.category) {
-        form.setValue("category", defaultValues.category);
+      // Force update the select fields
+      if (resetValues.category) {
+        form.setValue("category", resetValues.category, {
+          shouldValidate: true,
+        });
       }
-      if (defaultValues?.relatedParty) {
-        form.setValue("relatedParty", defaultValues.relatedParty);
+      if (resetValues.relatedParty) {
+        form.setValue("relatedParty", resetValues.relatedParty, {
+          shouldValidate: true,
+        });
       }
+
+      setIsInitialized(true);
     }
   }, [defaultValues, form, defaultType, isInitialized]);
 
@@ -270,7 +272,7 @@ export function TransactionForm({
             setItems={setItems}
           />
 
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2  ">
             <Button
               type="button"
               variant="outline"

@@ -78,7 +78,6 @@ export function RelatedPartySelect({
       const response = await fetch(`/api/related-parties/all?type=${apiType}`);
       if (!response.ok) throw new Error("Failed to fetch related parties");
       const responseData = await response.json();
-      // Return an empty array as default if data is undefined
       return responseData.data || responseData || [];
     },
   });
@@ -103,7 +102,7 @@ export function RelatedPartySelect({
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["relatedParties"] });
       toast.success("Pihak terkait berhasil ditambahkan");
-      form.setValue("relatedParty", data.name);
+      form.setValue("relatedParty", data.name, { shouldValidate: true });
       setDialogOpen(false);
       relatedPartyForm.reset({
         name: "",
@@ -127,6 +126,19 @@ export function RelatedPartySelect({
       // Error is handled by the mutation's onError
       toast.error("Gagal menambahkan pihak terkait");
       console.log(error);
+    }
+  };
+
+  const selectRelatedParty = (partyName: string) => {
+    if (relatedParties) {
+      const selectedParty = relatedParties.find(
+        (party: RelatedParty) => party.name === partyName
+      );
+      if (selectedParty) {
+        form.setValue("relatedParty", selectedParty.name, {
+          shouldValidate: true,
+        });
+      }
     }
   };
 
@@ -171,7 +183,7 @@ export function RelatedPartySelect({
             {getRelatedPartyLabel()}
           </FormLabel>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <Select onValueChange={field.onChange} value={field.value}>
+            <Select value={field.value} onValueChange={selectRelatedParty}>
               <FormControl>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder={getRelatedPartyPlaceholder()} />
