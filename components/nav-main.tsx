@@ -25,10 +25,8 @@ export function NavMain({
   const pathname = usePathname();
   return (
     <SidebarGroup>
-      <SidebarGroupContent >
-        <SidebarMenu
-        className="gap-2"
-        >
+      <SidebarGroupContent>
+        <SidebarMenu className="gap-2">
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               <Link href={item.url} passHref>
@@ -37,16 +35,15 @@ export function NavMain({
                   className={cn(
                     "hover:cursor-pointer",
                     // when open new transaction page make the /transactions not active
-                    pathname === "/transactions/new" && item.url === "/transactions"
-
+                    pathname === "/transactions/new" &&
+                      item.url === "/transactions"
                       ? "bg-transparent active:bg-transparent "
                       : pathname === item.url || pathname.startsWith(item.url)
                       ? "hover:text-background dark:hover:text-foreground hover:bg-primary/80 bg-primary/90 text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
-                      : " active:bg-muted"  
-
+                      : " active:bg-muted"
                   )}
                 >
-                  {item.icon && <item.icon  />}
+                  {item.icon && <item.icon />}
                   <span>{item.title}</span>
                 </SidebarMenuButton>
               </Link>

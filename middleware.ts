@@ -8,7 +8,7 @@ const requiresOrganization = createRouteMatcher([
   "/dashboard(.*)",
   "/transactions(.*)",
   "/report(.*)",
-  "/data-master(.*)",
+  "/master-data(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, req) => {

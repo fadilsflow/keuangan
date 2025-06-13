@@ -49,8 +49,8 @@ export async function GET(
 ) {
   try {
     const { id: transactionId } = await params;
-    const { userId, orgId } = await auth();
-    if (!userId || !orgId) {
+    const { orgId } = await auth();
+    if (!orgId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 

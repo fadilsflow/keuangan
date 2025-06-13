@@ -33,9 +33,9 @@ const data = {
       icon: Home,
     },
     {
-      title: "Data Master",
-      url: "/data-master",
-      pageName: "Data Master",
+      title: "Master Data",
+      url: "/master-data",
+      pageName: "Master Data",
       icon: Folder,
     },
     {

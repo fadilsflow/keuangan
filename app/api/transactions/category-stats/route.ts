@@ -5,7 +5,7 @@ import { auth } from "@clerk/nextjs/server";
 export async function GET(request: Request) {
   try {
     // Get organization ID and user ID from Clerk auth
-    const { orgId, userId } = await auth();
+    const { orgId } = await auth();
     
     // If no organization is selected, return error
     if (!orgId) {
@@ -15,13 +15,7 @@ export async function GET(request: Request) {
       );
     }
 
-    // If no user is authenticated, return error
-    if (!userId) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
+
 
     const { searchParams } = new URL(request.url);
     const from = searchParams.get('from');
@@ -41,7 +35,6 @@ export async function GET(request: Request) {
           ...dateFilter,
           type: 'pemasukan',
           organizationId: orgId,
-          userId: userId
         },
         _sum: {
           amountTotal: true,
@@ -53,7 +46,6 @@ export async function GET(request: Request) {
           ...dateFilter,
           type: 'pengeluaran',
           organizationId: orgId,
-          userId: userId
         },
         _sum: {
           amountTotal: true,

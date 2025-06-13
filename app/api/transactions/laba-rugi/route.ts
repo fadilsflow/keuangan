@@ -4,7 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 
 export async function GET(request: Request) {
     try {
-        const { orgId, userId } = await auth();
+        const { orgId } = await auth();
         
         // If no organization is selected, return error
         if (!orgId) {
@@ -14,13 +14,7 @@ export async function GET(request: Request) {
             );
         }
 
-        // If no user is authenticated, return error
-        if (!userId) {
-            return NextResponse.json(
-                { error: "Unauthorized" },
-                { status: 401 }
-            );
-        }
+        
 
         const { searchParams } = new URL(request.url);
         const startDate = searchParams.get("startDate");
@@ -41,7 +35,6 @@ export async function GET(request: Request) {
                     lte: new Date(endDate),
                 },
                 organizationId: orgId,
-                userId: userId,
             },
             include: {
                 items: true,

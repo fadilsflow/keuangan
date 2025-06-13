@@ -15,7 +15,7 @@ export async function GET(
 ) {
   try {
     // Get organization ID and user ID from Clerk auth
-    const { orgId, userId } = await auth();
+    const { orgId } = await auth();
 
     // If no organization is selected, return error
     if (!orgId) {
@@ -23,11 +23,6 @@ export async function GET(
         { error: "No organization selected" },
         { status: 403 }
       );
-    }
-
-    // If no user is authenticated, return error
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
@@ -49,7 +44,7 @@ export async function GET(
     }
 
     // Verify that the transaction belongs to the user's organization
-    if (transaction.organizationId !== orgId || transaction.userId !== userId) {
+    if (transaction.organizationId !== orgId) {
       return NextResponse.json(
         { error: "You do not have permission to access this transaction" },
         { status: 403 }
@@ -72,7 +67,7 @@ export async function PUT(
 ) {
   try {
     // Get organization ID and user ID from Clerk auth
-    const { orgId, userId } = await auth();
+    const { orgId } = await auth();
 
     // If no organization is selected, return error
     if (!orgId) {
@@ -80,11 +75,6 @@ export async function PUT(
         { error: "No organization selected" },
         { status: 403 }
       );
-    }
-
-    // If no user is authenticated, return error
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
@@ -102,10 +92,7 @@ export async function PUT(
     }
 
     // Check permission
-    if (
-      existingTransaction.organizationId !== orgId ||
-      existingTransaction.userId !== userId
-    ) {
+    if (existingTransaction.organizationId !== orgId) {
       return NextResponse.json(
         { error: "You do not have permission to update this transaction" },
         { status: 403 }
@@ -137,7 +124,6 @@ export async function PUT(
           quantity: Number(item.quantity),
           totalPrice: Number(item.itemPrice) * Number(item.quantity),
           organizationId: existingTransaction.organizationId,
-          userId: existingTransaction.userId,
         })),
       },
     } as any; // Use type assertion for the update data
@@ -168,7 +154,7 @@ export async function DELETE(
 ) {
   try {
     // Get organization ID and user ID from Clerk auth
-    const { orgId, userId } = await auth();
+    const { orgId } = await auth();
 
     // If no organization is selected, return error
     if (!orgId) {
@@ -176,11 +162,6 @@ export async function DELETE(
         { error: "No organization selected" },
         { status: 403 }
       );
-    }
-
-    // If no user is authenticated, return error
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
@@ -198,10 +179,7 @@ export async function DELETE(
     }
 
     // Check permission
-    if (
-      existingTransaction.organizationId !== orgId ||
-      existingTransaction.userId !== userId
-    ) {
+    if (existingTransaction.organizationId !== orgId) {
       return NextResponse.json(
         { error: "You do not have permission to delete this transaction" },
         { status: 403 }

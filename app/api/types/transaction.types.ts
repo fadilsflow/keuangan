@@ -21,4 +21,4 @@ export interface CreateItemDTO {
   itemPrice: number;
   quantity: number;
   masterItemId?: string;
-} 
+}

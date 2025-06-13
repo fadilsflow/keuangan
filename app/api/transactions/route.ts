@@ -32,7 +32,6 @@ export async function GET(request: Request) {
 
     const where: any = {
       organizationId: orgId,
-      userId: userId,
     };
 
     if (type && type !== "all") where.type = type;
