@@ -298,7 +298,7 @@ export function TransactionForm({
               ) : mode === "edit" ? (
                 "Perbarui Transaksi"
               ) : (
-                "Buat Transaksi"
+                "Simpan Transaksi"
               )}
             </Button>
           </div>

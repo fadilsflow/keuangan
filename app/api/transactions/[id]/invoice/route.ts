@@ -179,8 +179,6 @@ export async function GET(
 
     doc.setFont("helvetica", "normal");
     doc.text(`${currentDate}`, signatureX, y);
-    y += 10;
-    doc.text("Hormat Kami,", signatureX, y);
     y += 30;
     doc.line(signatureX, y, signatureX + signatureWidth, y); // Signature line
     y += 5;
