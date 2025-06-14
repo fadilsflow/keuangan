@@ -37,12 +37,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 // Report types
 const REPORT_TYPES = [
+  { value: "summary", label: "Laporan Ringkasan" },
   { value: "monthly", label: "Laporan Bulanan" },
   { value: "yearly", label: "Laporan Tahunan" },
   { value: "category", label: "Laporan Kategori" },
   { value: "related-party", label: "Laporan Pihak Terkait" },
   { value: "items", label: "Laporan Item" },
-  { value: "summary", label: "Laporan Ringkasan" },
 ];
 
 export default function ReportPage() {
@@ -124,6 +124,8 @@ export default function ReportPage() {
       if (!reportData) return true;
 
       switch (reportType) {
+        case "summary":
+          return !reportData.income && !reportData.expense;
         case "monthly":
         case "yearly":
         case "category":
@@ -134,8 +136,6 @@ export default function ReportPage() {
             !reportData.income?.items?.length &&
             !reportData.expense?.items?.length
           );
-        case "summary":
-          return !reportData.income && !reportData.expense;
         default:
           return true;
       }
