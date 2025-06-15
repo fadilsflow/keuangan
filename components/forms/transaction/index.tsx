@@ -18,7 +18,6 @@ import { TransactionBasicInfo } from "./TransactionBasicInfo";
 import { CategorySelect } from "./CategorySelect";
 import { RelatedPartySelect } from "./RelatedPartySelect";
 import { TransactionItems } from "./TransactionItems";
-import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface TransactionItem {
@@ -234,8 +233,6 @@ export function TransactionForm({
       console.error(error);
     }
   };
-
-  const router = useRouter();
 
   if (isLoading) {
     return <Skeleton className="h-screen w-full border" />;
