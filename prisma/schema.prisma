@@ -19,15 +19,17 @@ model Transaction {
   updatedAt      DateTime @updatedAt
   date           DateTime
   description    String
-  category       String
-  relatedParty   String
   amountTotal    Float
   paymentImg     String   @default("")
   type           String   @default("pengeluaran")
   organizationId String
   userId         String
 
-  items Item[]
+  relatedParty   RelatedParty @relation(fields: [relatedPartyId], references: [id], onDelete: Cascade)
+  category       Category     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  items          Item[]
+  categoryId     String
+  relatedPartyId String
 
   @@index([organizationId])
   @@index([userId])
@@ -40,14 +42,14 @@ model Item {
   name           String
   itemPrice      Float
   quantity       Int
-  totalPrice     Float // itemPrice * quantity (harus dihitung saat transaksi dibuat)
+  totalPrice     Float
   organizationId String
   userId         String
   masterItemId   String?
 
   transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
   transactionId Int
-  masterItem    MasterItem? @relation(fields: [masterItemId], references: [id])
+  masterItem    MasterItem? @relation(fields: [masterItemId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
   @@index([userId])
@@ -57,14 +59,15 @@ model Item {
 
 // Master Data Models
 model Category {
-  id             String   @id @default(cuid())
+  id             String        @id @default(cuid())
   name           String
   description    String?
-  type           String   @default("expense")
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  type           String        @default("expense")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
   organizationId String
   userId         String
+  transactions   Transaction[]
 
   @@unique([name, organizationId, type])
   @@index([organizationId])
@@ -72,15 +75,16 @@ model Category {
 }
 
 model RelatedParty {
-  id             String   @id @default(cuid())
+  id             String        @id @default(cuid())
   name           String
   description    String?
   contactInfo    String?
-  type           String   @default("expense")
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  type           String        @default("expense")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
   organizationId String
   userId         String
+  transactions   Transaction[]
 
   @@unique([name, organizationId, type])
   @@index([organizationId])

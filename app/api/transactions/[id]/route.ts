@@ -33,8 +33,14 @@ export async function GET(
       },
       include: {
         items: true,
+        category: true,
+        relatedParty: true,
       },
-    })) as unknown as ExtendedTransaction & { items: any[] };
+    })) as unknown as ExtendedTransaction & {
+      items: any[];
+      category: any;
+      relatedParty: any;
+    };
 
     if (!transaction) {
       return NextResponse.json(
@@ -51,7 +57,11 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(transaction);
+    return NextResponse.json({
+      ...transaction,
+      category: transaction.category.name,
+      relatedParty: transaction.relatedParty.name,
+    });
   } catch (error) {
     console.error("Error fetching transaction:", error);
     return NextResponse.json(
@@ -112,8 +122,8 @@ export async function PUT(
     const updateData = {
       date: new Date(body.date),
       description: body.description,
-      category: body.category,
-      relatedParty: body.relatedParty,
+      categoryId: body.categoryId,
+      relatedPartyId: body.relatedPartyId,
       amountTotal: body.amountTotal,
       type: body.type,
       paymentImg: body.paymentImg,
@@ -123,7 +133,9 @@ export async function PUT(
           itemPrice: Number(item.itemPrice),
           quantity: Number(item.quantity),
           totalPrice: Number(item.itemPrice) * Number(item.quantity),
+          masterItemId: item.masterItemId,
           organizationId: existingTransaction.organizationId,
+          userId: existingTransaction.userId,
         })),
       },
     } as any; // Use type assertion for the update data
@@ -135,10 +147,16 @@ export async function PUT(
       data: updateData,
       include: {
         items: true,
+        category: true,
+        relatedParty: true,
       },
     });
 
-    return NextResponse.json(transaction);
+    return NextResponse.json({
+      ...transaction,
+      category: transaction.category.name,
+      relatedParty: transaction.relatedParty.name,
+    });
   } catch (error) {
     console.error("Error updating transaction:", error);
     return NextResponse.json(

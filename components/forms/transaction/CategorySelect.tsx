@@ -98,7 +98,7 @@ export function CategorySelect({ form, transactionType }: CategorySelectProps) {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       toast.success("Kategori berhasil ditambahkan");
-      form.setValue("category", data.name, { shouldValidate: true });
+      form.setValue("categoryId", data.id, { shouldValidate: true });
       setDialogOpen(false);
       categoryForm.reset({
         name: "",
@@ -124,13 +124,13 @@ export function CategorySelect({ form, transactionType }: CategorySelectProps) {
     }
   };
 
-  const selectCategory = (categoryName: string) => {
+  const selectCategory = (categoryId: string) => {
     if (categories) {
       const selectedCategory = categories.find(
-        (category: Category) => category.name === categoryName
+        (category: Category) => category.id === categoryId
       );
       if (selectedCategory) {
-        form.setValue("category", selectedCategory.name, {
+        form.setValue("categoryId", selectedCategory.id, {
           shouldValidate: true,
         });
       }
@@ -140,7 +140,7 @@ export function CategorySelect({ form, transactionType }: CategorySelectProps) {
   return (
     <FormField
       control={form.control}
-      name="category"
+      name="categoryId"
       render={({ field }) => (
         <FormItem>
           <FormLabel className="font-semibold">Kategori</FormLabel>
@@ -148,7 +148,12 @@ export function CategorySelect({ form, transactionType }: CategorySelectProps) {
             <Select value={field.value} onValueChange={selectCategory}>
               <FormControl>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih kategori" />
+                  <SelectValue placeholder="Pilih kategori">
+                    {field.value && categories
+                      ? categories.find((c: Category) => c.id === field.value)
+                          ?.name
+                      : "Pilih kategori"}
+                  </SelectValue>
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
@@ -161,7 +166,7 @@ export function CategorySelect({ form, transactionType }: CategorySelectProps) {
                   </SelectItem>
                 ) : categories && categories.length > 0 ? (
                   categories.map((category: Category) => (
-                    <SelectItem key={category.id} value={category.name}>
+                    <SelectItem key={category.id} value={category.id}>
                       {category.name}
                     </SelectItem>
                   ))
@@ -197,76 +202,57 @@ export function CategorySelect({ form, transactionType }: CategorySelectProps) {
                 </div>
               </SelectContent>
             </Select>
-            <DialogContent
-              className="sm:max-w-[425px]"
-              onPointerDownOutside={(e) => e.preventDefault()}
-            >
+            <DialogContent>
               <DialogHeader>
                 <DialogTitle>Tambah Kategori Baru</DialogTitle>
                 <DialogDescription>
-                  Tambahkan kategori baru untuk transaksi {transactionType}
+                  Tambahkan kategori baru untuk transaksi{" "}
+                  {transactionType === "pemasukan"
+                    ? "pemasukan"
+                    : "pengeluaran"}
                 </DialogDescription>
               </DialogHeader>
               <Form {...categoryForm}>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleCreateCategory(e);
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                  className="space-y-6"
-                >
-                  <div className="space-y-4">
-                    <FormField
-                      control={categoryForm.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nama Kategori</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Nama kategori" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={categoryForm.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Deskripsi (Opsional)</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder="Deskripsi kategori"
-                              className="min-h-[100px]"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <input type="hidden" {...categoryForm.register("type")} />
-                  </div>
-                  <div className="flex justify-end">
-                    <Button
-                      type="submit"
-                      disabled={createCategory.isPending}
-                      className="w-full sm:w-auto"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {createCategory.isPending ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Menyimpan...
-                        </>
-                      ) : (
-                        "Simpan"
-                      )}
-                    </Button>
-                  </div>
+                <form onSubmit={handleCreateCategory} className="space-y-4">
+                  <FormField
+                    control={categoryForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nama Kategori</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Nama kategori" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={categoryForm.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Deskripsi</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Deskripsi kategori"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type="submit"
+                    disabled={createCategory.isPending}
+                    className="w-full"
+                  >
+                    {createCategory.isPending && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    Tambah Kategori
+                  </Button>
                 </form>
               </Form>
             </DialogContent>

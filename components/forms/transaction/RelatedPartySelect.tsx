@@ -102,7 +102,7 @@ export function RelatedPartySelect({
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["relatedParties"] });
       toast.success("Pihak terkait berhasil ditambahkan");
-      form.setValue("relatedParty", data.name, { shouldValidate: true });
+      form.setValue("relatedPartyId", data.id, { shouldValidate: true });
       setDialogOpen(false);
       relatedPartyForm.reset({
         name: "",
@@ -129,13 +129,13 @@ export function RelatedPartySelect({
     }
   };
 
-  const selectRelatedParty = (partyName: string) => {
+  const selectRelatedParty = (partyId: string) => {
     if (relatedParties) {
       const selectedParty = relatedParties.find(
-        (party: RelatedParty) => party.name === partyName
+        (party: RelatedParty) => party.id === partyId
       );
       if (selectedParty) {
-        form.setValue("relatedParty", selectedParty.name, {
+        form.setValue("relatedPartyId", selectedParty.id, {
           shouldValidate: true,
         });
       }
@@ -176,7 +176,7 @@ export function RelatedPartySelect({
   return (
     <FormField
       control={form.control}
-      name="relatedParty"
+      name="relatedPartyId"
       render={({ field }) => (
         <FormItem>
           <FormLabel className="font-semibold">
@@ -186,7 +186,13 @@ export function RelatedPartySelect({
             <Select value={field.value} onValueChange={selectRelatedParty}>
               <FormControl>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder={getRelatedPartyPlaceholder()} />
+                  <SelectValue placeholder={getRelatedPartyPlaceholder()}>
+                    {field.value && relatedParties
+                      ? relatedParties.find(
+                          (p: RelatedParty) => p.id === field.value
+                        )?.name
+                      : getRelatedPartyPlaceholder()}
+                  </SelectValue>
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
@@ -199,7 +205,7 @@ export function RelatedPartySelect({
                   </SelectItem>
                 ) : relatedParties && relatedParties.length > 0 ? (
                   relatedParties.map((party: RelatedParty) => (
-                    <SelectItem key={party.id} value={party.name}>
+                    <SelectItem key={party.id} value={party.id}>
                       {party.name}
                     </SelectItem>
                   ))
@@ -236,10 +242,7 @@ export function RelatedPartySelect({
                 </div>
               </SelectContent>
             </Select>
-            <DialogContent
-              className="sm:max-w-[425px]"
-              onPointerDownOutside={(e) => e.preventDefault()}
-            >
+            <DialogContent>
               <DialogHeader>
                 <DialogTitle>{getRelatedPartyDialogTitle()}</DialogTitle>
                 <DialogDescription>
@@ -247,87 +250,65 @@ export function RelatedPartySelect({
                 </DialogDescription>
               </DialogHeader>
               <Form {...relatedPartyForm}>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleCreateRelatedParty(e);
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                  className="space-y-6"
-                >
-                  <div className="space-y-4">
-                    <FormField
-                      control={relatedPartyForm.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{getRelatedPartyNameLabel()}</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder={getRelatedPartyNamePlaceholder()}
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={relatedPartyForm.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Deskripsi (Opsional)</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder={getRelatedPartyDescPlaceholder()}
-                              className="min-h-[100px]"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={relatedPartyForm.control}
-                      name="contactInfo"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Kontak (Opsional)</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder={getRelatedPartyContactPlaceholder()}
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <input
-                      type="hidden"
-                      {...relatedPartyForm.register("type")}
-                    />
-                  </div>
-                  <div className="flex justify-end">
-                    <Button
-                      type="submit"
-                      disabled={createRelatedParty.isPending}
-                      className="w-full sm:w-auto"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {createRelatedParty.isPending ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Menyimpan...
-                        </>
-                      ) : (
-                        "Simpan"
-                      )}
-                    </Button>
-                  </div>
+                <form onSubmit={handleCreateRelatedParty} className="space-y-4">
+                  <FormField
+                    control={relatedPartyForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{getRelatedPartyNameLabel()}</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder={getRelatedPartyNamePlaceholder()}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={relatedPartyForm.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Deskripsi</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder={getRelatedPartyDescPlaceholder()}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={relatedPartyForm.control}
+                    name="contactInfo"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Kontak</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder={getRelatedPartyContactPlaceholder()}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type="submit"
+                    disabled={createRelatedParty.isPending}
+                    className="w-full"
+                  >
+                    {createRelatedParty.isPending && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    {getAddRelatedPartyLabel()}
+                  </Button>
                 </form>
               </Form>
             </DialogContent>

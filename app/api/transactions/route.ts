@@ -20,7 +20,7 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type");
-    const category = searchParams.get("category");
+      const categoryId = searchParams.get("category");
     const from = searchParams.get("from");
     const to = searchParams.get("to");
     const search = searchParams.get("search");
@@ -35,7 +35,7 @@ export async function GET(request: Request) {
     };
 
     if (type && type !== "all") where.type = type;
-    if (category && category !== "all") where.category = category;
+    if (categoryId && categoryId !== "all") where.categoryId = categoryId;
     if (from || to) {
       where.date = {};
       if (from) where.date.gte = new Date(from);
@@ -44,7 +44,7 @@ export async function GET(request: Request) {
     if (search) {
       where.OR = [
         { description: { contains: search } },
-        { relatedParty: { contains: search } },
+        { relatedParty: { name: { contains: search } } },
       ];
     }
 
@@ -61,6 +61,8 @@ export async function GET(request: Request) {
       },
       include: {
         items: true,
+        category: true,
+        relatedParty: true,
       },
       skip,
       take: pageSize,
@@ -71,8 +73,10 @@ export async function GET(request: Request) {
       date: transaction.date,
       type: transaction.type,
       description: transaction.description,
-      category: transaction.category,
-      relatedParty: transaction.relatedParty,
+      category: transaction.category.name,
+      categoryId: transaction.categoryId,
+      relatedParty: transaction.relatedParty.name,
+      relatedPartyId: transaction.relatedPartyId,
       amountTotal: transaction.amountTotal,
       paymentImg: transaction.paymentImg,
       items: transaction.items.map((item) => ({
@@ -155,6 +159,8 @@ export async function POST(request: Request) {
       },
       include: {
         items: true,
+        category: true,
+        relatedParty: true,
       },
     });
 
@@ -166,8 +172,10 @@ export async function POST(request: Request) {
           date: transaction.date,
           type: transaction.type,
           description: transaction.description,
-          category: transaction.category,
-          relatedParty: transaction.relatedParty,
+          category: transaction.category.name,
+          categoryId: transaction.categoryId,
+          relatedParty: transaction.relatedParty.name,
+          relatedPartyId: transaction.relatedPartyId,
           amountTotal: transaction.amountTotal,
           items: transaction.items.map((item) => ({
             id: item.id,

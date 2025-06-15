@@ -91,8 +91,8 @@ export function TransactionForm({
         ? formatDateForInput(new Date(defaultValues.date))
         : formatDateForInput(new Date()),
       description: defaultValues?.description || "",
-      category: defaultValues?.category || "",
-      relatedParty: defaultValues?.relatedParty || "",
+      categoryId: defaultValues?.categoryId || "",
+      relatedPartyId: defaultValues?.relatedPartyId || "",
       amountTotal: defaultValues?.amountTotal || 0,
       type: defaultValues?.type || defaultType,
       paymentImg: defaultValues?.paymentImg || "",
@@ -123,8 +123,8 @@ export function TransactionForm({
           ? formatDateForInput(new Date(defaultValues.date))
           : formatDateForInput(new Date()),
         description: defaultValues?.description || "",
-        category: defaultValues?.category || "",
-        relatedParty: defaultValues?.relatedParty || "",
+        categoryId: defaultValues?.categoryId || "",
+        relatedPartyId: defaultValues?.relatedPartyId || "",
         amountTotal: defaultValues?.amountTotal || 0,
         type: defaultValues?.type || defaultType,
         paymentImg: defaultValues?.paymentImg || "",
@@ -137,13 +137,13 @@ export function TransactionForm({
       setItems(formattedItems);
 
       // Force update the select fields
-      if (resetValues.category) {
-        form.setValue("category", resetValues.category, {
+      if (resetValues.categoryId) {
+        form.setValue("categoryId", resetValues.categoryId, {
           shouldValidate: true,
         });
       }
-      if (resetValues.relatedParty) {
-        form.setValue("relatedParty", resetValues.relatedParty, {
+      if (resetValues.relatedPartyId) {
+        form.setValue("relatedPartyId", resetValues.relatedPartyId, {
           shouldValidate: true,
         });
       }
@@ -186,8 +186,8 @@ export function TransactionForm({
         form.reset({
           date: formatDateForInput(new Date()),
           description: "",
-          category: "",
-          relatedParty: "",
+          categoryId: "",
+          relatedPartyId: "",
           amountTotal: 0,
           type: defaultType,
           paymentImg: "",
@@ -249,57 +249,32 @@ export function TransactionForm({
             form={form}
             onTypeChange={(type) => {
               setTransactionType(type);
-              if (mode === "create") {
-                form.setValue("category", "");
-                form.setValue("relatedParty", "");
-                setItems([
-                  { name: "", itemPrice: 0, quantity: 1, totalPrice: 0 },
-                ]);
-                form.setValue("amountTotal", 0);
-              }
+              form.setValue("type", type);
             }}
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <CategorySelect form={form} transactionType={transactionType} />
             <RelatedPartySelect form={form} transactionType={transactionType} />
           </div>
 
           <TransactionItems
             form={form}
-            transactionType={transactionType}
             items={items}
             setItems={setItems}
+            transactionType={transactionType}
           />
 
-          <div className="flex justify-end gap-2  ">
-            <Button
-              type="button"
-              variant="outline"
-              size="lg"
-              className="w-full md:w-auto"
-              onClick={() => {
-                router.back();
-              }}
-            >
-              Batal
-            </Button>
+          <div className="flex justify-end">
             <Button
               type="submit"
               disabled={mutation.isPending}
-              size="lg"
               className="w-full md:w-auto"
             >
-              {mutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {mode === "edit" ? "Memperbarui..." : "Membuat..."}
-                </>
-              ) : mode === "edit" ? (
-                "Perbarui Transaksi"
-              ) : (
-                "Simpan Transaksi"
+              {mutation.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
+              {mode === "edit" ? "Update Transaksi" : "Buat Transaksi"}
             </Button>
           </div>
         </div>

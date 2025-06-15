@@ -65,6 +65,8 @@ export async function GET(
       },
       include: {
         items: true,
+        category: true,
+        relatedParty: true,
       },
     });
 
@@ -108,12 +110,12 @@ export async function GET(
     doc.text(
       `${
         transaction.type === "pemasukan" ? "Konsumen" : "Supplier"
-      } ${capitalize(transaction.relatedParty)}`,
+      } ${capitalize(transaction.relatedParty.name)}`,
       margin,
       y
     );
     y += 10;
-    doc.text(`Kategori: ${capitalize(transaction.category)}`, margin, y);
+    doc.text(`Kategori: ${capitalize(transaction.category.name)}`, margin, y);
     y += 20;
 
     // Add items table
@@ -183,7 +185,7 @@ export async function GET(
     doc.line(signatureX, y, signatureX + signatureWidth, y); // Signature line
     y += 5;
     doc.text(
-      capitalize(transaction.relatedParty),
+      capitalize(transaction.relatedParty.name),
       signatureX + signatureWidth / 2,
       y,
       {
@@ -200,7 +202,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("Failed to generate invoice:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    console.error("Error generating invoice:", error);
+    return new NextResponse("Error generating invoice", { status: 500 });
   }
 }

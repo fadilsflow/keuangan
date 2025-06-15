@@ -8,12 +8,13 @@ export const ItemSchema = z.object({
 });
 
 export const TransactionCreateSchema = z.object({
-  date: z.coerce.date()
-    .min(new Date('2000-01-01'), 'Tanggal terlalu lampau')
-    .max(new Date('2100-12-31'), 'Tanggal terlalu jauh ke depan'),
+  date: z.coerce
+    .date()
+    .min(new Date("2000-01-01"), "Tanggal terlalu lampau")
+    .max(new Date("2100-12-31"), "Tanggal terlalu jauh ke depan"),
   description: z.string().min(1, "Deskripsi harus diisi"),
-  category: z.string().min(1, "Kategori harus diisi"),
-  relatedParty: z.string().min(1, "Pihak terkait harus diisi"),
+  categoryId: z.string().min(1, "Kategori harus diisi"),
+  relatedPartyId: z.string().min(1, "Pihak terkait harus diisi"),
   amountTotal: z.number().positive("Total harus positif"),
   paymentImg: z.string().optional(),
   type: z.enum(["pemasukan", "pengeluaran"]).default("pengeluaran"),
@@ -23,13 +24,14 @@ export const TransactionCreateSchema = z.object({
 });
 
 export const TransactionUpdateSchema = z.object({
-  date: z.coerce.date()
-    .min(new Date('2000-01-01'), 'Tanggal terlalu lampau')
-    .max(new Date('2100-12-31'), 'Tanggal terlalu jauh ke depan')
+  date: z.coerce
+    .date()
+    .min(new Date("2000-01-01"), "Tanggal terlalu lampau")
+    .max(new Date("2100-12-31"), "Tanggal terlalu jauh ke depan")
     .optional(),
   description: z.string().min(1, "Deskripsi harus diisi").optional(),
-  category: z.string().min(1, "Kategori harus diisi").optional(),
-  relatedParty: z.string().min(1, "Pihak terkait harus diisi").optional(),
+  categoryId: z.string().min(1, "Kategori harus diisi").optional(),
+  relatedPartyId: z.string().min(1, "Pihak terkait harus diisi").optional(),
   amountTotal: z.number().positive("Total harus positif").optional(),
   paymentImg: z.string().optional(),
   type: z.enum(["pemasukan", "pengeluaran"]).optional(),
@@ -39,4 +41,4 @@ export const TransactionUpdateSchema = z.object({
 
 export const IdParamSchema = z.object({
   id: z.string().min(1, "ID is required"),
-}); 
+});

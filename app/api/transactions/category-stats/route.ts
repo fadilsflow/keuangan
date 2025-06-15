@@ -6,7 +6,7 @@ export async function GET(request: Request) {
   try {
     // Get organization ID and user ID from Clerk auth
     const { orgId } = await auth();
-    
+
     // If no organization is selected, return error
     if (!orgId) {
       return NextResponse.json(
@@ -15,11 +15,9 @@ export async function GET(request: Request) {
       );
     }
 
-
-
     const { searchParams } = new URL(request.url);
-    const from = searchParams.get('from');
-    const to = searchParams.get('to');
+    const from = searchParams.get("from");
+    const to = searchParams.get("to");
 
     const dateFilter = {
       date: {
@@ -28,39 +26,68 @@ export async function GET(request: Request) {
       },
     };
 
-    const [income, expense] = await Promise.all([
-      prisma.transaction.groupBy({
-        by: ['category'],
+    // First, get all transactions with their categories
+    const [incomeTransactions, expenseTransactions] = await Promise.all([
+      prisma.transaction.findMany({
         where: {
           ...dateFilter,
-          type: 'pemasukan',
+          type: "pemasukan",
           organizationId: orgId,
         },
-        _sum: {
+        select: {
           amountTotal: true,
+          category: {
+            select: {
+              name: true,
+            },
+          },
         },
       }),
-      prisma.transaction.groupBy({
-        by: ['category'],
+      prisma.transaction.findMany({
         where: {
           ...dateFilter,
-          type: 'pengeluaran',
+          type: "pengeluaran",
           organizationId: orgId,
         },
-        _sum: {
+        select: {
           amountTotal: true,
+          category: {
+            select: {
+              name: true,
+            },
+          },
         },
       }),
     ]);
 
+    // Process income transactions
+    const incomeStats = incomeTransactions.reduce(
+      (acc: { [key: string]: number }, transaction) => {
+        const categoryName = transaction.category.name;
+        acc[categoryName] = (acc[categoryName] || 0) + transaction.amountTotal;
+        return acc;
+      },
+      {}
+    );
+
+    // Process expense transactions
+    const expenseStats = expenseTransactions.reduce(
+      (acc: { [key: string]: number }, transaction) => {
+        const categoryName = transaction.category.name;
+        acc[categoryName] = (acc[categoryName] || 0) + transaction.amountTotal;
+        return acc;
+      },
+      {}
+    );
+
     return NextResponse.json({
-      income: income.map((item) => ({
-        category: item.category,
-        total: item._sum.amountTotal || 0,
+      income: Object.entries(incomeStats).map(([category, total]) => ({
+        category,
+        total,
       })),
-      expense: expense.map((item) => ({
-        category: item.category,
-        total: item._sum.amountTotal || 0,
+      expense: Object.entries(expenseStats).map(([category, total]) => ({
+        category,
+        total,
       })),
     });
   } catch (error) {
@@ -70,4 +97,4 @@ export async function GET(request: Request) {
       { status: 500 }
     );
   }
-} 
+}

@@ -53,7 +53,11 @@ export interface TransactionTypeData {
   items: { name: string; total: number; quantity: number }[];
 }
 
-export async function generateMonthlyReport(orgId: string, startDate: Date, endDate: Date) {
+export async function generateMonthlyReport(
+  orgId: string,
+  startDate: Date,
+  endDate: Date
+) {
   const transactions = await prisma.transaction.findMany({
     where: {
       organizationId: orgId,
@@ -99,7 +103,11 @@ export async function generateMonthlyReport(orgId: string, startDate: Date, endD
   return Object.values(monthlyData);
 }
 
-export async function generateCategoryReport(orgId: string, startDate: Date, endDate: Date) {
+export async function generateCategoryReport(
+  orgId: string,
+  startDate: Date,
+  endDate: Date
+) {
   const transactions = await prisma.transaction.findMany({
     where: {
       organizationId: orgId,
@@ -109,7 +117,11 @@ export async function generateCategoryReport(orgId: string, startDate: Date, end
       },
     },
     select: {
-      category: true,
+      category: {
+        select: {
+          name: true,
+        },
+      },
       type: true,
       amountTotal: true,
     },
@@ -117,13 +129,14 @@ export async function generateCategoryReport(orgId: string, startDate: Date, end
 
   // Group transactions by category and type
   const categoryData = transactions.reduce((acc: CategoryData, transaction) => {
-    const isIncome = transaction.type === "income" || transaction.type === "pemasukan";
+    const isIncome =
+      transaction.type === "income" || transaction.type === "pemasukan";
     const type = isIncome ? "income" : "expense";
-    const key = `${transaction.category}-${type}`;
+    const key = `${transaction.category.name}-${type}`;
 
     if (!acc[key]) {
       acc[key] = {
-        category: transaction.category,
+        category: transaction.category.name,
         income: 0,
         expense: 0,
         type: type,
@@ -142,7 +155,11 @@ export async function generateCategoryReport(orgId: string, startDate: Date, end
   return Object.values(categoryData);
 }
 
-export async function generateYearlyReport(orgId: string, startDate: Date, endDate: Date) {
+export async function generateYearlyReport(
+  orgId: string,
+  startDate: Date,
+  endDate: Date
+) {
   const transactions = await prisma.transaction.findMany({
     where: {
       organizationId: orgId,
@@ -182,7 +199,11 @@ export async function generateYearlyReport(orgId: string, startDate: Date, endDa
   return Object.values(yearlyData);
 }
 
-export async function generateRelatedPartyReport(orgId: string, startDate: Date, endDate: Date) {
+export async function generateRelatedPartyReport(
+  orgId: string,
+  startDate: Date,
+  endDate: Date
+) {
   const transactions = await prisma.transaction.findMany({
     where: {
       organizationId: orgId,
@@ -192,40 +213,52 @@ export async function generateRelatedPartyReport(orgId: string, startDate: Date,
       },
     },
     select: {
-      relatedParty: true,
+      relatedParty: {
+        select: {
+          name: true,
+        },
+      },
       type: true,
       amountTotal: true,
     },
   });
 
   // Group transactions by related party and type
-  const relatedPartyData = transactions.reduce((acc: RelatedPartyData, transaction) => {
-    const isIncome = transaction.type === "income" || transaction.type === "pemasukan";
-    const type = isIncome ? "income" : "expense";
-    const key = `${transaction.relatedParty}-${type}`;
+  const relatedPartyData = transactions.reduce(
+    (acc: RelatedPartyData, transaction) => {
+      const isIncome =
+        transaction.type === "income" || transaction.type === "pemasukan";
+      const type = isIncome ? "income" : "expense";
+      const key = `${transaction.relatedParty.name}-${type}`;
 
-    if (!acc[key]) {
-      acc[key] = {
-        relatedParty: transaction.relatedParty,
-        income: 0,
-        expense: 0,
-        type: type,
-      };
-    }
+      if (!acc[key]) {
+        acc[key] = {
+          relatedParty: transaction.relatedParty.name,
+          income: 0,
+          expense: 0,
+          type: type,
+        };
+      }
 
-    if (isIncome) {
-      acc[key].income += transaction.amountTotal;
-    } else {
-      acc[key].expense += transaction.amountTotal;
-    }
+      if (isIncome) {
+        acc[key].income += transaction.amountTotal;
+      } else {
+        acc[key].expense += transaction.amountTotal;
+      }
 
-    return acc;
-  }, {});
+      return acc;
+    },
+    {}
+  );
 
   return Object.values(relatedPartyData);
 }
 
-export async function generateItemReport(orgId: string, startDate: Date, endDate: Date) {
+export async function generateItemReport(
+  orgId: string,
+  startDate: Date,
+  endDate: Date
+) {
   const transactions = await prisma.transaction.findMany({
     where: {
       organizationId: orgId,
@@ -241,12 +274,13 @@ export async function generateItemReport(orgId: string, startDate: Date, endDate
 
   // Group by items
   const itemData = transactions.reduce((acc: ItemData, transaction) => {
-    const isIncome = transaction.type === "income" || transaction.type === "pemasukan";
+    const isIncome =
+      transaction.type === "income" || transaction.type === "pemasukan";
     const type = isIncome ? "income" : "expense";
-    
-    transaction.items.forEach(item => {
+
+    transaction.items.forEach((item) => {
       const key = `${item.name}-${type}`;
-      
+
       if (!acc[key]) {
         acc[key] = {
           itemName: item.name,
@@ -255,19 +289,22 @@ export async function generateItemReport(orgId: string, startDate: Date, endDate
           type: type,
         };
       }
-      
+
       acc[key].quantity += item.quantity;
       acc[key].totalAmount += item.totalPrice;
     });
-    
+
     return acc;
   }, {});
 
   return Object.values(itemData);
 }
 
-export async function generateSummaryReport(orgId: string, startDate: Date, endDate: Date) {
-  // Fetch transactions with items
+export async function generateSummaryReport(
+  orgId: string,
+  startDate: Date,
+  endDate: Date
+) {
   const transactions = await prisma.transaction.findMany({
     where: {
       organizationId: orgId,
@@ -278,118 +315,118 @@ export async function generateSummaryReport(orgId: string, startDate: Date, endD
     },
     include: {
       items: true,
+      category: {
+        select: {
+          name: true,
+        },
+      },
+      relatedParty: {
+        select: {
+          name: true,
+        },
+      },
     },
   });
 
-  // Separate by transaction type
-  const summary: { income: TransactionTypeData, expense: TransactionTypeData } = {
-    income: {
-      type: "income",
-      total: 0,
-      transactionCount: 0,
-      categories: [],
-      relatedParties: [],
-      items: [],
-    },
-    expense: {
-      type: "expense",
-      total: 0,
-      transactionCount: 0,
-      categories: [],
-      relatedParties: [],
-      items: [],
-    }
+  const incomeData: TransactionTypeData = {
+    type: "income",
+    total: 0,
+    transactionCount: 0,
+    categories: [],
+    relatedParties: [],
+    items: [],
   };
 
-  // Helper objects for aggregation
-  const categories: { 
-    income: Record<string, number>, 
-    expense: Record<string, number> 
-  } = { 
-    income: {}, 
-    expense: {} 
-  };
-  
-  const relatedParties: { 
-    income: Record<string, number>, 
-    expense: Record<string, number> 
-  } = { 
-    income: {}, 
-    expense: {} 
-  };
-  
-  const items: { 
-    income: Record<string, { total: number, quantity: number }>, 
-    expense: Record<string, { total: number, quantity: number }> 
-  } = { 
-    income: {}, 
-    expense: {} 
+  const expenseData: TransactionTypeData = {
+    type: "expense",
+    total: 0,
+    transactionCount: 0,
+    categories: [],
+    relatedParties: [],
+    items: [],
   };
 
-  // Aggregate data
-  transactions.forEach(transaction => {
-    const isIncome = transaction.type === "income" || transaction.type === "pemasukan";
-    const type = isIncome ? "income" : "expense";
-    
-    // Add to total and count
-    summary[type].total += transaction.amountTotal;
-    summary[type].transactionCount += 1;
-    
-    // Process category
-    if (!categories[type][transaction.category]) {
-      categories[type][transaction.category] = 0;
+  // Helper function to update category stats
+  function updateCategoryStats(
+    data: TransactionTypeData,
+    categoryName: string,
+    amount: number
+  ) {
+    const existingCategory = data.categories.find(
+      (c) => c.name === categoryName
+    );
+    if (existingCategory) {
+      existingCategory.total += amount;
+    } else {
+      data.categories.push({ name: categoryName, total: amount });
     }
-    categories[type][transaction.category] += transaction.amountTotal;
-    
-    // Process related party
-    if (!relatedParties[type][transaction.relatedParty]) {
-      relatedParties[type][transaction.relatedParty] = 0;
+  }
+
+  // Helper function to update related party stats
+  function updateRelatedPartyStats(
+    data: TransactionTypeData,
+    partyName: string,
+    amount: number
+  ) {
+    const existingParty = data.relatedParties.find((p) => p.name === partyName);
+    if (existingParty) {
+      existingParty.total += amount;
+    } else {
+      data.relatedParties.push({ name: partyName, total: amount });
     }
-    relatedParties[type][transaction.relatedParty] += transaction.amountTotal;
-    
-    // Process items
-    transaction.items.forEach(item => {
-      const itemKey = item.name;
-      if (!items[type][itemKey]) {
-        items[type][itemKey] = { total: 0, quantity: 0 };
-      }
-      items[type][itemKey].total += item.totalPrice;
-      items[type][itemKey].quantity += item.quantity;
+  }
+
+  // Helper function to update item stats
+  function updateItemStats(
+    data: TransactionTypeData,
+    itemName: string,
+    amount: number,
+    quantity: number
+  ) {
+    const existingItem = data.items.find((i) => i.name === itemName);
+    if (existingItem) {
+      existingItem.total += amount;
+      existingItem.quantity += quantity;
+    } else {
+      data.items.push({ name: itemName, total: amount, quantity: quantity });
+    }
+  }
+
+  // Process transactions
+  transactions.forEach((transaction) => {
+    const data = transaction.type === "pemasukan" ? incomeData : expenseData;
+    data.total += transaction.amountTotal;
+    data.transactionCount++;
+
+    // Update category stats
+    updateCategoryStats(
+      data,
+      transaction.category.name,
+      transaction.amountTotal
+    );
+
+    // Update related party stats
+    updateRelatedPartyStats(
+      data,
+      transaction.relatedParty.name,
+      transaction.amountTotal
+    );
+
+    // Update item stats
+    transaction.items.forEach((item) => {
+      updateItemStats(data, item.name, item.totalPrice, item.quantity);
     });
   });
 
-  // Convert aggregated data to arrays
-  summary.income.categories = Object.entries(categories.income)
-    .map(([name, total]) => ({ name, total: total as number }))
-    .sort((a, b) => b.total - a.total);
-  
-  summary.income.relatedParties = Object.entries(relatedParties.income)
-    .map(([name, total]) => ({ name, total: total as number }))
-    .sort((a, b) => b.total - a.total);
-  
-  summary.income.items = Object.entries(items.income)
-    .map(([name, data]) => ({ 
-      name, 
-      total: (data as { total: number, quantity: number }).total,
-      quantity: (data as { total: number, quantity: number }).quantity
-    }))
-    .sort((a, b) => b.total - a.total);
-  
-  summary.expense.categories = Object.entries(categories.expense)
-    .map(([name, total]) => ({ name, total: total as number }))
-    .sort((a, b) => b.total - a.total);
-  
-  summary.expense.relatedParties = Object.entries(relatedParties.expense)
-    .map(([name, total]) => ({ name, total: total as number }))
-    .sort((a, b) => b.total - a.total);
-  
-  summary.expense.items = Object.entries(items.expense)
-    .map(([name, data]) => ({ 
-      name, 
-      total: (data as { total: number, quantity: number }).total,
-      quantity: (data as { total: number, quantity: number }).quantity
-    }))
-    .sort((a, b) => b.total - a.total);
+  // Sort arrays by total amount
+  [incomeData, expenseData].forEach((data) => {
+    data.categories.sort((a, b) => b.total - a.total);
+    data.relatedParties.sort((a, b) => b.total - a.total);
+    data.items.sort((a, b) => b.total - a.total);
+  });
 
-  return summary;
-} 
+  return {
+    income: incomeData,
+    expense: expenseData,
+  };
+}
