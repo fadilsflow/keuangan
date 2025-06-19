@@ -78,6 +78,7 @@ interface TransactionResponse {
     date: string;
     description: string;
     category: string;
+    categoryId: string;
     relatedParty: string;
     amountTotal: number;
     type: string;
@@ -92,8 +93,19 @@ interface TransactionResponse {
   };
 }
 
-// Tambahkan tipe untuk transaction item untuk menggantikan any
-type TransactionItem = TransactionResponse["data"][0];
+// Update the TransactionItem type to match the response data structure
+type TransactionItem = {
+  id: string;
+  date: string;
+  description: string;
+  category: string;
+  categoryId: string;
+  relatedParty: string;
+  amountTotal: number;
+  type: string;
+  paymentImg?: string;
+  items: Item[];
+};
 
 // Definisi return type untuk fungsi API
 interface DeleteResponse {
@@ -112,21 +124,52 @@ async function fetchTransactions(
   if (filters.search) params.append("search", filters.search);
   if (filters.type && filters.type !== "all")
     params.append("type", filters.type);
-  if (filters.category && filters.category !== "all")
-    params.append("category", filters.category);
+  if (filters.category && filters.category !== "all") {
+    params.append("categoryId", filters.category);
+  }
   if (filters.dateRange?.from)
     params.append("from", filters.dateRange.from.toISOString());
   if (filters.dateRange?.to)
     params.append("to", filters.dateRange.to.toISOString());
+
   params.append("page", page.toString());
   params.append("pageSize", pageSize.toString());
 
   const url = `/api/transactions?${params.toString()}`;
-  console.log("API URL:", url);
+  console.log("Final API URL:", url);
 
   const response = await fetch(url);
-  if (!response.ok) throw new Error("Failed to fetch transactions");
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("API Error Response:", errorText);
+    throw new Error(`Failed to fetch transactions: ${errorText}`);
+  }
+
   const data = await response.json();
+
+  // Filter the transactions based on category if specified
+  if (filters.category && filters.category !== "all") {
+    const filteredData = {
+      ...data,
+      data: data.data.filter(
+        (transaction: any) => transaction.categoryId === filters.category
+      ),
+    };
+
+    // Update meta information for filtered data
+    filteredData.meta = {
+      ...data.meta,
+      totalItems: filteredData.data.length,
+      totalPages: Math.ceil(filteredData.data.length / pageSize),
+      currentPage: page,
+      pageSize: pageSize,
+    };
+
+    console.log("Filtered Response data:", filteredData);
+    return filteredData;
+  }
+
+  console.log("API Response data:", data);
   return data;
 }
 
@@ -171,27 +214,59 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
   }, [filters.search, search, setSearch]);
 
   // Query to fetch transactions with debounced search
-  const { data, isLoading, isFetching } = useQuery<TransactionResponse, Error>({
+  const { data, isLoading, isFetching, error } = useQuery<
+    TransactionResponse,
+    Error
+  >({
     queryKey: [
       "transactions",
-      { ...filters, search: debouncedSearch },
+      {
+        search: debouncedSearch,
+        type: filters.type,
+        category: filters.category,
+        dateRange: filters.dateRange,
+      },
       currentPage,
       pageSize,
     ],
     queryFn: () =>
       fetchTransactions(
-        { ...filters, search: debouncedSearch },
+        {
+          ...filters,
+          search: debouncedSearch,
+        },
         currentPage,
         pageSize
       ),
     staleTime: 30000,
-    placeholderData: (prevData) => prevData,
   });
+
+  // Filter transactions based on selected category
+  const filteredTransactions = useMemo(() => {
+    if (!data?.data) return [];
+
+    return data.data.filter((transaction) => {
+      // If no category filter (all), return all transactions
+      if (!filters.category || filters.category === "all") {
+        return true;
+      }
+      // Return only transactions matching the selected category ID
+      return transaction.categoryId === filters.category;
+    });
+  }, [data?.data, filters.category]);
+
+  // Log any query errors
+  useEffect(() => {
+    if (error) {
+      console.error("Query error:", error);
+    }
+  }, [error]);
 
   // Reset pagination when filters change
   useEffect(() => {
+    console.log("Filters changed in data table:", filters);
     setCurrentPage(1);
-  }, [debouncedSearch, filters.type, filters.category, filters.dateRange]);
+  }, [filters]);
 
   const transactions = useMemo(() => data?.data || [], [data?.data]);
   const totalPages = data?.meta?.totalPages || 1;
@@ -437,7 +512,7 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody className="**:data-[slot=table-cell]:first:w-8">
-            {transactions.length === 0 ? (
+            {filteredTransactions.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={9}
@@ -447,7 +522,7 @@ export function TransactionDataTable({ filters }: TransactionDataTableProps) {
                 </TableCell>
               </TableRow>
             ) : (
-              transactions.map((transaction: TransactionItem) => (
+              filteredTransactions.map((transaction: TransactionItem) => (
                 <TableRow
                   key={transaction.id}
                   className="transition-colors hover:bg-muted/50"

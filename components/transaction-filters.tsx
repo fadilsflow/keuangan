@@ -67,11 +67,8 @@ export function TransactionFilters({
         if (!response.ok) throw new Error("Failed to fetch categories");
 
         const data: CategoryResponse = await response.json();
-        const uniqueCategories = Array.from(
-          new Map(data.data.map((cat) => [cat.name, cat])).values()
-        ) as Category[];
-
-        setCategories(uniqueCategories);
+        console.log("Fetched categories:", data.data);
+        setCategories(data.data);
       } catch (e) {
         console.error("Error fetching categories:", e);
         setCategories([]);
@@ -99,27 +96,17 @@ export function TransactionFilters({
   }, [dateRange]);
 
   useEffect(() => {
+    console.log("Current filters:", filters);
     onFilterChange(filters);
   }, [filters, onFilterChange]);
 
   const handleFilterChange = (key: keyof Filters, value: any) => {
+    console.log(`Filter changed: ${key} = ${value}`);
     const newFilters = { ...filters, [key]: value };
     if (key === "dateRange") {
       newFilters.dateRange = normalizeDateRange(value);
     }
     setFilters(newFilters);
-  };
-
-  const handleReset = () => {
-    setSearch("");
-    const resetFilters = {
-      search: "",
-      type: "all",
-      category: "all",
-      dateRange: undefined,
-    };
-    setDateRange(undefined);
-    setFilters(resetFilters);
   };
 
   return (
@@ -154,21 +141,26 @@ export function TransactionFilters({
         <div className="flex-1 min-w-[150px]">
           <Select
             value={filters.category}
-            onValueChange={(value) => handleFilterChange("category", value)}
+            onValueChange={(value) => {
+              console.log("Category selected:", value);
+              handleFilterChange("category", value);
+            }}
             disabled={loadingCategories}
           >
             <SelectTrigger className="w-full">
               <SelectValue
                 placeholder={loadingCategories ? "Loading..." : "Kategori"}
-              />
+              >
+                {filters.category === "all"
+                  ? "Kategori"
+                  : categories.find((cat) => cat.id === filters.category)
+                      ?.name || "Kategori"}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Kategori</SelectItem>
               {categories.map((category) => (
-                <SelectItem
-                  key={category.id || category.name}
-                  value={category.name}
-                >
+                <SelectItem key={category.id} value={category.id}>
                   {category.name}
                 </SelectItem>
               ))}
@@ -180,7 +172,19 @@ export function TransactionFilters({
           <DatePickerWithRange date={dateRange} setDate={setDateRange} />
         </div>
 
-        <Button variant="outline" onClick={handleReset}>
+        <Button
+          variant="outline"
+          onClick={() => {
+            setSearch("");
+            setDateRange(undefined);
+            setFilters({
+              search: "",
+              type: "all",
+              category: "all",
+              dateRange: undefined,
+            });
+          }}
+        >
           Reset
         </Button>
       </div>
