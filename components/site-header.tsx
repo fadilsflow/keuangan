@@ -13,7 +13,7 @@ export function SiteHeader() {
     "/dashboard": "Dashboard",
     "/transactions/*": "Transaksi",
     "/report": "Laporan",
-    "/master-data": "Master Data",
+    "/data-master": "Data Master",
     "/transactions/new": "Buat Transaksi",
   };
   const pathname = usePathname();

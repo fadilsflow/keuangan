@@ -56,12 +56,14 @@ CREATE TABLE public.Transaction (
   updatedAt timestamp without time zone NOT NULL,
   date timestamp without time zone NOT NULL,
   description text NOT NULL,
-  category text NOT NULL,
-  relatedParty text NOT NULL,
   amountTotal double precision NOT NULL,
   paymentImg text NOT NULL DEFAULT ''::text,
   type text NOT NULL DEFAULT 'pengeluaran'::text,
   organizationId text NOT NULL,
   userId text NOT NULL,
-  CONSTRAINT Transaction_pkey PRIMARY KEY (id)
+  categoryId text NOT NULL,
+  relatedPartyId text NOT NULL,
+  CONSTRAINT Transaction_pkey PRIMARY KEY (id),
+  CONSTRAINT Transaction_relatedPartyId_fkey FOREIGN KEY (relatedPartyId) REFERENCES public.RelatedParty(id),
+  CONSTRAINT Transaction_categoryId_fkey FOREIGN KEY (categoryId) REFERENCES public.Category(id)
 );

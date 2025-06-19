@@ -57,7 +57,8 @@ model Item {
   @@index([masterItemId])
 }
 
-// Master Data Models
+
+// Data Master Models
 model Category {
   id             String        @id @default(cuid())
   name           String

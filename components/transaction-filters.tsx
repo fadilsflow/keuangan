@@ -62,20 +62,13 @@ export function TransactionFilters({
     async function fetchCategories() {
       try {
         setLoadingCategories(true);
-        const [incomeRes, expenseRes] = await Promise.all([
-          fetch("/api/categories?type=income"),
-          fetch("/api/categories?type=expense"),
-        ]);
+        const response = await fetch("/api/categories/all");
 
-        if (!incomeRes.ok || !expenseRes.ok)
-          throw new Error("Failed to fetch categories");
+        if (!response.ok) throw new Error("Failed to fetch categories");
 
-        const incomeData: CategoryResponse = await incomeRes.json();
-        const expenseData: CategoryResponse = await expenseRes.json();
-
-        const allCategories = [...incomeData.data, ...expenseData.data];
+        const data: CategoryResponse = await response.json();
         const uniqueCategories = Array.from(
-          new Map(allCategories.map((cat) => [cat.name, cat])).values()
+          new Map(data.data.map((cat) => [cat.name, cat])).values()
         ) as Category[];
 
         setCategories(uniqueCategories);
