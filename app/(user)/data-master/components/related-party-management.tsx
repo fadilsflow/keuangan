@@ -442,9 +442,8 @@ export function RelatedPartyManagement({
               </span>
             ),
           },
-          { header: "Alamat", key: "address" },
-          { header: "Telepon", key: "phone" },
-          { header: "Email", key: "email" },
+          { header: "Informasi Kontak", key: "contactInfo" },
+          { header: "Deskripsi", key: "description" },
           {
             header: "Aksi",
             key: (party) => (
