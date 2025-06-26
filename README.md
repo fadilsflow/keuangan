@@ -6,11 +6,11 @@
   <p align="center">
     Aplikasi pencatatan pemasukan dan pengeluaran yang simpel dan terorganisir
     <br />
-    <a href="https://cashlog.vercel.app">View Demo</a>
+    <a href="https://cashlog.webtron.biz.id">View Demo</a>
     ·
-    <a href="https://github.com/fadilsflow/cashlog/issues">Report Bug</a>
+    <a href="https://github.com/fadilsflow/keuangan/issues">Report Bug</a>
     ·
-    <a href="https://github.com/fadilsflow/cashlog/issues">Request Feature</a>
+    <a href="https://github.com/fadilsflow/keuangan/issues">Request Feature</a>
   </p>
 </div>
 
